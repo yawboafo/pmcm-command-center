@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { BRANCH_BY_ID } from "@/lib/network/branches";
 import { useApp } from "@/store/app";
 import { sims } from "@/store/sims";
-import type { NormalisedOrderEvent, NormalisedReading } from "./contracts";
+import type { NormalisedOrderEvent, NormalisedReading, Origin } from "./contracts";
 
 interface LiveState {
   status: "connecting" | "connected" | "reconnecting";
@@ -12,12 +12,17 @@ interface LiveState {
   lastReadingAt: number | null;
   /** Readings whose binding points at equipment missing from the branch floor plan. */
   unmatched: number;
+  /** Branches receiving data from physical devices / systems (shown as LIVE). */
   liveBranches: string[];
-  /** Live POS / ordering-system events applied (or ignored as unmappable). */
+  /** Branches receiving data from simulated hardware through the pipeline (shown as SIM DEVICE, never LIVE). */
+  virtualBranches: string[];
+  /** POS / ordering-system events applied (or ignored as unmappable), physical and virtual. */
   orders: number;
+  /** Of `readings` + `orders`, how many came from simulated hardware. */
+  virtualEvents: number;
 }
 
-export const useLive = create<LiveState>(() => ({ status: "connecting", readings: 0, lastReadingAt: null, unmatched: 0, liveBranches: [], orders: 0 }));
+export const useLive = create<LiveState>(() => ({ status: "connecting", readings: 0, lastReadingAt: null, unmatched: 0, liveBranches: [], virtualBranches: [], orders: 0, virtualEvents: 0 }));
 
 let source: EventSource | null = null;
 
@@ -31,14 +36,23 @@ function parse<T>(ev: Event): T | null {
 
 const withBranch = (list: string[], id: string) => (list.includes(id) ? list : [...list, id]);
 
-/** Accept events only for known branches; the first live event moves the console to the real clock. */
-function goLive(branchId: string) {
+/**
+ * Accept events only for known branches. The first pipeline event — from a physical device or
+ * simulated hardware alike — moves the console to the real clock, because pipeline data is
+ * timestamped in real time; the notification says which kind arrived.
+ */
+function goLive(branchId: string, origin: Origin) {
   if (!BRANCH_BY_ID.has(branchId)) return false;
   if (!sims().realtime) {
     sims().enableRealtime();
-    useApp.getState().notify("Live data received — clock switched to real time (1×)", "info");
+    useApp.getState().notify(origin === "virtual" ? "Simulated hardware connected — clock switched to real time (1×)" : "Live data received — clock switched to real time (1×)", "info");
   }
   return true;
+}
+
+/** Track which branches get physical (LIVE) vs simulated-hardware (SIM DEVICE) data. */
+function branchState(s: LiveState, branchId: string, origin: Origin): Partial<LiveState> {
+  return origin === "virtual" ? { virtualBranches: withBranch(s.virtualBranches, branchId), virtualEvents: s.virtualEvents + 1 } : { liveBranches: withBranch(s.liveBranches, branchId) };
 }
 
 /**
@@ -53,19 +67,22 @@ export function startLiveTelemetry() {
   source.onerror = () => useLive.setState({ status: "reconnecting" });
   source.addEventListener("reading", (ev) => {
     const r = parse<NormalisedReading>(ev);
-    if (!r || !goLive(r.branchId)) return;
-    const applied = sims().get(r.branchId).ingestReading(r);
+    const origin: Origin = r?.origin === "virtual" ? "virtual" : "physical";
+    if (!r || !goLive(r.branchId, origin)) return;
+    const applied = sims().get(r.branchId).ingestReading({ ...r, origin });
     const s = useLive.getState();
-    useLive.setState({ readings: s.readings + 1, lastReadingAt: Date.now(), unmatched: s.unmatched + (applied ? 0 : 1), liveBranches: withBranch(s.liveBranches, r.branchId) });
+    useLive.setState({ readings: s.readings + 1, lastReadingAt: Date.now(), unmatched: s.unmatched + (applied ? 0 : 1), ...branchState(s, r.branchId, origin) });
   });
   source.addEventListener("order", (ev) => {
     const o = parse<NormalisedOrderEvent>(ev);
-    if (!o || !goLive(o.branchId)) return;
+    const origin: Origin = o?.origin === "virtual" ? "virtual" : "physical";
+    if (!o || !goLive(o.branchId, origin)) return;
     const { externalRef, channel, fulfilment, status, lines } = o.event;
-    const order = sims().get(o.branchId).ingestOrderEvent({ externalRef, channel, fulfilment, status, lines });
-    if (order && status === "RECEIVED") useApp.getState().notify(`Live order ${externalRef} received from ${o.sourceId} — #${order.number}`, "info");
+    const order = sims().get(o.branchId).ingestOrderEvent({ externalRef, channel, fulfilment, status, lines, origin });
+    // Virtual terminals produce steady demo volume; only real orders get a notification each.
+    if (order && status === "RECEIVED" && origin === "physical") useApp.getState().notify(`Live order ${externalRef} received from ${o.sourceId} — #${order.number}`, "info");
     const s = useLive.getState();
-    useLive.setState({ orders: s.orders + 1, liveBranches: withBranch(s.liveBranches, o.branchId) });
+    useLive.setState({ orders: s.orders + 1, ...branchState(s, o.branchId, origin) });
   });
   return () => {
     source?.close();

@@ -23,8 +23,8 @@ export interface PriorityItem {
   score: number;
   title: string;
   detail: string;
-  /** Where the signal came from — a live device or the simulation. */
-  provenance: "live" | "simulated";
+  /** Where the signal came from — a live device, simulated hardware through the pipeline, or the simulation. */
+  provenance: "live" | "virtual" | "simulated";
   /** Epoch ms when the issue started (if known). */
   since?: number;
   target: { kind: "alert" | "order" | "equipment"; id: string } | null;
@@ -91,7 +91,7 @@ export function rankPriorities(snaps: BranchSnapshot[], sims: Map<string, Branch
         score: BASE["order-delays"] + Math.min(25, delayed.length * 5) + agePoints(at(oldest.createdAt), nowMs) / 2,
         title: `${delayed.length} order${delayed.length > 1 ? "s" : ""} over target time`,
         detail: `Oldest: #${oldest.number}`,
-        provenance: delayed.some((o) => o.source === "live") ? "live" : "simulated",
+        provenance: delayed.some((o) => o.source === "live") ? "live" : delayed.some((o) => o.source === "virtual") ? "virtual" : "simulated",
         since: at(oldest.createdAt),
         target: { kind: "order", id: oldest.id },
       });

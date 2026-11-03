@@ -13,8 +13,15 @@ import { z } from "zod";
  * (topic `pmcm/v1/{branchCode}/{deviceId}/telemetry`, same payload).
  */
 
-export const DataSourceKind = z.enum(["live", "simulated"]);
+/**
+ * Provenance of a value: "live" = physical device/system, "simulated" = in-browser simulation,
+ * "virtual" = simulated hardware sending through the real pipeline (shown as SIM DEVICE, never LIVE).
+ */
+export const DataSourceKind = z.enum(["live", "simulated", "virtual"]);
 export type DataSourceKind = z.infer<typeof DataSourceKind>;
+
+/** Where a pipeline event physically came from, decided server-side from the registry — never from the message. */
+export type Origin = "physical" | "virtual";
 
 /** Physical quantities a device may report. Units are fixed per metric. */
 export const Metric = z.enum([
@@ -74,6 +81,8 @@ export const DeviceBinding = z
     model: z.string().optional(),
     installedAt: z.string().optional(),
     lastCalibratedAt: z.string().optional(),
+    /** Simulated hardware (scripts/hardware-sim.ts). Its key is derived from VIRTUAL_FLEET_SECRET; its data shows as SIM DEVICE. */
+    virtual: z.boolean().default(false),
   })
   .refine((b) => b.equipmentId || b.sensorCode, {
     message: "Binding needs equipmentId or sensorCode",
@@ -95,7 +104,10 @@ export interface NormalisedReading {
   ts: number;
   receivedAt: number;
   expectedIntervalSec: number;
-  source: "live";
+  /** Physical device or simulated hardware (from the registry's `virtual` flag). */
+  origin: Origin;
+  /** Provenance shown in the UI: LIVE for physical devices, SIM DEVICE for virtual ones. */
+  source: "live" | "virtual";
 }
 
 /**
@@ -109,19 +121,41 @@ export const PhysicalCamera = z.object({
   name: z.string(),
   /** Virtual camera in the floor plan that matches this camera's pose (for side-by-side viewing). */
   virtualCameraId: z.string().optional(),
-  protocol: z.enum(["webrtc-whep", "hls"]),
+  /** `mjpeg` is served by the simulated camera gateway (scripts/camera-sim.ts) and proxied by /api/cameras/{id}/mjpeg. */
+  protocol: z.enum(["webrtc-whep", "hls", "mjpeg"]),
   /** Gateway-relative path; the server combines it with CAMERA_GATEWAY_URL. */
   streamPath: z.string(),
-  authorisation: z.object({
-    approvedBy: z.string(),
-    approvedAt: z.string(),
-    purpose: z.string(),
-    privacyNoticeUrl: z.string().url(),
-    retentionDays: z.number().int().min(0).max(365),
-  }),
+  /** Required for real cameras; simulated cameras film nobody (synthetic test pattern). */
+  authorisation: z
+    .object({
+      approvedBy: z.string(),
+      approvedAt: z.string(),
+      purpose: z.string(),
+      privacyNoticeUrl: z.string().url(),
+      retentionDays: z.number().int().min(0).max(365),
+    })
+    .optional(),
   enabled: z.boolean(),
-});
+  /** Simulated camera (synthetic video from the camera simulator); shown as SIM CAMERA, never LIVE. */
+  virtual: z.boolean().default(false),
+}).refine((c) => c.virtual || c.authorisation, { message: "Physical cameras need a recorded authorisation" });
 export type PhysicalCamera = z.infer<typeof PhysicalCamera>;
+
+/**
+ * A registered order source (POS terminal, ordering app backend). Unregistered sources still sign
+ * with POS_WEBHOOK_SECRET and count as physical; virtual terminals sign with a key derived from
+ * VIRTUAL_FLEET_SECRET and their orders show as SIM DEVICE.
+ */
+export const PosTerminal = z.object({
+  sourceId: z.string().regex(/^[a-zA-Z0-9._:-]{2,64}$/),
+  branchId: z.string(),
+  name: z.string(),
+  model: z.string().optional(),
+  /** Floor-plan equipment the terminal stands on (e.g. "pos-counter-1"), if any. */
+  equipmentId: z.string().optional(),
+  virtual: z.boolean().default(false),
+});
+export type PosTerminal = z.infer<typeof PosTerminal>;
 
 /** Order lifecycle event from POS / Chris B / partner webhooks. */
 export const PosOrderEvent = z.object({
@@ -168,8 +202,29 @@ export interface NormalisedOrderEvent {
   /** Webhook source id (x-pmcm-source), e.g. "chris-b". */
   sourceId: string;
   event: PosOrderEvent;
-  source: "live";
+  /** Physical POS / ordering system, or a virtual terminal (from the terminal registry). */
+  origin: Origin;
+  source: "live" | "virtual";
 }
+
+/**
+ * Heartbeat from the hardware simulator (scripts/hardware-sim.ts) describing what it is
+ * simulating, so Settings → Integrations can show the injected faults. Signed with the key
+ * derived from VIRTUAL_FLEET_SECRET for the id "hardware-sim".
+ */
+export const SimulatorReport = z.object({
+  v: z.literal(1),
+  startedAt: z.iso.datetime({ offset: true }),
+  speed: z.number().min(0.1).max(1000),
+  branches: z.array(z.string()).max(100),
+  devices: z.number().int().min(0),
+  terminals: z.number().int().min(0),
+  faults: z
+    .array(z.object({ deviceId: z.string().max(64), kind: z.string().max(32), since: z.iso.datetime({ offset: true }), injected: z.boolean() }))
+    .max(500),
+  offline: z.array(z.string().max(64)).max(2000),
+});
+export type SimulatorReport = z.infer<typeof SimulatorReport>;
 
 /** Everything the hub streams, in one sequence so a single Last-Event-ID resumes both. */
 export type HubEvent = NormalisedReading | NormalisedOrderEvent;

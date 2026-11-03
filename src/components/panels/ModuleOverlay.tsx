@@ -32,9 +32,11 @@ export default function ModuleOverlay({ section }: { section: string }) {
   const meta = TITLES[section];
   if (!sim || !meta) return null;
   // Say so when some rows in this module come from connected sources (orders, sensors).
-  const hasLive =
-    (section === "orders" || section === "kitchen" || section === "delivery" ? [...sim.orders.values()].some((o) => o.source === "live") : false) ||
-    (section === "safety" ? [...sim.sensors.values()].some((x) => x.source === "live") : false);
+  const sourced = (src: "live" | "virtual") =>
+    (section === "orders" || section === "kitchen" || section === "delivery" ? [...sim.orders.values()].some((o) => o.source === src) : false) ||
+    (section === "safety" ? [...sim.sensors.values()].some((x) => x.source === src) : false);
+  const hasLive = sourced("live");
+  const hasVirtual = sourced("virtual");
 
   return (
     <section
@@ -49,7 +51,7 @@ export default function ModuleOverlay({ section }: { section: string }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h2 className="truncate font-display text-[13px] font-bold text-white">{meta.title}</h2>
-            {hasLive ? <SimBadge label="SIMULATED + LIVE" /> : <SimBadge />}
+            {hasLive ? <SimBadge label={hasVirtual ? "SIMULATED + SIM DEVICE + LIVE" : "SIMULATED + LIVE"} /> : hasVirtual ? <SimBadge label="SIMULATED + SIM DEVICE" /> : <SimBadge />}
           </div>
           {!collapsed && <p className="truncate text-[10.5px] text-white/45">{meta.sub} · {sim.branchName}</p>}
         </div>

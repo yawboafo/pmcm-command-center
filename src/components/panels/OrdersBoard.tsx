@@ -87,6 +87,7 @@ export default function OrdersBoard({ sim }: { sim: BranchSimulation }) {
                   <td className="py-1 pr-1 font-mono text-white">
                     {o.number}
                     {o.source === "live" && <span title="Live order from a connected ordering system" className="ml-1 text-[9px] font-semibold text-emerald-300">LIVE</span>}
+                    {o.source === "virtual" && <span title="SIM DEVICE — order from a simulated POS terminal through the real pipeline" className="ml-1 text-[9px] font-semibold text-fuchsia-300">SIM</span>}
                   </td>
                   <td className="pr-1 font-mono text-white/45">
                     {clock(simMs(sim, o.createdAt))}

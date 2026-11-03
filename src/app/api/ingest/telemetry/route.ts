@@ -1,10 +1,12 @@
 import { TelemetryMessage } from "@/lib/integration/contracts";
-import { bindingsFor, deviceSecret, ingest } from "@/lib/integration/hub";
+import { bindingsFor, deviceSecret, ingest, noteRejected } from "@/lib/integration/hub";
 import { verify } from "@/lib/integration/signing";
 
 /**
  * Device telemetry ingestion (HTTPS). Devices or an MQTT bridge POST signed
- * TelemetryMessage JSON. See docs/INTEGRATION.md for the contract.
+ * TelemetryMessage JSON. See docs/INTEGRATION.md for the contract. Simulated
+ * hardware (scripts/hardware-sim.ts) uses this exact route; the hub marks its
+ * readings `origin: "virtual"` from the registry.
  *
  *  401 unknown device / bad signature / stale timestamp
  *  400 schema violation      413 too large      202 accepted      200 duplicate
@@ -29,7 +31,10 @@ export async function POST(req: Request) {
   if (!parsed.success) return Response.json({ error: "schema", issues: parsed.error.issues.slice(0, 5).map((i) => `${i.path.join(".")}: ${i.message}`) }, { status: 400 });
   if (parsed.data.deviceId !== deviceId) return Response.json({ error: "device_mismatch" }, { status: 401 });
   // Reject readings timestamped far in the future (device clock not synchronised).
-  if (Date.parse(parsed.data.ts) - Date.now() > 2 * 60 * 1000) return Response.json({ error: "clock_skew" }, { status: 400 });
+  if (Date.parse(parsed.data.ts) - Date.now() > 2 * 60 * 1000) {
+    noteRejected(deviceId, "clock_skew");
+    return Response.json({ error: "clock_skew" }, { status: 400 });
+  }
 
   const result = ingest(parsed.data);
   if (result.status === "duplicate") return Response.json({ status: "duplicate" }, { status: 200 });

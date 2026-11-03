@@ -1,7 +1,7 @@
 "use client";
 
 import { Video } from "lucide-react";
-import { Btn, LiveBadge, SectionTitle, SimBadge } from "@/components/ui/primitives";
+import { Btn, LiveBadge, SectionTitle, SimBadge, SimDeviceBadge } from "@/components/ui/primitives";
 import { EQUIPMENT_CATALOG } from "@/lib/floorplan/catalog";
 import { mins, pct } from "@/lib/format";
 import { roleLabel, type BranchSimulation } from "@/lib/sim/engine";
@@ -250,7 +250,7 @@ export function InspectSensor({ sim, id }: { sim: BranchSimulation; id: string }
       <div>
         <div className="flex items-center gap-2">
           <span className="font-mono text-[10px] tracking-[0.16em] text-white/40">{s.code}</span>
-          {st.source === "live" ? <LiveBadge label={`LIVE · ${st.deviceId}`} /> : <SimBadge label="CONCEPTUAL SENSOR" />}
+          {st.source === "live" ? <LiveBadge label={`LIVE · ${st.deviceId}`} /> : st.source === "virtual" ? <SimDeviceBadge label={`SIM DEVICE · ${st.deviceId}`} /> : <SimBadge label="CONCEPTUAL SENSOR" />}
         </div>
         <h2 className="font-display text-sm font-bold text-white">{s.name}</h2>
       </div>
@@ -259,7 +259,7 @@ export function InspectSensor({ sim, id }: { sim: BranchSimulation; id: string }
         <KV k="Room" v={sim.roomName(s.roomId)} />
         <KV k="Reading" v={st.value === null ? st.note ?? "—" : `${st.value} ${s.unit === "status" ? "" : s.unit}`} mono />
         <KV k="Status" v={<Pill tone={statusTone(st.status)}>{st.status}</Pill>} />
-        <KV k="Connectivity" v={st.source === "live" ? (st.connected ? `Live device ${st.deviceId}` : `No data from ${st.deviceId}`) : st.connected ? "Connected (simulated)" : "Offline"} tone={st.connected ? "green" : "yellow"} />
+        <KV k="Connectivity" v={st.source !== "simulated" ? (st.connected ? `${st.source === "virtual" ? "Simulated device" : "Live device"} ${st.deviceId}` : `No data from ${st.deviceId}`) : st.connected ? "Connected (simulated)" : "Offline"} tone={st.connected ? "green" : "yellow"} />
         {limit && <KV k="Configured limit" v={limit.label} mono />}
       </Card>
       {st.history.length > 1 && <HistoryChart data={st.history} limit={limit} unit={s.unit === "%" ? "%" : "°C"} />}
