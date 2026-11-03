@@ -10,6 +10,7 @@ import { BRAND, M, PANTS, SHIRTS, SKIN } from "./materials";
 import type { AssetEntry } from "./modelAssets";
 import { G } from "./parts";
 import { usePropSet, type PropSet } from "./propAssets";
+import { drawnAgents } from "@/components/cameras/replay";
 
 /**
  * Blender-built people (blender/build_people.py → public/models/characters/people.glb).
@@ -444,8 +445,9 @@ class PeopleRuntime {
   /** Poses every agent; returns the capacity needed when the crowd outgrows this layer, else 0. */
   frame(sim: BranchSimulation, states: Map<string, AgentState>, t: number, dt: number, selectedId?: string | null): number {
     const { parts, carry, blobs, pick, ring, ids, rig } = this;
+    const agents = drawnAgents(sim) ?? sim.agents;
     let live = 0;
-    for (const a of sim.agents) if (!a.gone) live++;
+    for (const a of agents) if (!a.gone) live++;
     if (live > this.cap) return Math.max(this.cap * 2, Math.ceil(live / 32) * 32);
     for (const p of parts.values()) p.n = 0;
     for (const c of carry.values()) c.n = 0;
@@ -454,7 +456,7 @@ class PeopleRuntime {
     const k = 1 - Math.exp(-dt * 14);
     const kh = 1 - Math.exp(-dt * 10);
     const J = rig.joints;
-    for (const a of sim.agents) {
+    for (const a of agents) {
       if (a.gone) continue;
       let st = states.get(a.id);
       if (!st) {

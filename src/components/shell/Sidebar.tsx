@@ -30,7 +30,7 @@ export const NAV: Array<{ id: Section; label: string; icon: LucideIcon; group: s
   { id: "network", label: "Ghana Network", icon: MapIcon, group: "Network" },
   { id: "branches", label: "Restaurant Branches", icon: Building2, group: "Network" },
   { id: "twin", label: "3D Digital Twin", icon: Cuboid, group: "Restaurant" },
-  { id: "cameras", label: "Virtual Cameras", icon: Camera, group: "Restaurant" },
+  { id: "cameras", label: "Cameras", icon: Camera, group: "Restaurant" },
   { id: "kitchen", label: "Kitchen Operations", icon: ChefHat, group: "Restaurant" },
   { id: "orders", label: "Live Orders", icon: ReceiptText, group: "Restaurant" },
   { id: "safety", label: "Food Safety", icon: ShieldCheck, group: "Restaurant" },

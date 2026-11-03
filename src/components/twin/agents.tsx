@@ -6,6 +6,7 @@ import * as THREE from "three";
 import type { Agent } from "@/lib/sim/types";
 import type { BranchSimulation } from "@/lib/sim/engine";
 import { useApp } from "@/store/app";
+import { drawnAgents } from "@/components/cameras/replay";
 import { M, PANTS, SHIRTS, SKIN } from "./materials";
 import { AssetBoundary, useManifest } from "./modelAssets";
 import { G } from "./parts";
@@ -212,7 +213,7 @@ export function AgentsLayer(props: LayerProps) {
 
 function ProceduralAgents({ sim, version, selectedId, onSelect }: LayerProps) {
   // Recomputed on the throttled tick: new arrivals appear, departed agents unmount.
-  const list = useMemo(() => sim.agents.filter((a) => !a.gone), [sim, version]); // eslint-disable-line react-hooks/exhaustive-deps
+  const list = useMemo(() => (drawnAgents(sim) ?? sim.agents).filter((a) => !a.gone), [sim, version]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <group>
       {list.map((a) => (

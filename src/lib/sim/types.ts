@@ -93,7 +93,7 @@ export interface Unit {
   recook?: boolean;
 }
 
-export type TaskKind = "serve" | "stage" | "pack" | "handoff" | "rice-batch" | "chicken-batch" | "clean";
+export type TaskKind = "serve" | "stage" | "pack" | "handoff" | "rice-batch" | "chicken-batch" | "clean" | "fetch";
 
 export interface Task {
   id: string;
@@ -116,6 +116,10 @@ export interface Task {
   target?: Vec2;
   roomId?: string;
   batch?: { cut: "wing" | "drum"; pieces: number; step: number };
+  /** Clean-up tasks for a specific spill. */
+  spillId?: string;
+  /** Fetch tasks: the door the person goes through (opens while they are inside). */
+  doorId?: string;
 }
 
 export type AgentKind = "staff" | "customer" | "rider";
@@ -157,6 +161,8 @@ export interface Agent {
   seat?: number;
   arrivedAt: number;
   gone?: boolean;
+  /** Staff on a break: sim time the break ends. */
+  breakUntil?: number;
 }
 
 export type StaffRole = "cashier" | "pizza" | "chicken" | "rice" | "packer" | "supervisor";
@@ -171,6 +177,10 @@ export interface StaffMember {
   tasksDone: number;
   training: string[];
   homeWs?: WorkstationType;
+  /** Sim time of the next scheduled break. */
+  nextBreakAt?: number;
+  /** Set while the person is away from their post without a task (sim time it started). */
+  offPostSince?: number;
 }
 
 export type EquipStatus = "idle" | "active" | "fault" | "offline" | "cleaning";
@@ -226,6 +236,20 @@ export interface Alert {
   limit?: number;
   /** Whether the alert was raised from a live device, a simulated device (via the pipeline) or the simulation. */
   source: DataSource;
+  /** Rule id for operational (rule-based) alerts; undefined for sensor-threshold alerts. */
+  kind?: string;
+  /** Camera zone the alert belongs to. */
+  zoneId?: string;
+  /** Plain-language cause, e.g. "Queue 9 deep, 2 on till". */
+  cause?: string;
+  /** Recommended action, e.g. "Move Kofi from dining to till 2". */
+  action?: string;
+  /** 0 = new, 1 = unattended for 3 min, 2 = unattended for 8 min (manager notified). */
+  escalation: 0 | 1 | 2;
+  escalatedAt?: number;
+  assignedTo?: string;
+  /** Closed by the system because the condition cleared. */
+  autoResolved?: boolean;
 }
 
 export interface InventoryItem {
@@ -270,8 +294,11 @@ export interface SimEvent {
   type: "order" | "kitchen" | "safety" | "equipment" | "inventory" | "customer" | "delivery" | "staff" | "system";
   severity: "info" | "success" | "warning" | "critical";
   message: string;
-  refs?: { orderId?: string; equipmentId?: string; alertId?: string; agentId?: string; sku?: string };
+  refs?: { orderId?: string; equipmentId?: string; alertId?: string; agentId?: string; sku?: string; zoneId?: string; scenario?: string; marker?: MarkerKind };
 }
+
+/** Timeline marker classes the camera timeline draws. */
+export type MarkerKind = "alert" | "rush" | "shift" | "delivery" | "anomaly" | "incident";
 
 export interface CleaningRecord {
   roomId: string;
@@ -307,4 +334,53 @@ export interface BranchMetrics {
   criticalAlerts: number;
   lowStock: number;
   equipmentIssues: number;
+}
+
+/* ───────────── camera-zone operational state ───────────── */
+
+export interface DoorState {
+  doorId: string;
+  open: boolean;
+  /** Sim time of the last change. */
+  since: number;
+  /** Openings since the simulation started. */
+  opens: number;
+  /** Held open (e.g. propped) until this sim time; undefined = closes when traffic clears. */
+  heldUntil?: number;
+  lastOpenedAt?: number;
+  /** Openings while the branch was closed. */
+  afterHoursOpens: number;
+}
+
+export interface TillState {
+  drawerOpen: boolean;
+  /** Sim time the drawer last opened or closed. */
+  since: number;
+  /** Sim time of the last recorded sale at this till. */
+  lastSaleAt?: number;
+  /** True while the drawer is open without a sale having been rung up. */
+  openNoSale: boolean;
+}
+
+export interface Spill {
+  id: string;
+  roomId: string;
+  pos: Vec2;
+  since: number;
+  cleanedAt?: number;
+  by?: string;
+}
+
+/** Compact per-second record of what every person was doing, for timeline replay. */
+export type HistoryPerson = [id: string, kind: AgentKind, role: StaffRole | undefined, x: number, z: number, heading: number, anim: Anim, carrying: Agent["carrying"], look: Vec2 | undefined, name: string, seed: number];
+
+export interface HistoryFrame {
+  /** Sim seconds. */
+  t: number;
+  people: HistoryPerson[];
+  /** Zone status level and primary metric value at this second, keyed by zone id. */
+  zones: Record<string, { level: "ok" | "watch" | "act"; primary: number | null; metrics: Record<string, number | null> }>;
+  doors: Record<string, boolean>;
+  drawerOpen: boolean;
+  queue: number;
 }

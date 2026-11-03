@@ -1,7 +1,9 @@
 "use client";
 
-import { memo, useMemo } from "react";
+import { useFrame } from "@react-three/fiber";
+import { memo, useMemo, useRef, type ReactNode } from "react";
 import * as THREE from "three";
+import { doorIsOpen } from "./doorState";
 import type { FloorPlan, Room, Wall } from "@/lib/floorplan/types";
 import { BRAND, M, badgeTexture, canopyTexture, floorMaterial, labelTexture, posterTexture, signTexture, taglineTexture, windowBandTexture } from "./materials";
 import { Box, Cyl, G, Slab } from "./parts";
@@ -123,6 +125,36 @@ const xrayWall = new THREE.MeshStandardMaterial({ color: "#9fc6ff", transparent:
 
 /* ───────────────────────── doors & windows ───────────────────────── */
 
+function HingedLeaf({ doorId, width, openAngle, children }: { doorId: string; width: number; openAngle: number; children: ReactNode }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame((_, dt) => {
+    const g = ref.current;
+    if (!g) return;
+    const target = doorIsOpen(doorId) ? openAngle : 0;
+    g.rotation.y += (target - g.rotation.y) * (1 - Math.exp(-dt * 5));
+  });
+  return (
+    <group ref={ref} position={[-width / 2, 0, 0]} rotation={[0, openAngle, 0]}>
+      {children}
+    </group>
+  );
+}
+
+function SlidingPanel({ doorId, side, width, children }: { doorId: string; side: number; width: number; children: ReactNode }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame((_, dt) => {
+    const g = ref.current;
+    if (!g) return;
+    const target = side * width * (doorIsOpen(doorId) ? 0.36 : 0.23);
+    g.position.x += (target - g.position.x) * (1 - Math.exp(-dt * 6));
+  });
+  return (
+    <group ref={ref} position={[side * width * 0.36, 0, -0.03]}>
+      {children}
+    </group>
+  );
+}
+
 export const Doors = memo(function Doors({ plan, showHeaders }: { plan: FloorPlan; showHeaders: boolean }) {
   const H = plan.dimensions.height;
   // In the cut-away view door frames and leaves are trimmed to the wall cut height.
@@ -147,20 +179,20 @@ export const Doors = memo(function Doors({ plan, showHeaders }: { plan: FloorPla
               </>
             )}
             {glassDoor ? (
-              // Sliding glass doors, parked open behind the side panels.
+              // Sliding glass doors: meet in the middle when shut, park behind the side panels when open.
               [-1, 1].map((s) => (
-                <group key={s} position={[s * d.width * 0.36, 0, -0.03]}>
+                <SlidingPanel key={s} doorId={d.id} side={s} width={d.width}>
                   <Box p={[0, DH / 2, 0]} s={[d.width * 0.46, DH - 0.04, 0.02]} m={M.glass()} shadow={false} />
                   <Box p={[0, DH / 2, 0]} s={[d.width * 0.46, 0.05, 0.03]} m={M.frame()} />
                   <Box p={[0, DH - 0.04, 0]} s={[d.width * 0.46, 0.05, 0.03]} m={M.frame()} />
-                </group>
+                </SlidingPanel>
               ))
             ) : (
-              // Hinged leaf swung open ~75°.
-              <group position={[-d.width / 2, 0, 0]} rotation={[0, d.kind === "emergency" ? -1.3 : 1.3, 0]}>
+              // Hinged leaf: swings open ~75° while the door is in use.
+              <HingedLeaf doorId={d.id} width={d.width} openAngle={d.kind === "emergency" ? -1.3 : 1.3}>
                 <Box p={[d.width / 2, DH / 2, 0]} s={[d.width - 0.04, DH - 0.04, 0.045]} m={d.kind === "emergency" ? M.plastic("#c9ccd1") : d.kind === "delivery" ? M.plastic("#d9d9d9") : M.door()} />
                 <Box p={[d.width - 0.12, 1.05, 0.04]} s={[0.12, 0.025, 0.025]} m={M.steelDark()} />
-              </group>
+              </HingedLeaf>
             )}
             {d.kind === "emergency" && showHeaders && (
               <mesh geometry={G.plane} material={cachedBasic("exit", () => labelTexture("EXIT", "#0b8a3a"))} position={[0, DOOR_H + 0.2, t / 2 + 0.02]} scale={[0.5, 0.16, 1]} />

@@ -185,3 +185,122 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ───────────── Camera centre (dark control-room surface in either theme) ───────────── */
+.cam-root {
+  --cam-bg: #07090d;
+  --cam-panel: #0d1117;
+  --cam-panel-2: #121821;
+  --cam-line: rgba(255, 255, 255, 0.08);
+  --cam-fg: #e8eaed;
+  --cam-muted: rgba(232, 234, 237, 0.55);
+  --cam-faint: rgba(232, 234, 237, 0.35);
+  --ok: #22c55e;
+  --watch: #f59e0b;
+  --act: #ef4444;
+  --accent: #ee1d25;
+  color: var(--cam-fg);
+  /* Transparent: the WebGL canvas underneath paints the feeds and the background colour. */
+  background: transparent;
+  font-variant-numeric: tabular-nums;
+}
+.cam-header {
+  background: var(--cam-bg);
+}
+.cam-panel {
+  background: var(--cam-panel);
+  border: 1px solid var(--cam-line);
+  border-radius: 12px;
+}
+.cam-scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.18) 0 1px, transparent 1px 3px);
+  opacity: 0.5;
+}
+.cam-vignette::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.45) 100%);
+}
+@keyframes cam-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.cam-crossfade {
+  animation: cam-fade 0.45s ease-out forwards;
+}
+@keyframes cam-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgba(239, 68, 68, 0);
+  }
+}
+.cam-pulse {
+  animation: cam-pulse 1.4s ease-out 2;
+}
+@keyframes cam-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.cam-slide-in {
+  animation: cam-slide-in 0.3s ease-out;
+}
+.cam-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 44px;
+  background: transparent;
+  cursor: pointer;
+}
+.cam-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.cam-range::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.cam-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -9px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.cam-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--accent);
+}
+.cam-sheet {
+  scroll-snap-type: x mandatory;
+}
+.cam-sheet > * {
+  scroll-snap-align: start;
+}

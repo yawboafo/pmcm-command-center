@@ -68,7 +68,7 @@ export function Toolbar() {
       <span className="mx-1 h-5 w-px bg-white/10" />
       <ToolBtn active={xray} onClick={() => toggle("xray")} icon={ScanEye} label="X-ray" title="Transparent walls" />
       <ToolBtn active={showPaths} onClick={() => toggle("showPaths")} icon={Route} label="Paths" title="Show customer, staff, delivery and exit paths" />
-      <ToolBtn active={cctvOpen} onClick={() => setCctv(!cctvOpen)} icon={LayoutGrid} label="Camera grid" title="Monitor several virtual cameras at once" />
+      <ToolBtn active={cctvOpen} onClick={() => setCctv(!cctvOpen)} icon={LayoutGrid} label="Cameras" title="Camera centre — every zone at a glance (G)" />
       <span className="mx-1 h-5 w-px bg-white/10" />
       <ToolBtn active={view2d} onClick={() => setView2d(!view2d)} icon={MapIcon} label="2D plan" title="Live 2D operations floor plan (V)" />
     </div>

@@ -6,12 +6,16 @@ import { Bloom, EffectComposer, SMAA, ToneMapping } from "@react-three/postproce
 import { ToneMappingMode } from "postprocessing";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
+import CameraCenter from "@/components/cameras/CameraCenter";
+import { drawnDoorOpen } from "@/components/cameras/replay";
 import { useApp } from "@/store/app";
 import { sims } from "@/store/sims";
 import CameraRig from "./CameraRig";
-import { CameraDevices, CctvOverlay, MultiViewRenderer, PathsOverlay } from "./CctvGrid";
+import { CameraDevices, MultiViewRenderer, PathsOverlay } from "./CctvGrid";
 import BadgeMarkers from "./BadgeMarkers";
+import { setDoorStateProvider } from "./doorState";
 import FeedBoot from "./FeedBoot";
+import RainLayer from "./Weather";
 import PlanView2D from "./PlanView2D";
 import { CameraList, CctvLabel, DemoMenu, FollowBanner, FpsHud, Toolbar } from "./Hud";
 import PerfProbe from "./PerfProbe";
@@ -84,8 +88,18 @@ export default function TwinView({ branchId }: { branchId: string }) {
   }, [selection, live, tick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const effects = ceiling.effects && hiQ && !cctvOpen;
-  // Daylight throughout: the feed-style entry shows the restaurant as it is now.
-  const dusk = false;
+  // Lighting follows the simulated clock (re-evaluated once per simulated minute).
+  const minute = Math.floor(sims().clock / 60000);
+  const hour = useMemo(() => {
+    const d = new Date(minute * 60000);
+    return d.getUTCHours() + d.getUTCMinutes() / 60;
+  }, [minute]);
+  const weather = useMemo(() => live.weather(), [live, minute]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Doors in the 3D model follow the simulation (or the replay frame being scrubbed).
+  useEffect(() => {
+    setDoorStateProvider((id) => drawnDoorOpen(live, id));
+    return () => setDoorStateProvider(null);
+  }, [live]);
 
   return (
     <div id="twin-root" className="relative h-full w-full select-none bg-[#0b0f16]">
@@ -95,7 +109,8 @@ export default function TwinView({ branchId }: { branchId: string }) {
         shadows={graphics === "low" ? false : { type: THREE.PCFShadowMap }}
         dpr={dpr}
         camera={{ fov: 50, near: 0.1, far: 400, position: [0, 20, -30] }}
-        gl={{ antialias: !effects, powerPreference: "high-performance" }}
+        // The camera centre refreshes feed tiles round-robin, so the drawing buffer must persist between frames.
+        gl={{ antialias: !effects, powerPreference: "high-performance", preserveDrawingBuffer: true }}
         onCreated={({ gl }) => {
           gl.toneMapping = THREE.ACESFilmicToneMapping;
           gl.toneMappingExposure = 1.05;
@@ -119,7 +134,7 @@ export default function TwinView({ branchId }: { branchId: string }) {
             sim={live}
             cutaway
             xray={xray}
-            dusk={dusk}
+            hour={hour}
             quality={hiQ ? graphics : "low"}
             version={tick}
             selectedId={selectedEq}
@@ -135,9 +150,10 @@ export default function TwinView({ branchId }: { branchId: string }) {
           <CameraDevices cameras={live.plan.cameras} activeId={activeCameraId} />
           {showPaths && <PathsOverlay plan={live.plan} version={tick} />}
           <BadgeMarkers sim={live} />
+          {weather.rain && <RainLayer plan={live.plan} intensity={weather.intensity} />}
         </Suspense>
         <CameraRig key={live.plan.restaurantId} sim={live} />
-        <MultiViewRenderer cameras={live.plan.cameras} composerActive={effects} />
+        <MultiViewRenderer sim={live} composerActive={effects} />
         <EffectComposer enabled={effects} multisampling={ceiling.msaa}>
           <Bloom mipmapBlur luminanceThreshold={0.9} intensity={0.45} />
           <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
@@ -145,7 +161,7 @@ export default function TwinView({ branchId }: { branchId: string }) {
         </EffectComposer>
       </Canvas>
 
-      <CctvOverlay plan={live.plan} />
+      {cctvOpen && <CameraCenter sim={live} ready={phase === "inside"} />}
       <FeedBoot branchId={branchId} />
       {view2d && <PlanView2D sim={live} />}
       {phase === "inside" && !cctvOpen && (

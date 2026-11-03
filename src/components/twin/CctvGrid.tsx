@@ -2,12 +2,11 @@
 
 import { Line } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { memo, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { memo, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import LiveCameraPlayer from "@/components/integration/LiveCameraPlayer";
+import { tileRegistry, useFeed } from "@/components/cameras/feedStore";
 import type { FloorPlan, VirtualCamera } from "@/lib/floorplan/types";
-import { clockSec } from "@/lib/format";
-import { useIntegrationStatus } from "@/lib/integration/useStatus";
+import type { BranchSimulation } from "@/lib/sim/engine";
 import { useApp } from "@/store/app";
 import { sims } from "@/store/sims";
 import { virtualPose } from "./CameraRig";
@@ -15,63 +14,93 @@ import { M } from "./materials";
 import { G } from "./parts";
 import { useTwin } from "./twinStore";
 
-/** Render cameras reused for grid tiles (one twin is mounted at a time). */
-const pool = Array.from({ length: 9 }, () => new THREE.PerspectiveCamera(60, 1, 0.05, 200));
-
-export function gridDims(layout: 1 | 4 | 9) {
-  const n = layout === 1 ? 1 : layout === 4 ? 2 : 3;
-  return { cols: n, rows: n };
-}
-
 /**
- * Owns rendering for the twin canvas (useFrame priority 1) whenever the
- * post-processing composer is off. When the CCTV grid is open the composer is
- * disabled and this renders 1/4/9 virtual cameras into scissored viewports of
- * the same WebGL context.
+ * Owns rendering for the twin canvas (useFrame priority 2) whenever the post-processing
+ * composer is off. With the camera centre open it renders each registered feed tile — a
+ * DOM element anywhere in the page — as a scissored viewport of the same WebGL context,
+ * using that zone's fixed camera. Tiles are refreshed round-robin so eight feeds cost about
+ * the same as two full frames; the canvas keeps its drawing buffer between frames.
  */
-export function MultiViewRenderer({ cameras, composerActive }: { cameras: VirtualCamera[]; composerActive: boolean }) {
+const RENDER_W = 480;
+
+export function MultiViewRenderer({ sim, composerActive }: { sim: BranchSimulation; composerActive: boolean }) {
+  const cams = useRef(new Map<string, THREE.PerspectiveCamera>());
+  const rr = useRef(0);
+  const seenVersion = useRef(-1);
+  const fps = useRef({ n: 0, at: 0 });
+
   useFrame(({ gl, scene, camera, size }) => {
-    const { cctvOpen, cctvLayout } = useApp.getState();
+    const now = performance.now();
+    fps.current.n++;
+    if (!fps.current.at) fps.current.at = now;
+    if (now - fps.current.at >= 1000) {
+      useFeed.getState().setFps(Math.round((fps.current.n * 1000) / (now - fps.current.at)));
+      fps.current = { n: 0, at: now };
+    }
+    const { cctvOpen } = useApp.getState();
     if (!cctvOpen) {
-      // The post-processing composer renders the main view when it is active.
       if (composerActive) return;
-      const prev = gl.autoClear;
       gl.autoClear = true;
       gl.setScissorTest(false);
       gl.setViewport(0, 0, size.width, size.height);
       gl.render(scene, camera);
-      gl.autoClear = prev;
       return;
     }
-    const { cctvPage, camAdjust } = useTwin.getState();
-    const { cols, rows } = gridDims(cctvLayout);
-    const gap = 2;
-    const tw = (size.width - gap * (cols - 1)) / cols;
-    const th = (size.height - gap * (rows - 1)) / rows;
+    const regs = [...tileRegistry.all().entries()].filter(([, r]) => r.el.isConnected);
+    const pr = gl.getPixelRatio();
+    const cRect = gl.domElement.getBoundingClientRect();
     gl.autoClear = false;
+    // Layout changed (tiles added/removed): wipe the whole buffer once so stale pictures never linger.
+    // Otherwise only the gutters are cleared, so tiles rendered on earlier frames stay on screen.
     gl.setScissorTest(false);
-    gl.setClearColor("#05070a", 1);
-    gl.clear();
+    gl.setClearColor("#07090d", 1);
+    if (seenVersion.current !== tileRegistry.version()) {
+      seenVersion.current = tileRegistry.version();
+      gl.clear();
+    } else gl.clear(false, true, true);
+    if (!regs.length) return;
+    const { camAdjust } = useTwin.getState();
+    const prevAuto = gl.shadowMap.autoUpdate;
+    gl.shadowMap.autoUpdate = false;
+    gl.shadowMap.needsUpdate = true;
     gl.setScissorTest(true);
-    for (let i = 0; i < cctvLayout; i++) {
-      const c = cameras[cctvPage * cctvLayout + i];
-      if (!c) continue;
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const x = col * (tw + gap);
-      const y = size.height - (row + 1) * th - row * gap;
-      const pc = pool[i];
-      const p = virtualPose(c, camAdjust[c.id]);
+    const budget = regs.length <= 2 ? regs.length : Math.ceil(regs.length / 3);
+    for (let i = 0; i < budget; i++) {
+      const [id, reg] = regs[(rr.current + i) % regs.length];
+      const zc = sim.zoneCameras.find((c) => c.zoneId === reg.zoneId);
+      if (!zc) continue;
+      const r = reg.el.getBoundingClientRect();
+      const x = r.left - cRect.left;
+      const y = cRect.bottom - r.bottom;
+      if (r.width < 8 || r.height < 8 || r.right < cRect.left || r.left > cRect.right || r.bottom < cRect.top || r.top > cRect.bottom) continue;
+      let pc = cams.current.get(id);
+      if (!pc) {
+        pc = new THREE.PerspectiveCamera(60, 1, 0.05, 200);
+        pc.layers.disable(1); // camera domes never appear in a camera's own picture
+        cams.current.set(id, pc);
+      }
+      const p = virtualPose(zc, camAdjust[zc.id]);
       pc.position.copy(p.pos);
       pc.fov = p.fov;
-      pc.aspect = tw / th;
+      pc.aspect = r.width / r.height;
       pc.lookAt(p.target);
       pc.updateProjectionMatrix();
-      gl.setViewport(x, y, tw, th);
-      gl.setScissor(x, y, tw, th);
+      // three.js takes CSS pixels here and applies the pixel ratio itself.
+      gl.setViewport(x, y, r.width, r.height);
+      gl.setScissor(x, y, r.width, r.height);
       gl.clear();
       gl.render(scene, pc);
+      tileRegistry.setFrame(id, { camera: pc, x, y: r.top - cRect.top, w: r.width, h: r.height, at: now });
+      const caps = tileRegistry.takeCaptures(id);
+      if (caps.length) {
+        // readPixels is raw WebGL: device pixels.
+        const url = snapshot(gl, Math.round(x * pr), Math.round(y * pr), Math.round(r.width * pr), Math.round(r.height * pr));
+        for (const cb of caps) cb(url);
+      }
     }
+    rr.current = (rr.current + budget) % Math.max(1, regs.length);
+    tileRegistry.setRefreshMs((Math.ceil(regs.length / budget) * 1000) / Math.max(1, useFeed.getState().fps || 30));
+    gl.shadowMap.autoUpdate = prevAuto;
     gl.setScissorTest(false);
     gl.setViewport(0, 0, size.width, size.height);
     gl.autoClear = true;
@@ -79,94 +108,25 @@ export function MultiViewRenderer({ cameras, composerActive }: { cameras: Virtua
   return null;
 }
 
-/** HTML labels and controls laid over the grid tiles. */
-export function CctvOverlay({ plan }: { plan: FloorPlan }) {
-  const open = useApp((s) => s.cctvOpen);
-  const layout = useApp((s) => s.cctvLayout);
-  const setCctv = useApp((s) => s.setCctv);
-  const goToCamera = useApp((s) => s.useVirtualCamera);
-  useApp((s) => s.tick);
-  const page = useTwin((s) => s.cctvPage);
-  const setPage = useTwin((s) => s.setPage);
-  const { status } = useIntegrationStatus(60_000);
-  const [watching, setWatching] = useState<{ cameraId: string; name: string; protocol: string; virtual: boolean } | null>(null);
-  if (!open) return null;
-  // Registered cameras (real, or simulated through the camera gateway) at the pose of a virtual camera in this branch.
-  const physical = new Map((status?.cameras ?? []).filter((c) => c.enabled && c.branchId === plan.restaurantId && c.virtualCameraId && (c.protocol === "webrtc-whep" || c.protocol === "mjpeg")).map((c) => [c.virtualCameraId!, c]));
-  const { cols } = gridDims(layout);
-  const pages = Math.max(1, Math.ceil(plan.cameras.length / layout));
-  const p = Math.min(page, pages - 1);
-  const tiles = plan.cameras.slice(p * layout, p * layout + layout);
-  const rooms = new Map(plan.rooms.map((r) => [r.id, r.name]));
-  return (
-    <div className="pointer-events-none absolute inset-0 z-10">
-      <div className="grid h-full w-full gap-[2px]" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${cols}, 1fr)` }}>
-        {tiles.map((c) => (
-          <div key={c.id} className="group pointer-events-auto relative cursor-pointer border border-white/5 hover:border-brand-red/70" onClick={() => (layout === 1 ? (setCctv(false), goToCamera(c.id)) : (setPage(Math.floor(plan.cameras.indexOf(c) / 1)), setCctv(true, 1)))}>
-            <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded bg-black/70 px-1.5 py-0.5 font-mono text-[10px] text-white">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
-              {c.code}
-              <span className="text-white/60">{c.name}</span>
-            </div>
-            <div className="absolute right-2 top-2 flex items-center gap-1">
-              {physical.has(c.id) && !physical.get(c.id)!.virtual && (
-                <button type="button" title="Open the real camera at this position in a separate live player" className="rounded border border-emerald-400/50 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-emerald-300 hover:bg-emerald-400/15" onClick={(e) => (e.stopPropagation(), setWatching({ cameraId: physical.get(c.id)!.cameraId, name: physical.get(c.id)!.name, protocol: physical.get(c.id)!.protocol, virtual: false }))}>
-                  ● LIVE FEED
-                </button>
-              )}
-              {physical.get(c.id)?.virtual && (
-                <button type="button" title="Open the camera stream at this position" className="rounded border border-fuchsia-400/50 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-fuchsia-300 hover:bg-fuchsia-400/15" onClick={(e) => (e.stopPropagation(), setWatching({ cameraId: physical.get(c.id)!.cameraId, name: physical.get(c.id)!.name, protocol: physical.get(c.id)!.protocol, virtual: true }))}>
-                  ● CAMERA FEED
-                </button>
-              )}
-            </div>
-            <div className="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 font-mono text-[10px] text-white/70">
-              {rooms.get(c.roomId)} · {clockSec(sims().clock)}
-            </div>
-            <div className="absolute bottom-2 right-2 hidden gap-1 group-hover:flex">
-              <button type="button" className="rounded bg-brand-red px-2 py-0.5 text-[10px] font-semibold text-white" onClick={(e) => (e.stopPropagation(), setCctv(false), goToCamera(c.id))}>
-                Go to camera
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-      {watching && (
-        <div className="pointer-events-auto absolute inset-0 z-20 flex items-center justify-center bg-black/70 p-6" onClick={() => setWatching(null)}>
-          <div className="w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
-            <LiveCameraPlayer cameraId={watching.cameraId} name={watching.name} protocol={watching.protocol} virtual={watching.virtual} className="aspect-video" />
-            <div className="mt-2 flex justify-end">
-              <button type="button" onClick={() => setWatching(null)} className="rounded-md border border-white/15 px-3 py-1 text-[11px] text-white/80 hover:bg-white/10">
-                {watching.virtual ? "Close camera" : "Close live feed"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      <div className="glass pointer-events-auto absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-lg p-1 text-[11px] text-white">
-        <span className="px-2 font-semibold tracking-wide text-white/70">VIRTUAL CAMERA GRID</span>
-        {([1, 4, 9] as const).map((l) => (
-          <button key={l} type="button" onClick={() => (setCctv(true, l), setPage(0))} className={`rounded-md px-2 py-1 ${layout === l ? "bg-white/15" : "text-white/60 hover:text-white"}`}>
-            {l === 1 ? "1" : l === 4 ? "2×2" : "3×3"}
-          </button>
-        ))}
-        <span className="mx-1 h-4 w-px bg-white/15" />
-        <button type="button" disabled={p === 0} onClick={() => setPage(p - 1)} className="rounded-md px-2 py-1 text-white/70 disabled:opacity-30">
-          ‹
-        </button>
-        <span className="font-mono text-white/60">
-          {p + 1}/{pages}
-        </span>
-        <button type="button" disabled={p >= pages - 1} onClick={() => setPage(p + 1)} className="rounded-md px-2 py-1 text-white/70 disabled:opacity-30">
-          ›
-        </button>
-        <span className="mx-1 h-4 w-px bg-white/15" />
-        <button type="button" onClick={() => setCctv(false)} className="rounded-md px-2 py-1 text-white/70 hover:text-white">
-          Close grid
-        </button>
-      </div>
-    </div>
-  );
+/** Read the tile's pixels straight from the drawing buffer and return a JPEG data URL (≤ 480 px wide). */
+function snapshot(gl: THREE.WebGLRenderer, x: number, y: number, w: number, h: number) {
+  const ctx = gl.getContext();
+  const buf = new Uint8Array(w * h * 4);
+  ctx.readPixels(x, y, w, h, ctx.RGBA, ctx.UNSIGNED_BYTE, buf);
+  const raw = document.createElement("canvas");
+  raw.width = w;
+  raw.height = h;
+  const c2 = raw.getContext("2d")!;
+  const img = c2.createImageData(w, h);
+  // WebGL rows run bottom-up.
+  for (let row = 0; row < h; row++) img.data.set(buf.subarray(row * w * 4, (row + 1) * w * 4), (h - 1 - row) * w * 4);
+  c2.putImageData(img, 0, 0);
+  const out = document.createElement("canvas");
+  const scale = Math.min(1, RENDER_W / w);
+  out.width = Math.round(w * scale);
+  out.height = Math.round(h * scale);
+  out.getContext("2d")!.drawImage(raw, 0, 0, out.width, out.height);
+  return out.toDataURL("image/jpeg", 0.74);
 }
 
 /** Small dome cameras mounted where the floor plan places each virtual camera. */
