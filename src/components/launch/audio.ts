@@ -43,12 +43,12 @@ export class LaunchAudio {
     const drone = ctx.createGain();
     drone.gain.setValueAtTime(0, now);
     drone.gain.linearRampToValueAtTime(0.22, at(3));
-    drone.gain.setValueAtTime(0.22, at(15));
-    drone.gain.linearRampToValueAtTime(0.1, at(19));
+    drone.gain.setValueAtTime(0.22, at(12.5));
+    drone.gain.linearRampToValueAtTime(0.1, at(16));
     const lp = ctx.createBiquadFilter();
     lp.type = "lowpass";
     lp.frequency.setValueAtTime(120, now);
-    lp.frequency.exponentialRampToValueAtTime(900, at(14));
+    lp.frequency.exponentialRampToValueAtTime(900, at(11.5));
     lp.Q.value = 0.8;
     for (const [freq, detune] of [[36.7, -6], [36.7, 6], [73.4, 0]] as const) {
       const o = ctx.createOscillator();
@@ -65,9 +65,9 @@ export class LaunchAudio {
     // Pad: a slow D minor add9 voicing on triangles with gentle vibrato, swelling into the sweep.
     const pad = ctx.createGain();
     pad.gain.setValueAtTime(0, now);
-    pad.gain.linearRampToValueAtTime(0.1, at(5));
-    pad.gain.linearRampToValueAtTime(0.16, at(12));
-    pad.gain.linearRampToValueAtTime(0.05, at(19));
+    pad.gain.linearRampToValueAtTime(0.1, at(4.5));
+    pad.gain.linearRampToValueAtTime(0.16, at(10));
+    pad.gain.linearRampToValueAtTime(0.05, at(16));
     const padLp = ctx.createBiquadFilter();
     padLp.type = "lowpass";
     padLp.frequency.value = 1400;
@@ -104,13 +104,13 @@ export class LaunchAudio {
     const bp = ctx.createBiquadFilter();
     bp.type = "bandpass";
     bp.frequency.setValueAtTime(400, now);
-    bp.frequency.exponentialRampToValueAtTime(2400, at(16));
+    bp.frequency.exponentialRampToValueAtTime(2400, at(13));
     bp.Q.value = 0.9;
     const air = ctx.createGain();
     air.gain.setValueAtTime(0, now);
-    air.gain.linearRampToValueAtTime(0.035, at(6));
-    air.gain.linearRampToValueAtTime(0.05, at(14));
-    air.gain.linearRampToValueAtTime(0.012, at(19));
+    air.gain.linearRampToValueAtTime(0.035, at(5));
+    air.gain.linearRampToValueAtTime(0.05, at(11.5));
+    air.gain.linearRampToValueAtTime(0.012, at(16));
     noise.connect(bp);
     bp.connect(air);
     air.connect(master);
@@ -118,9 +118,9 @@ export class LaunchAudio {
     this.nodes.push(noise);
 
     // Zone pulses as the camera passes each zone, then the riser and the title hit.
-    for (const s of [4.2, 7.2, 10.2, 12.7]) this.pulse(at(s), 55 + Math.random() * 20);
-    this.riser(at(13.2), at(16));
-    this.hit(at(16.1));
+    for (const s of [4.8, 6.8, 8.6, 10.2]) this.pulse(at(s), 55 + Math.random() * 20);
+    this.riser(at(10.4), at(12.5));
+    this.hit(at(12.6));
   }
 
   private pulse(when: number, freq: number) {

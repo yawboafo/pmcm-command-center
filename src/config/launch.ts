@@ -10,12 +10,10 @@ export const LAUNCH = {
     enabled: true,
     /** "before-login" plays the intro on every cold launch, then the gate; "after-login" shows the gate first. */
     when: "before-login" as "before-login" | "after-login",
-    /** Seconds; the camera path and the score are timed against this. */
-    durationSec: 17,
+    /** Seconds; the drawing, the camera path and the score are timed against this. */
+    durationSec: 14,
     /** Seconds before the Skip control appears. */
     skipAfterSec: 3,
-    /** Fallback video for low-end devices (served from /public). Empty string disables the fallback. */
-    fallbackVideo: "/intro/intro-fallback.mp4",
   },
   gate: {
     maxAttempts: 5,

@@ -28,6 +28,9 @@ export const TWIN_SECTIONS: Section[] = ["twin", "cameras", "kitchen", "orders",
 /** Sections drawn over the Ghana map (entering one leaves the restaurant twin). */
 const MAP_SECTIONS: Section[] = ["network", "branches", "central"];
 
+/** The section to show once the camera centre closes: the twin itself, unless another module was active. */
+const leaveCameras = (section: Section): Section => (section === "cameras" ? "twin" : section);
+
 export type CameraMode = "orbit" | "fps" | "top" | "dollhouse" | "cctv" | "focus" | "tour" | "follow";
 
 export type Selection =
@@ -193,9 +196,11 @@ export const useApp = create<AppState>((set, get) => ({
 
   setSection: (section) => {
     const s = get();
+    // `section` and `cctvOpen` describe one screen: the camera centre is open exactly when the Cameras section is active.
+    const cctvOpen = section === "cameras";
     if (TWIN_SECTIONS.includes(section) && !s.enteredBranchId) {
-      // Twin modules need a restaurant — open the selected (or first demo) branch.
-      set({ section });
+      // Twin modules need a restaurant — the view asks for one; `enterBranch` keeps the chosen section.
+      set({ section, cctvOpen });
       return;
     }
     if (MAP_SECTIONS.includes(section) && s.enteredBranchId) {
@@ -204,7 +209,7 @@ export const useApp = create<AppState>((set, get) => ({
       set({ section });
       return;
     }
-    set({ section, cctvOpen: section === "cameras" ? true : s.cctvOpen && TWIN_SECTIONS.includes(section) });
+    set({ section, cctvOpen, view2d: cctvOpen ? false : s.view2d });
   },
   selectBranch: (id) => set({ selectedBranchId: id, selection: id ? { kind: "branch", id } : null }),
   enterBranch: (id) =>
@@ -216,8 +221,9 @@ export const useApp = create<AppState>((set, get) => ({
   useVirtualCamera: (id) => set({ activeCameraId: id, cameraMode: id ? "cctv" : "orbit", followOrderId: null, selection: id ? { kind: "camera", id } : get().selection }),
   requestCamera: (r) => set({ cameraRequest: { ...r, nonce: (get().cameraRequest?.nonce ?? 0) + 1 }, cameraMode: "focus", activeCameraId: null }),
   followOrder: (id) => set({ followOrderId: id, followAgentId: null, cameraMode: id ? "follow" : "orbit", selection: id ? { kind: "order", id } : get().selection }),
-  followAgent: (id) => set({ followAgentId: id, followOrderId: null, cameraMode: id ? "follow" : "orbit", cctvOpen: false, view2d: false, selection: id ? { kind: "agent", id } : get().selection }),
-  setCctv: (cctvOpen, layout) => set({ cctvOpen, cctvLayout: layout ?? get().cctvLayout, view2d: cctvOpen ? false : get().view2d }),
+  followAgent: (id) => set({ followAgentId: id, followOrderId: null, cameraMode: id ? "follow" : "orbit", cctvOpen: false, section: leaveCameras(get().section), view2d: false, selection: id ? { kind: "agent", id } : get().selection }),
+  // Opening the camera centre is navigating to the Cameras section (and closing it returns to the twin), so the sidebar always matches the screen.
+  setCctv: (cctvOpen, layout) => set({ cctvOpen, section: cctvOpen ? "cameras" : leaveCameras(get().section), cctvLayout: layout ?? get().cctvLayout, view2d: cctvOpen ? false : get().view2d }),
   toggle: (k) => set({ [k]: !get()[k] } as Pick<AppState, typeof k>),
   setSpeed: (speed) => set({ speed, paused: false }),
   setPaused: (paused) => set({ paused }),
@@ -237,7 +243,7 @@ export const useApp = create<AppState>((set, get) => ({
     set({ theme, resolvedTheme: resolveTheme(theme) });
   },
   setResolvedTheme: (resolvedTheme) => set({ resolvedTheme }),
-  setView2d: (view2d) => set({ view2d, cctvOpen: view2d ? false : get().cctvOpen }),
+  setView2d: (view2d) => set({ view2d, cctvOpen: view2d ? false : get().cctvOpen, section: view2d ? leaveCameras(get().section) : get().section }),
   setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen, paletteOpen: false }),
   setUser: (id) => set({ user: DEMO_USERS.find((u) => u.id === id) ?? DEMO_USERS[1] }),
   setFilters: (f) => set(f),
