@@ -58,6 +58,7 @@ export default function SafetyModule({ sim }: { sim: BranchSimulation }) {
                     <button key={s.id} type="button" onClick={() => select(s.equipmentId ? { kind: "equipment", id: s.equipmentId } : { kind: "sensor", id: s.id })} className={cx("rounded-md border p-1.5 text-left text-[10.5px] hover:bg-white/[0.06]", st.status === "critical" ? "border-red-500/50 bg-red-500/10" : st.status === "warning" ? "border-amber-400/40 bg-amber-400/[0.06]" : st.status === "offline" ? "border-white/15 bg-white/[0.02]" : "border-white/[0.07] bg-white/[0.03]")}>
                       <div className="flex items-center gap-1 truncate text-white/60">
                         {st.source === "live" && <span title={`Live device ${st.deviceId}`} className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-emerald-400" />}
+                        {st.source === "virtual" && <span title={`Simulated device ${st.deviceId} (SIM DEVICE)`} className="h-1.5 w-1.5 shrink-0 rotate-45 bg-fuchsia-400" />}
                         <span className="truncate">{s.name.split(" — ")[0]}</span>
                       </div>
                       <div className="flex items-baseline justify-between">

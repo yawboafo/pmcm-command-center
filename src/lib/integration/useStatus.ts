@@ -4,9 +4,43 @@ import { useEffect, useState } from "react";
 
 export interface IntegrationStatus {
   serverTime: number;
-  devices: Array<{ deviceId: string; branchId: string; target: string | null; metric: string; model: string | null; keyConfigured: boolean; lastSeenAt: number | null; online: boolean; battery: number | null; rssi: number | null; firmware: string | null }>;
-  cameras: Array<{ cameraId: string; branchId: string; name: string; virtualCameraId: string | null; protocol: string; enabled: boolean; authorisedBy: string }>;
+  devices: Array<{
+    deviceId: string;
+    branchId: string;
+    target: string | null;
+    metric: string;
+    model: string | null;
+    /** Simulated hardware (SIM DEVICE). */
+    virtual: boolean;
+    expectedIntervalSec: number;
+    keyConfigured: boolean;
+    lastSeenAt: number | null;
+    online: boolean;
+    battery: number | null;
+    rssi: number | null;
+    firmware: string | null;
+    messages: number;
+    duplicates: number;
+    late: number;
+    rejected: number;
+  }>;
+  posTerminals: Array<{ sourceId: string; branchId: string; name: string; model: string | null; virtual: boolean; keyConfigured: boolean; lastSeenAt: number | null; orders: number; duplicates: number }>;
+  cameras: Array<{ cameraId: string; branchId: string; name: string; virtualCameraId: string | null; protocol: string; enabled: boolean; virtual: boolean; authorisedBy: string }>;
+  /** Latest heartbeat from scripts/hardware-sim.ts, if it has run since the server started. */
+  simulator: {
+    startedAt: string;
+    speed: number;
+    branches: string[];
+    devices: number;
+    terminals: number;
+    faults: Array<{ deviceId: string; kind: string; since: string; injected: boolean }>;
+    offline: string[];
+    receivedAt: number;
+    running: boolean;
+  } | null;
   cameraGatewayConfigured: boolean;
+  virtualCameraGatewayConfigured: boolean;
+  virtualFleetConfigured: boolean;
   posWebhookConfigured: boolean;
   assistantConfigured: boolean;
 }

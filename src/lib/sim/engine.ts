@@ -6,11 +6,13 @@ import { CHICKEN_BATCH, MENU, MENU_BY_ID, stagesFor } from "./menu";
 import { Rng, hashString } from "./rng";
 import {
   ORDER_FLOW,
+  isDeviceSource,
   type Agent,
   type Alert,
   type BranchMetrics,
   type Channel,
   type CleaningRecord,
+  type DataSource,
   type EquipmentState,
   type Fulfilment,
   type InventoryItem,
@@ -28,6 +30,9 @@ import {
 } from "./types";
 
 export const STEP = 0.25;
+
+/** How alert text names where a reading came from. */
+const SOURCE_WORD: Record<DataSource, string> = { live: "Live", simulated: "Simulated", virtual: "Simulated-device" };
 const DAY = 86400;
 
 const STAFF_NAMES = ["Kwame", "Ama", "Kofi", "Akosua", "Yaw", "Efua", "Kojo", "Abena", "Kwesi", "Esi", "Kwabena", "Adwoa", "Fiifi", "Selorm", "Elikem", "Naa", "Nii", "Afia", "Kobby", "Dzifa"];
@@ -425,18 +430,20 @@ export class BranchSimulation {
 
   /**
    * Apply an order event from a connected POS / ordering system (already validated and
-   * de-duplicated upstream). New orders enter the simulated kitchen marked LIVE with the
-   * source system's prices; later events update status. Returns the order, or null if
-   * no line maps to a known menu item.
+   * de-duplicated upstream). New orders enter the simulated kitchen marked LIVE (physical
+   * source) or SIM DEVICE (virtual terminal, `origin: "virtual"`) with the source system's
+   * prices; later events update status. Returns the order, or null if no line maps to a
+   * known menu item.
    */
-  ingestOrderEvent(e: { externalRef: string; channel: Exclude<Channel, "demo">; fulfilment: Fulfilment; status: string; lines: Array<{ menuId: string; qty: number; unitPriceGhs: number }> }): Order | null {
-    let o = [...this.orders.values()].find((x) => x.source === "live" && x.externalRef === e.externalRef);
+  ingestOrderEvent(e: { externalRef: string; channel: Exclude<Channel, "demo">; fulfilment: Fulfilment; status: string; lines: Array<{ menuId: string; qty: number; unitPriceGhs: number }>; origin?: "physical" | "virtual" }): Order | null {
+    const source: DataSource = e.origin === "virtual" ? "virtual" : "live";
+    let o = [...this.orders.values()].find((x) => x.source === source && x.externalRef === e.externalRef);
     if (!o) {
       if (!["RECEIVED", "ACCEPTED"].includes(e.status)) return null;
       const lines = e.lines.filter((l) => MENU_BY_ID.has(l.menuId));
       if (!lines.length) return null;
       o = this.createOrder(lines, e.channel, e.fulfilment);
-      o.source = "live";
+      o.source = source;
       o.externalRef = e.externalRef;
       // Payment is not part of the order webhook: never show a simulated payment on a live order.
       o.payment = undefined;
@@ -536,7 +543,7 @@ export class BranchSimulation {
   refundOrder(orderId: string) {
     const o = this.orders.get(orderId);
     if (!o || !["COMPLETED", "CANCELLED", "FAILED"].includes(o.status)) return false;
-    const how = o.source === "live" ? "recorded in source system" : "simulated";
+    const how = isDeviceSource(o.source) ? "recorded in source system" : "simulated";
     this.setStatus(o, "REFUNDED", `Refund ${how}`);
     this.log("order", "info", `Order #${o.number} refunded (${how})`, { orderId });
     this.version++;
@@ -1244,7 +1251,7 @@ export class BranchSimulation {
       const st = this.sensors.get(s.id)!;
       const e = s.equipmentId ? this.eqById.get(s.equipmentId) : undefined;
       const es = e ? this.equipment.get(e.id) : undefined;
-      if (st.source === "live") {
+      if (isDeviceSource(st.source)) {
         if (at === undefined) this.evaluateLiveSensor(s, st, tNow);
         continue;
       }
@@ -1304,7 +1311,7 @@ export class BranchSimulation {
     }
   }
 
-  /** Live sensors: flag the device offline after 3 missed intervals, otherwise apply the normal limits. */
+  /** Device-fed sensors (live or virtual): flag the device offline after 3 missed intervals, otherwise apply the normal limits. */
   private evaluateLiveSensor(s: Sensor, st: SensorState, tNow: number) {
     const stale = st.lastSeen === undefined || this.now() - st.lastSeen > (st.expectedIntervalSec ?? 60) * 3000;
     if (stale) {
@@ -1331,18 +1338,22 @@ export class BranchSimulation {
       openedAt: this.now(),
       status: "open",
       correctiveActions: [],
-      source: "live",
+      source: st.source,
     };
     this.alerts.unshift(alert);
     this.log("safety", "warning", `WARNING — ${alert.title}`, { alertId: alert.id, equipmentId: s.equipmentId });
   }
 
   /**
-   * Apply a reading from a physical device (already authenticated, de-duplicated and
-   * calibrated server-side). The bound sensor switches to live mode permanently for
-   * this session. Returns the floor-plan sensor id, or null if the plan has no match.
+   * Apply a reading from a device (already authenticated, de-duplicated and calibrated
+   * server-side). The bound sensor switches to device mode permanently for this session:
+   * "live" for physical hardware, "virtual" for simulated hardware (`origin: "virtual"`)
+   * that came through the same pipeline. Returns the floor-plan sensor id (or
+   * `equipment:<id>` for a status reading on equipment without a health sensor), or null
+   * if the plan has no match.
    */
-  ingestReading(r: { equipmentId?: string; sensorCode?: string; metric: string; value: number; ts: number; deviceId: string; expectedIntervalSec: number }): string | null {
+  ingestReading(r: { equipmentId?: string; sensorCode?: string; metric: string; value: number; ts: number; deviceId: string; expectedIntervalSec: number; origin?: "physical" | "virtual" }): string | null {
+    const source: DataSource = r.origin === "virtual" ? "virtual" : "live";
     const kindFor: Record<string, Sensor["kind"][]> = {
       temperature_c: ["fridge-temp", "freezer-temp", "hot-holding-temp"],
       oil_quality_pct: ["oil-quality"],
@@ -1352,14 +1363,26 @@ export class BranchSimulation {
     };
     const kinds = kindFor[r.metric] ?? [];
     const s = r.sensorCode ? this.plan.sensors.find((x) => x.code === r.sensorCode) : this.plan.sensors.find((x) => x.equipmentId === r.equipmentId && kinds.includes(x.kind));
-    if (!s) return null;
+    if (!s) {
+      // Equipment controllers (e.g. fryers) report status even where the plan has no health sensor.
+      const es = r.metric === "status" && r.equipmentId ? this.equipment.get(r.equipmentId) : undefined;
+      if (!es) return null;
+      const wasFault = es.fault?.kind === "reported";
+      es.fault = r.value ? (wasFault ? undefined : es.fault) : wasFault ? es.fault : { kind: "reported", since: this.t };
+      if (!r.value && !wasFault) this.log("equipment", "warning", `${source === "virtual" ? "Simulated device" : "Device"} ${r.deviceId} reports a fault on ${this.eqById.get(r.equipmentId!)?.name ?? r.equipmentId}`, { equipmentId: r.equipmentId });
+      this.version++;
+      return `equipment:${r.equipmentId}`;
+    }
     const st = this.sensors.get(s.id)!;
     const es = s.equipmentId ? this.equipment.get(s.equipmentId) : undefined;
-    const firstLive = st.source !== "live";
-    st.source = "live";
-    st.deviceId = r.deviceId;
+    const firstLive = st.source !== source;
+    st.source = source;
+    // A door contact shares the cabinet's sensor; it must not take over the temperature probe's identity or interval.
+    if (firstLive || r.metric !== "door_open") {
+      st.deviceId = r.deviceId;
+      st.expectedIntervalSec = r.expectedIntervalSec;
+    }
     st.lastSeen = Math.max(st.lastSeen ?? 0, r.ts);
-    st.expectedIntervalSec = r.expectedIntervalSec;
     st.connected = true;
     if (st.status === "offline") st.status = "normal";
     if (firstLive) {
@@ -1367,7 +1390,7 @@ export class BranchSimulation {
       st.history = [];
       st.outOfRangeSince = undefined;
       if (es?.fault && es.fault.kind !== "reported") es.fault = undefined;
-      this.log("system", "info", `Live device ${r.deviceId} connected to ${s.name}`);
+      this.log("system", "info", `${source === "virtual" ? "Simulated device (SIM DEVICE)" : "Live device"} ${r.deviceId} connected to ${s.name}`);
     }
     if (r.metric === "door_open") {
       st.note = r.value ? "Door open" : "Door closed";
@@ -1386,7 +1409,7 @@ export class BranchSimulation {
         this.cookChecks.push({ t: r.ts, unitId: `live:${r.deviceId}`, orderId: "", valueC: st.value, pass });
         if (this.cookChecks.length > 200) this.cookChecks.shift();
         st.status = pass ? "normal" : "warning";
-        if (!pass) this.log("safety", "warning", `LIVE probe ${st.value} °C below ${this.safety.cookCoreMinC} °C at ${s.name} — re-cook required`);
+        if (!pass) this.log("safety", "warning", `${source === "virtual" ? "SIM DEVICE" : "LIVE"} probe ${st.value} °C below ${this.safety.cookCoreMinC} °C at ${s.name} — re-cook required`);
       } else this.evaluateLimits(s, st, this.t);
     }
     this.version++;
@@ -1404,8 +1427,8 @@ export class BranchSimulation {
       sensorId: s.id,
       title: isOil ? `${e?.name}: oil change due` : `${e?.name ?? s.name}: temperature ${lim.kind === "max" ? "above" : "below"} configured limit`,
       issue: isOil
-        ? `${st.source === "live" ? "Live" : "Simulated"} oil quality ${st.value}% below configured minimum ${lim.value}%`
-        : `${st.source === "live" ? "Live" : "Simulated"} reading ${st.value} °C ${lim.kind === "max" ? ">" : "<"} limit ${lim.value} °C for ≥ ${this.safety.alertDelayMin} min`,
+        ? `${SOURCE_WORD[st.source]} oil quality ${st.value}% below configured minimum ${lim.value}%`
+        : `${SOURCE_WORD[st.source]} reading ${st.value} °C ${lim.kind === "max" ? ">" : "<"} limit ${lim.value} °C for ≥ ${this.safety.alertDelayMin} min`,
       openedAt: this.now(),
       status: "open",
       correctiveActions: [],

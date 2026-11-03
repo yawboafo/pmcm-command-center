@@ -73,7 +73,7 @@ export default function InspectOrder({ sim, id }: { sim: BranchSimulation; id: s
   for (const s of flow) {
     if (s === "ACCEPTED") {
       // Payment is its own step; acceptance is shown inside it for remote orders.
-      steps.push({ key: "PAYMENT", label: o.source === "live" && !o.payment ? "Payment (not reported)" : "Payment", t: o.payment?.paidAt, current: false });
+      steps.push({ key: "PAYMENT", label: o.source !== "simulated" && !o.payment ? "Payment (not reported)" : "Payment", t: o.payment?.paidAt, current: false });
       continue;
     }
     steps.push({ key: s, label: statusLabel(s, o), t: reached.get(s), current: o.status === s });
@@ -95,8 +95,8 @@ export default function InspectOrder({ sim, id }: { sim: BranchSimulation; id: s
       <Card>
         <KV k="Branch" v={sim.branchName} />
         <KV k="Channel" v={channelLabel(o.channel)} />
-        {o.source === "live" && <KV k="Source reference" v={`${o.externalRef}${o.externalStatus ? ` · ${o.externalStatus}` : ""}`} mono />}
-        {o.source === "live" && <KV k="Kitchen progress" v="Simulated (no KDS connected)" tone="yellow" />}
+        {o.source !== "simulated" && <KV k="Source reference" v={`${o.externalRef}${o.externalStatus ? ` · ${o.externalStatus}` : ""}${o.source === "virtual" ? " · simulated POS terminal" : ""}`} mono />}
+        {o.source !== "simulated" && <KV k="Kitchen progress" v="Simulated (no KDS connected)" tone="yellow" />}
         <KV k="Fulfilment" v={fulfilmentLabel(o.fulfilment)} />
         <KV k="Elapsed" v={mins(elapsed)} mono tone={o.delayed ? "red" : undefined} />
         <KV k="Target (demo SLA)" v={`${o.slaMin} min to ready`} mono />
@@ -117,7 +117,7 @@ export default function InspectOrder({ sim, id }: { sim: BranchSimulation; id: s
           v={
             o.payment ? (
               `${PAYMENT_LABEL[o.payment.method]} · ${clockSec(simMs(sim, o.payment.paidAt))}`
-            ) : o.source === "live" ? (
+            ) : o.source !== "simulated" ? (
               <span className="inline-flex items-center gap-1.5">
                 Not reported by source <UnavailableBadge />
               </span>
@@ -141,7 +141,7 @@ export default function InspectOrder({ sim, id }: { sim: BranchSimulation; id: s
             </li>
           ))}
           <li className="flex justify-between border-t border-white/10 pt-1 font-semibold">
-            <span className="text-white/60">{o.source === "live" ? "Total (source system prices, GH₵)" : "Total (published menu prices, GH₵)"}</span>
+            <span className="text-white/60">{o.source === "live" ? "Total (source system prices, GH₵)" : o.source === "virtual" ? "Total (simulated POS prices, GH₵)" : "Total (published menu prices, GH₵)"}</span>
             <span className="font-mono text-white">{ghs(o.total)}</span>
           </li>
         </ul>

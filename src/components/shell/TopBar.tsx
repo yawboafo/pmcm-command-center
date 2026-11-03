@@ -57,10 +57,10 @@ export default function TopBar() {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        <span className="max-md:hidden">{realtime ? <SimBadge label="LIVE DEVICES + SIMULATION" /> : <SimBadge label="DEMO SIMULATION" />}</span>
-        <span className="md:hidden">{realtime ? <SimBadge label="LIVE + SIM" /> : <SimBadge label="DEMO" />}</span>
-        <div className={cx("hidden items-center gap-1 rounded-lg border px-2 py-1 md:flex", realtime ? "border-emerald-400/40 bg-emerald-400/10" : "border-white/10 bg-black/30")} title={realtime ? "Real wall clock — live devices connected" : "Simulated clock (Africa/Accra, GMT)"}>
-          {realtime && <span className="font-mono text-[9px] font-semibold tracking-wider text-emerald-300">LIVE CLOCK</span>}
+        <span className="max-md:hidden">{realtime ? <SimBadge label={liveBranches ? "LIVE DEVICES + SIMULATION" : "SIM DEVICES + SIMULATION"} /> : <SimBadge label="DEMO SIMULATION" />}</span>
+        <span className="md:hidden">{realtime ? <SimBadge label={liveBranches ? "LIVE + SIM" : "SIM DEV + SIM"} /> : <SimBadge label="DEMO" />}</span>
+        <div className={cx("hidden items-center gap-1 rounded-lg border px-2 py-1 md:flex", realtime ? "border-emerald-400/40 bg-emerald-400/10" : "border-white/10 bg-black/30")} title={realtime ? (liveBranches ? "Real wall clock — live devices connected" : "Real wall clock — simulated hardware connected") : "Simulated clock (Africa/Accra, GMT)"}>
+          {realtime && <span className="font-mono text-[9px] font-semibold tracking-wider text-emerald-300">{liveBranches ? "LIVE CLOCK" : "REAL CLOCK"}</span>}
           <span className={cx("h-1.5 w-1.5 rounded-full", paused && !realtime ? "bg-white/30" : "animate-pulse bg-emerald-400")} />
           <span className="font-mono text-xs tabular-nums text-white">{clockSec(sims().clock)}</span>
           <span className="text-[10px] text-white/40">GMT</span>

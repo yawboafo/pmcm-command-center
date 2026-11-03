@@ -50,7 +50,7 @@ export default function InspectEquipment({ sim, id }: { sim: BranchSimulation; i
         {e.operational.setpointC !== undefined && <KV k="Setpoint" v={`${e.operational.setpointC} °C`} mono />}
         {limit && <KV k="Configured limit" v={`${limit.label} · alert after ${sim.safety.alertDelayMin} min`} mono />}
         <KV k="Status" v={<Pill tone={statusTone(status)}>{status}</Pill>} />
-        {sensor && <KV k="Sensor" v={sState?.connected ? `CONNECTED · ${sensor.code}${sState.source === "live" ? ` · device ${sState.deviceId}` : " · simulated"}` : sState?.source === "live" ? `NO DATA · device ${sState.deviceId}` : "DISCONNECTED"} tone={sState?.connected ? "green" : "yellow"} />}
+        {sensor && <KV k="Sensor" v={sState?.connected ? `CONNECTED · ${sensor.code}${sState.source === "live" ? ` · device ${sState.deviceId}` : sState.source === "virtual" ? ` · simulated device ${sState.deviceId}` : " · simulated"}` : sState && sState.source !== "simulated" ? `NO DATA · device ${sState.deviceId}` : "DISCONNECTED"} tone={sState?.connected ? "green" : "yellow"} />}
         {st.oilQualityPct !== undefined && <KV k="Oil quality" v={`${Math.round(st.oilQualityPct)}% (min ${sim.safety.oilQualityMinPct}%)`} mono tone={st.oilQualityPct < sim.safety.oilQualityMinPct ? "red" : st.oilQualityPct < sim.safety.oilQualityMinPct + 15 ? "yellow" : "green"} />}
         <KV k="Last inspection" v={`${clock(simMs(sim, st.lastInspection))} · ${ago(simMs(sim, st.lastInspection), sim.now())}`} mono />
         <KV k="Maintenance status" v={maint.label} tone={maint.tone === "default" ? undefined : maint.tone} />

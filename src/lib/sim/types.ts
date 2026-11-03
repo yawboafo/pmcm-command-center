@@ -2,6 +2,16 @@ import type { Vec2, WorkstationType } from "../floorplan/types";
 import type { StorageClass } from "./catalog";
 import type { StageSpec, UnitKind } from "./menu";
 
+/**
+ * Data provenance. "simulated" = generated in the browser simulation; "live" = a physical device or
+ * system through the integration pipeline; "virtual" = simulated hardware through the same pipeline
+ * (shown as SIM DEVICE, never as LIVE).
+ */
+export type DataSource = "simulated" | "live" | "virtual";
+
+/** True when values come from a device through the ingestion pipeline (physical or virtual). */
+export const isDeviceSource = (s: DataSource) => s !== "simulated";
+
 export type Channel = "walk-in" | "online" | "chris-b-app" | "phone" | "delivery-partner" | "pos" | "demo";
 export type Fulfilment = "pickup" | "dine-in" | "delivery";
 
@@ -51,8 +61,11 @@ export interface Order {
   inventoryConsumed: boolean;
   delivery?: { status: "AWAITING_DISPATCH" | "RIDER_ASSIGNED" | "COLLECTED" | "IN_TRANSIT" | "DELIVERED" | "DELAYED"; eta?: number; collectedAt?: number; deliveredAt?: number; rider?: string };
   note?: string;
-  /** "live" when the order arrived from a connected POS / ordering system; kitchen progress is still simulated. */
-  source: "simulated" | "live";
+  /**
+   * "live" when the order arrived from a connected physical POS / ordering system, "virtual" when it
+   * came through the same pipeline from a simulated terminal; kitchen progress is still simulated.
+   */
+  source: DataSource;
   /** Order reference in the source system (live orders). */
   externalRef?: string;
   /** Latest status reported by the source system (live orders). */
@@ -169,8 +182,11 @@ export interface SensorState {
   history: Array<{ t: number; v: number | null }>;
   lastCheck?: number;
   note?: string;
-  /** "live" once a bound physical device has reported; the simulator then stops generating values. */
-  source: "simulated" | "live";
+  /**
+   * "live" once a bound physical device has reported, "virtual" once a simulated device has reported
+   * through the real ingestion pipeline; the in-browser simulation then stops generating values.
+   */
+  source: DataSource;
   deviceId?: string;
   /** Epoch ms of the last live reading (device timestamp). */
   lastSeen?: number;
@@ -193,8 +209,8 @@ export interface Alert {
   resolvedBy?: string;
   peakValue?: number;
   limit?: number;
-  /** Whether the alert was raised from a live device reading or the simulation. */
-  source: "simulated" | "live";
+  /** Whether the alert was raised from a live device, a simulated device (via the pipeline) or the simulation. */
+  source: DataSource;
 }
 
 export interface InventoryItem {

@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "generate:floorplans": "npx --yes tsx scripts/generate-floorplans.ts"
+    "generate:floorplans": "npx --yes tsx scripts/generate-floorplans.ts",
+    "generate:fleet": "npx --yes tsx scripts/generate-fleet.ts",
+    "hardware:sim": "npx --yes tsx scripts/hardware-sim.ts",
+    "camera:sim": "npx --yes tsx scripts/camera-sim.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.4.0",

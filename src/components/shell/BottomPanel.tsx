@@ -134,7 +134,7 @@ export default function BottomPanel() {
               {[
                 ["Simulation engine", `Running · ${sims().sims.size} full branch simulation(s)${sims().realtime ? " · real-time clock" : ""}`, "ok"],
                 ["Branch directory", "Official outlet list · verified 2026-11-03", "ok"],
-                ["Live telemetry stream", `${live.status}${live.readings ? ` · ${live.readings} readings, last ${live.lastReadingAt ? clock(live.lastReadingAt) : "—"}` : " · no readings yet"}${live.unmatched ? ` · ${live.unmatched} unmatched` : ""}`, live.status === "connected" ? "ok" : "warn"],
+                ["Live telemetry stream", `${live.status}${live.readings ? ` · ${live.readings} readings, last ${live.lastReadingAt ? clock(live.lastReadingAt) : "—"}` : " · no readings yet"}${live.virtualEvents ? ` · ${live.virtualEvents} events from simulated hardware (SIM DEVICE)` : ""}${live.unmatched ? ` · ${live.unmatched} unmatched` : ""}`, live.status === "connected" ? "ok" : "warn"],
                 ["IoT devices", integ ? `${online} online / ${integ.devices.length} registered (${bound} with keys)${online ? "" : " — sensors use simulated readings"}` : "Checking…", online ? "ok" : "off"],
                 ["POS / Chris B orders", integ?.posWebhookConfigured ? "Webhook secret configured — awaiting integration" : "Not connected — simulated orders only", "off"],
                 ["Physical CCTV", integ?.cameras.some((c) => c.enabled) ? `${integ.cameras.filter((c) => c.enabled).length} authorised camera(s)` : "Not connected — virtual cameras only", integ?.cameras.some((c) => c.enabled) ? "ok" : "off"],
