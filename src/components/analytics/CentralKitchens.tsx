@@ -77,7 +77,7 @@ export default function CentralKitchens() {
     );
 
   return (
-    <aside aria-label="Central kitchens and supply" className="glass animate-fade-in absolute bottom-3 right-11 top-3 z-20 flex w-[min(460px,calc(100%-3.5rem))] flex-col overflow-hidden rounded-xl !bg-[#0b0e13]/95 max-md:inset-x-3 max-md:top-auto max-md:h-[60%] max-md:w-auto">
+    <aside aria-label="Central kitchens and supply" className="glass animate-fade-in absolute bottom-3 right-11 top-3 z-20 flex w-[min(460px,calc(100%-3.5rem))] flex-col overflow-hidden rounded-xl !bg-[var(--surface)]/95 max-md:inset-x-3 max-md:top-auto max-md:h-[60%] max-md:w-auto">
       <header className="border-b border-white/5 px-4 py-3">
         <div className="flex items-center gap-2">
           <Truck size={16} className="text-brand-yellow" />
@@ -138,7 +138,7 @@ export default function CentralKitchens() {
               );
             })}
           </ul>
-          <p className="mt-1 text-[10px] text-white/35">* Illustrative capacity for the simulation.</p>
+          <p className="mt-1 text-[10px] text-white/35">* Illustrative capacity.</p>
         </section>
 
         <section>

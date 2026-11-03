@@ -37,6 +37,13 @@ body {
 :root {
   --fg: #e8eaed;
   --scroll-thumb: rgba(255, 255, 255, 0.15);
+  /* Opaque surfaces for full panels and sticky headers, and chart ink. */
+  --surface: #0b0e13;
+  --surface-2: #0e1117;
+  --surface-3: #1b1f27;
+  --grid: rgba(255, 255, 255, 0.06);
+  --axis: rgba(255, 255, 255, 0.45);
+  --axis-line: rgba(255, 255, 255, 0.12);
 }
 :root[data-theme="light"] {
   color-scheme: light;
@@ -46,6 +53,12 @@ body {
   --panel-border: rgba(15, 23, 42, 0.1);
   --panel-highlight: rgba(255, 255, 255, 0.7);
   --scroll-thumb: rgba(15, 23, 42, 0.18);
+  --surface: #ffffff;
+  --surface-2: #f4f6f9;
+  --surface-3: #e6eaf0;
+  --grid: rgba(11, 18, 32, 0.07);
+  --axis: rgba(11, 18, 32, 0.55);
+  --axis-line: rgba(11, 18, 32, 0.15);
   --color-white: #0b1220;
   --color-black: #ffffff;
   --color-emerald-200: oklch(50.8% 0.118 165.612);
@@ -66,6 +79,12 @@ body {
 /* Surfaces that are dark by nature (camera-feed boot, 2D tactical plan) keep dark tokens in either theme. */
 :root[data-theme="light"] [data-theme="dark"] {
   color-scheme: dark;
+  --surface: #0b0e13;
+  --surface-2: #0e1117;
+  --surface-3: #1b1f27;
+  --grid: rgba(255, 255, 255, 0.06);
+  --axis: rgba(255, 255, 255, 0.45);
+  --axis-line: rgba(255, 255, 255, 0.12);
   --panel: rgba(11, 14, 19, 0.86);
   --panel-border: rgba(255, 255, 255, 0.075);
   --panel-highlight: rgba(255, 255, 255, 0.035);

@@ -189,7 +189,7 @@ export default function FloorPlanEditor() {
     setNote("");
     setForceDraft(false);
     setHistoryTick((t) => t + 1);
-    notify(`Layout saved — ${branch?.name} digital twin and simulation now use it`, "success");
+    notify(`Layout saved — ${branch?.name} digital twin now uses it`, "success");
   };
 
   const runOptimise = () => {
@@ -318,7 +318,7 @@ export default function FloorPlanEditor() {
           <Btn size="xs" onClick={() => enterBranch(branchId)} title={dirty ? "Save first to see changes in the twin" : "Open this branch's digital twin"}>
             <ExternalLink size={13} /> Open twin
           </Btn>
-          <Btn size="xs" tone="red" disabled={readOnly || !dirty} onClick={save} title="Save layout (applies to the 3D twin and simulation)">
+          <Btn size="xs" tone="red" disabled={readOnly || !dirty} onClick={save} title="Save layout (applies to the 3D twin)">
             <Save size={13} /> Save{dirty ? " *" : ""}
           </Btn>
         </div>
@@ -354,7 +354,8 @@ export default function FloorPlanEditor() {
           <div className={cx("flex min-h-0 flex-1", view === "split" ? "flex-row" : "")}>
             {view !== "3d" && (
               <div className={cx("relative min-w-0", view === "split" ? "w-3/5 border-r border-white/5" : "flex-1")}>
-                <div className="absolute inset-0">
+                {/* The drawing canvas is a dark CAD surface in either theme. */}
+                <div data-theme="dark" className="absolute inset-0">
                   <PlanCanvas plan={draft} issues={issues} grid={layers.navgrid ? (analysis?.grid ?? null) : null} readOnly={readOnly} />
                 </div>
               </div>

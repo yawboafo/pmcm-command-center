@@ -28,7 +28,7 @@ export default function App() {
   useThemeSync();
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-ink text-white">
+    <div className="flex h-full w-full overflow-hidden bg-[var(--bg)] text-white">
       <SimDriver />
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">

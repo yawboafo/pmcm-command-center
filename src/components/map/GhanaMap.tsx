@@ -511,7 +511,7 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
   const flying = phase === "flying";
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#0b0e13]">
+    <div className="relative h-full w-full overflow-hidden bg-[var(--surface)]">
       <div ref={container} className="!absolute inset-0 h-full w-full" aria-label={`Map of Ghana showing ${TENANT.name} branches`} role="region" />
       {!flying && !(section === "branches" && !enteredBranchId) && (
         <>

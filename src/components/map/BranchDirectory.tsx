@@ -77,7 +77,7 @@ export default function BranchDirectory() {
     );
 
   return (
-    <section aria-label="Branch directory" className="glass animate-fade-in absolute inset-x-3 bottom-3 top-3 z-20 flex flex-col overflow-hidden rounded-xl !bg-[#0b0e13]/95 md:right-11">
+    <section aria-label="Branch directory" className="glass animate-fade-in absolute inset-x-3 bottom-3 top-3 z-20 flex flex-col overflow-hidden rounded-xl !bg-[var(--surface)]/95 md:right-11">
       <header className="flex flex-wrap items-center gap-2 border-b border-white/5 px-4 py-3">
         <div className="mr-auto min-w-0">
           <div className="flex items-center gap-2">
@@ -124,7 +124,7 @@ export default function BranchDirectory() {
       {/* Desktop table */}
       <div className="scroll-thin hidden min-h-0 flex-1 overflow-auto md:block">
         <table className="w-full min-w-[980px] border-collapse text-[11.5px]">
-          <thead className="sticky top-0 z-10 bg-[#0e1117]">
+          <thead className="sticky top-0 z-10 bg-[var(--surface-2)]">
             <tr className="text-left text-[10px] uppercase tracking-wider text-white/45">
               {COLS.map((c) => (
                 <th key={c.key} className={cx("px-2 py-2 font-semibold", c.num && "text-right", c.key === "name" && "pl-4")} aria-sort={sort.key === c.key ? (sort.dir === 1 ? "ascending" : "descending") : "none"}>
@@ -176,7 +176,7 @@ export default function BranchDirectory() {
               </tr>
             ))}
           </tbody>
-          <tfoot className="sticky bottom-0 bg-[#0e1117]">
+          <tfoot className="sticky bottom-0 bg-[var(--surface-2)]">
             <tr className="border-t border-white/10 text-[11px] font-semibold text-white">
               <td className="py-2 pl-4" colSpan={5}>
                 Total · {rows.length} branches

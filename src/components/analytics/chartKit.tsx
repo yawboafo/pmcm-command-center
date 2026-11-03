@@ -7,16 +7,17 @@ import type { ReactNode } from "react";
  * Categorical slots: dataviz reference palette, dark steps, validated on #0e1117
  * (first three pass all-pairs CVD/normal-vision checks). Status colours are reserved.
  */
-export const SURFACE = "#0e1117";
+// Theme-aware (CSS variables from globals.css), so charts read in light and dark.
+export const SURFACE = "var(--surface-2)";
 export const SERIES = ["#3987e5", "#d95926", "#199e70", "#c98500"] as const;
 export const SINGLE = SERIES[0];
-export const GRID = "rgba(255,255,255,0.06)";
-export const AXIS_TEXT = { fill: "rgba(255,255,255,0.45)", fontSize: 10.5 };
+export const GRID = "var(--grid)";
+export const AXIS_TEXT = { fill: "var(--axis)", fontSize: 10.5 };
 
 export const axisProps = {
   tick: AXIS_TEXT,
   tickLine: false,
-  axisLine: { stroke: "rgba(255,255,255,0.12)" },
+  axisLine: { stroke: "var(--axis-line)" },
 } as const;
 
 interface TipPayload {
@@ -32,7 +33,7 @@ export function DarkTooltip({ active, payload, label, format, labelFormat }: { a
   const fmt = format ?? ((v: number) => v.toLocaleString());
   const total = payload.length > 1 ? payload.reduce((s, p) => s + (Number(p.value) || 0), 0) : null;
   return (
-    <div className="rounded-lg border border-white/10 bg-[#0b0e13]/95 px-2.5 py-2 text-[11px] shadow-xl">
+    <div className="rounded-lg border border-white/10 bg-[var(--surface)]/95 px-2.5 py-2 text-[11px] shadow-xl">
       {label !== undefined && <div className="mb-1 text-white/50">{labelFormat ? labelFormat(label) : label}</div>}
       {payload.map((p) => (
         <div key={String(p.dataKey)} className="flex items-center gap-2">
@@ -83,7 +84,7 @@ export function DataTable({ rows, columns }: { rows: Array<Record<string, string
   return (
     <div className="scroll-thin max-h-56 overflow-auto rounded-lg border border-white/5">
       <table className="w-full text-[11px]">
-        <thead className="sticky top-0 bg-[#0e1117] text-[10px] uppercase tracking-wider text-white/45">
+        <thead className="sticky top-0 bg-[var(--surface-2)] text-[10px] uppercase tracking-wider text-white/45">
           <tr>
             {columns.map((c) => (
               <th key={c.key} className={`px-2 py-1.5 font-semibold ${c.num ? "text-right" : "text-left"}`}>

@@ -21,16 +21,16 @@ const BINS = [
 ] as const;
 
 function HBars({ data, fmt, height = 22, labelWidth = 120 }: { data: Array<{ name: string; v: number }>; fmt: (v: number) => string; height?: number; labelWidth?: number }) {
-  if (!data.length) return <Empty>No data yet — let the simulation run.</Empty>;
+  if (!data.length) return <Empty>No data yet — check back in a few minutes.</Empty>;
   return (
     <div style={{ height: Math.max(80, data.length * height) }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ top: 0, right: 56, left: 0, bottom: 0 }}>
           <XAxis type="number" hide />
           <YAxis type="category" dataKey="name" width={labelWidth} {...axisProps} axisLine={false} />
-          <Tooltip cursor={{ fill: "rgba(255,255,255,0.05)" }} content={<DarkTooltip format={fmt} />} />
+          <Tooltip cursor={{ fill: "var(--grid)" }} content={<DarkTooltip format={fmt} />} />
           <Bar isAnimationActive={false} dataKey="v" name="Value" fill={SINGLE} radius={[0, 4, 4, 0]} maxBarSize={14}>
-            <LabelList dataKey="v" position="right" formatter={(v: unknown) => fmt(Number(v))} style={{ fill: "rgba(255,255,255,0.75)", fontSize: 10.5 }} />
+            <LabelList dataKey="v" position="right" formatter={(v: unknown) => fmt(Number(v))} style={{ fill: "var(--axis)", fontSize: 10.5 }} />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -76,7 +76,7 @@ export default function BranchDrilldown({ branchId, onPick, rows }: { branchId: 
           <Stat label="Status" value={<span className="flex items-center gap-1.5 text-sm"><StatusDot status={snap.status} /> {snap.status}</span>} sub={snap.issue} />
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-white/5 bg-white/[0.03] p-3 text-xs text-white/60">
-          Workstation utilisation, channel mix, prep-time distribution, inventory consumption, food-safety and delivery analytics come from the full kitchen simulation.
+          Workstation utilisation, channel mix, prep-time distribution, inventory consumption, food-safety and delivery analytics come from the branch twin.
           <div className="ml-auto flex gap-2">
             <Btn onClick={() => (sims().get(b.id), onPick(b.id))}>Start simulation here</Btn>
             <Btn tone="red" onClick={() => enterBranch(b.id)}>
@@ -115,7 +115,7 @@ export default function BranchDrilldown({ branchId, onPick, rows }: { branchId: 
   return (
     <Card
       title={`Branch drill-down · ${b.name}`}
-      sub={`Full kitchen simulation running · Model ${sim.plan.format} conceptual layout · ${orders.length} simulated orders since the twin opened`}
+      sub={`Branch twin running · Model ${sim.plan.format} conceptual layout · ${orders.length} orders since the twin opened`}
       right={
         <div className="flex items-center gap-2">
           <SimBadge />
@@ -152,9 +152,9 @@ export default function BranchDrilldown({ branchId, onPick, rows }: { branchId: 
                 <CartesianGrid vertical={false} stroke={GRID} />
                 <XAxis dataKey="name" {...axisProps} tick={{ ...axisProps.tick, fontSize: 9.5 }} />
                 <YAxis {...axisProps} width={28} allowDecimals={false} />
-                <Tooltip cursor={{ fill: "rgba(255,255,255,0.05)" }} content={<DarkTooltip format={(v) => `${v} orders`} />} />
+                <Tooltip cursor={{ fill: "var(--grid)" }} content={<DarkTooltip format={(v) => `${v} orders`} />} />
                 <Bar isAnimationActive={false} dataKey="v" name="Orders" fill={SINGLE} radius={[4, 4, 0, 0]} maxBarSize={28}>
-                  <LabelList dataKey="v" position="top" style={{ fill: "rgba(255,255,255,0.7)", fontSize: 10 }} />
+                  <LabelList dataKey="v" position="top" style={{ fill: "var(--axis)", fontSize: 10 }} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -186,7 +186,7 @@ export default function BranchDrilldown({ branchId, onPick, rows }: { branchId: 
               ))}
             </ul>
           ) : (
-            <p className="text-[11px] text-white/40">No safety alerts raised in this simulation run.</p>
+            <p className="text-[11px] text-white/40">No safety alerts raised since the twin opened.</p>
           )}
         </div>
         <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
@@ -199,7 +199,7 @@ export default function BranchDrilldown({ branchId, onPick, rows }: { branchId: 
             <Stat label="Delayed" value={dStat("DELAYED")} tone={dStat("DELAYED") ? "yellow" : "default"} />
             <Stat label="Avg trip" value={avgDeliv ? `${avgDeliv.toFixed(0)}m` : "—"} />
           </div>
-          <p className="mt-2 text-[10px] text-white/35">Trip times are simulated durations; no rider coordinates are generated or shown.</p>
+          <p className="mt-2 text-[10px] text-white/35">Rider coordinates are not connected yet; trip times only.</p>
         </div>
       </div>
     </Card>

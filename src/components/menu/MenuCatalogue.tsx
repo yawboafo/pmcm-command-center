@@ -61,7 +61,7 @@ export default function MenuCatalogue() {
       </div>
       <div className="scroll-thin max-h-80 overflow-auto">
         <table className="w-full min-w-[720px] text-left text-[11.5px]">
-          <thead className="sticky top-0 bg-[#0b0e13] text-[10px] uppercase tracking-wider text-white/40">
+          <thead className="sticky top-0 bg-[var(--surface)] text-[10px] uppercase tracking-wider text-white/40">
             <tr>
               {["Item", "Category", "Regular", "Promo", "Status", "Verified", "Source"].map((h) => (
                 <th key={h} className="px-2 py-1.5 font-semibold">{h}</th>

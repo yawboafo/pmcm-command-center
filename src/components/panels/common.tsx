@@ -13,12 +13,13 @@ import { sims } from "@/store/sims";
 /** Chart tokens for the dark surface (reference palette, dark column). */
 export const VIZ = {
   series1: "#3987e5",
-  grid: "rgba(255,255,255,0.06)",
-  axis: "rgba(255,255,255,0.4)",
-  text: "#f0efec",
-  muted: "rgba(240,239,236,0.55)",
+  // Theme-aware ink (CSS variables in globals.css).
+  grid: "var(--grid)",
+  axis: "var(--axis)",
+  text: "var(--fg)",
+  muted: "var(--axis)",
   critical: "#e66767",
-  surface: "#14171d",
+  surface: "var(--surface)",
 };
 
 /** Sim-seconds → epoch ms for a given simulation. */
@@ -165,8 +166,8 @@ export function HistoryChart({ data, limit, unit, height = 120 }: { data: Array<
           <XAxis dataKey="t" type="number" domain={["dataMin", "dataMax"]} tickFormatter={(t) => clock(t)} tick={{ fill: VIZ.axis, fontSize: 9 }} tickLine={false} axisLine={false} minTickGap={40} />
           <YAxis domain={[lo, hi]} tick={{ fill: VIZ.axis, fontSize: 9 }} tickLine={false} axisLine={false} width={40} />
           <Tooltip
-            cursor={{ stroke: "rgba(255,255,255,0.35)", strokeWidth: 1 }}
-            contentStyle={{ background: VIZ.surface, border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, fontSize: 11, color: VIZ.text }}
+            cursor={{ stroke: "var(--axis-line)", strokeWidth: 1 }}
+            contentStyle={{ background: VIZ.surface, border: "1px solid var(--axis-line)", borderRadius: 8, fontSize: 11, color: VIZ.text }}
             labelFormatter={(t) => `${clock(Number(t))} GMT`}
             formatter={(v) => [`${v} ${unit}`, "Reading"]}
           />
@@ -188,12 +189,12 @@ export function HourlyBars({ values, format, height = 80, nowHour }: { values: n
         <BarChart data={rows} margin={{ top: 4, right: 0, bottom: 0, left: 0 }} barCategoryGap={2}>
           <XAxis dataKey="h" tick={{ fill: VIZ.axis, fontSize: 9 }} tickLine={false} axisLine={false} interval={5} tickFormatter={(h) => `${String(h).padStart(2, "0")}h`} />
           <Tooltip
-            cursor={{ fill: "rgba(255,255,255,0.05)" }}
-            contentStyle={{ background: VIZ.surface, border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, fontSize: 11, color: VIZ.text }}
+            cursor={{ fill: "var(--grid)" }}
+            contentStyle={{ background: VIZ.surface, border: "1px solid var(--axis-line)", borderRadius: 8, fontSize: 11, color: VIZ.text }}
             labelFormatter={(h) => `${String(h).padStart(2, "0")}:00–${String(Number(h) + 1).padStart(2, "0")}:00`}
             formatter={(v) => [format(Number(v)), "Sales"]}
           />
-          {nowHour !== undefined && <ReferenceLine x={nowHour} stroke="rgba(255,255,255,0.3)" strokeDasharray="2 2" />}
+          {nowHour !== undefined && <ReferenceLine x={nowHour} stroke="var(--axis-line)" strokeDasharray="2 2" />}
           <Bar dataKey="v" fill={VIZ.series1} radius={[3, 3, 0, 0]} isAnimationActive={false} />
         </BarChart>
       </ResponsiveContainer>

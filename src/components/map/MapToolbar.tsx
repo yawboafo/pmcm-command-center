@@ -99,7 +99,7 @@ export default function MapToolbar({ visibleCount }: { visibleCount: number }) {
             Region revenue today
             <span className="h-2 w-28 rounded-full" style={{ background: "linear-gradient(90deg,#0d366b,#184f95,#256abf,#3987e5,#6da7ec,#9ec5f4)" }} />
             <span>low → high</span>
-            <span className="h-2 w-3 rounded-sm bg-[#1b1f27] ring-1 ring-white/15" /> no outlets
+            <span className="h-2 w-3 rounded-sm bg-[var(--surface-3)] ring-1 ring-white/15" /> no outlets
           </div>
         )}
         <div className="mt-1 text-[9.5px] text-white/40">Locations verified from the official outlet directory</div>
