@@ -39,7 +39,15 @@ export default function Gate({ onUnlocked, onDeny, unlocking }: { onUnlocked: (k
     e.preventDefault();
     if (busy || unlocking || lock.locked) return;
     setBusy(true);
-    const ok = await g.verify(value);
+    let ok: boolean;
+    try {
+      ok = await g.verify(value, keep);
+    } catch (err) {
+      // The key was not judged (server unreachable or rate limited), so it doesn't count as a failure.
+      setBusy(false);
+      setError(err instanceof Error ? err.message : "Try again.");
+      return;
+    }
     setBusy(false);
     if (ok) {
       g.resetAttempts();

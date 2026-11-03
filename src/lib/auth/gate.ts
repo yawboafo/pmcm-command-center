@@ -1,6 +1,8 @@
 /**
- * Access gate: hashed key check, attempt limiting with cooldown, and a per-device session.
- * Everything here is browser-side and is a product lock for the prototype, not authentication.
+ * Access gate, browser side: asks the server to check the key (src/lib/auth/session.ts), counts
+ * attempts for the on-screen cooldown and remembers the per-device session for the launch flow.
+ * The server's session cookie is what actually protects server routes; the state kept here only
+ * decides which screen to show.
  *
  * To move to real auth, implement `GateProvider` against your identity service (the UI only
  * calls `verify`, `startSession`, `sessionValid` and `endSession`) and pass it to <Launch>.
@@ -8,8 +10,8 @@
 import { LAUNCH } from "../../config/launch";
 
 export interface GateProvider {
-  /** Resolves true when the entered key is accepted. */
-  verify: (input: string) => Promise<boolean>;
+  /** Resolves true when the entered key is accepted, false when it is wrong; throws with a message to show if the check could not run. */
+  verify: (input: string, keep?: boolean) => Promise<boolean>;
   startSession: (keep: boolean, now?: number) => void;
   sessionValid: (now?: number) => boolean;
   endSession: () => void;
@@ -34,9 +36,31 @@ function same(a: string, b: string) {
   return diff === 0;
 }
 
-export async function verifyKey(input: string, hash = LAUNCH.gate.accessKeyHash): Promise<boolean> {
+export async function verifyKey(input: string, hash: string): Promise<boolean> {
   if (!input.trim()) return false;
   return same(await hashKey(input), hash);
+}
+
+/** The key check and sign-out, against the server. */
+async function verifyOnServer(input: string, keep = false): Promise<boolean> {
+  let res: Response;
+  try {
+    res = await fetch("/api/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: input, keep }) });
+  } catch {
+    throw new Error("Can't reach the server. Try again.");
+  }
+  if (res.ok) return true;
+  if (res.status === 401) return false;
+  if (res.status === 429) {
+    const data = (await res.json().catch(() => ({}))) as { retryAfterSec?: number };
+    throw new Error(`Too many attempts · try again in ${data.retryAfterSec ?? LAUNCH.gate.cooldownSec} s`);
+  }
+  throw new Error("Can't check the key right now. Try again.");
+}
+function signOutOnServer() {
+  if (typeof window === "undefined") return;
+  // keepalive: sign-out reloads the page straight after this.
+  void fetch("/api/session", { method: "DELETE", keepalive: true }).catch(() => {});
 }
 
 /* ───────────── storage (localStorage with an in-memory fallback, injectable for tests) ───────────── */
@@ -86,14 +110,13 @@ function read<T>(kv: KV, key: string): T | null {
  * Session rules: "Keep me signed in" stores the session in localStorage for `sessionDays`;
  * otherwise it lives in sessionStorage (gone when the tab closes) with the same expiry cap.
  */
-export function makeGate(opts: { local?: KV; session?: KV; hash?: string; maxAttempts?: number; cooldownSec?: number; sessionDays?: number } = {}): GateProvider & {
+export function makeGate(opts: { local?: KV; session?: KV; verify?: GateProvider["verify"]; maxAttempts?: number; cooldownSec?: number; sessionDays?: number } = {}): GateProvider & {
   lockState: (now?: number) => { locked: boolean; remainingSec: number; attemptsLeft: number };
   recordFailure: (now?: number) => { locked: boolean; remainingSec: number; attemptsLeft: number };
   resetAttempts: () => void;
 } {
   const local = opts.local ?? (typeof window === "undefined" ? mem : webStorage("local"));
   const session = opts.session ?? (typeof window === "undefined" ? mem : webStorage("session"));
-  const hash = opts.hash ?? LAUNCH.gate.accessKeyHash;
   const maxAttempts = opts.maxAttempts ?? LAUNCH.gate.maxAttempts;
   const cooldownSec = opts.cooldownSec ?? LAUNCH.gate.cooldownSec;
   const sessionDays = opts.sessionDays ?? LAUNCH.gate.sessionDays;
@@ -115,10 +138,7 @@ export function makeGate(opts: { local?: KV; session?: KV; hash?: string; maxAtt
   const resetAttempts = () => local.remove(ATTEMPTS_KEY);
 
   return {
-    verify: async (input) => {
-      const ok = await verifyKey(input, hash);
-      return ok;
-    },
+    verify: opts.verify ?? verifyOnServer,
     startSession: (keep, now = Date.now()) => {
       const s: Session = { exp: now + sessionDays * DAY, keep };
       (keep ? local : session).set(SESSION_KEY, JSON.stringify(s));
@@ -131,6 +151,7 @@ export function makeGate(opts: { local?: KV; session?: KV; hash?: string; maxAtt
     endSession: () => {
       local.remove(SESSION_KEY);
       session.remove(SESSION_KEY);
+      signOutOnServer();
     },
     lockState,
     recordFailure,
