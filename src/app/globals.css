@@ -464,6 +464,12 @@ select {
   text-transform: uppercase;
   color: var(--launch-fg-2);
 }
+@media (max-width: 640px) {
+  .launch-title .launch-eyebrow {
+    letter-spacing: 0.18em;
+    white-space: nowrap;
+  }
+}
 .launch-wordmark {
   margin-top: 10px;
   font-family: var(--font-brand), var(--font-ui), system-ui, sans-serif;

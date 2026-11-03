@@ -591,7 +591,7 @@ function Instrumentation({ sim }: { sim: BranchSimulation }) {
   return (
     <>
       {items.map((it) => {
-        const k = smooth(it.at, it.at + 0.7, t) * (1 - smooth(BEAT.hero - 0.4, BEAT.hero + 0.8, t) * 0.85);
+        const k = smooth(it.at, it.at + 0.7, t) * (1 - smooth(BEAT.hero - 0.6, BEAT.hero + 0.5, t));
         if (k <= 0) return null;
         return (
           <Html key={it.id} position={it.pos} center zIndexRange={[20, 0]} style={{ pointerEvents: "none" }}>
