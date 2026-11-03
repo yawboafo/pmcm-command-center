@@ -12,6 +12,7 @@ export const SHORTCUTS: Array<[string, string, "anywhere" | "twin"]> = [
   ["Esc", "Close / clear selection", "anywhere"],
   ["M", "Back to the Ghana map", "twin"],
   ["1–5", "Dollhouse · Free · Walk · Top · Tour", "twin"],
+  ["V", "Live 2D floor plan / back to 3D", "twin"],
   ["S", "Stations & zones", "twin"],
   ["G", "Virtual camera grid", "twin"],
   ["X", "X-ray walls", "twin"],
@@ -43,7 +44,8 @@ export function useShortcuts() {
       // First-person walk uses WASD; leave keys alone while the pointer is locked.
       if (app.cameraMode === "fps" && useTwin.getState().fpsLocked) return;
       const k = e.key.toLowerCase();
-      if (k >= "1" && k <= "5") return (app.setCctv(false), app.setCameraMode(MODES[+k - 1]));
+      if (k >= "1" && k <= "5") return (app.setCctv(false), app.setView2d(false), app.setCameraMode(MODES[+k - 1]));
+      if (k === "v") return app.setView2d(!app.view2d);
       if (k === "m") return app.exitToMap();
       if (k === "g") return app.setCctv(!app.cctvOpen);
       if (k === "x") return app.toggle("xray");

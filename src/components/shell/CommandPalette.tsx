@@ -76,8 +76,9 @@ export default function CommandPalette() {
         out.push({ id: `or:${o.id}`, group: "Active orders", label: `Order #${o.number}`, hint: o.lines.map((l) => l.name).join(", "), icon: ReceiptText, run: () => app.select({ kind: "order", id: o.id }) });
       for (const e of sim.plan.equipment)
         out.push({ id: `eq:${e.id}`, group: "Equipment", label: e.name, hint: e.type, icon: Wrench, run: () => (app.setCctv(false), app.select({ kind: "equipment", id: e.id }), focusEquipment(sim, e.id)) });
-      for (const [m, label] of CAMERA_MODES) out.push({ id: `cam:${m}`, group: "Camera", label, icon: Camera, run: () => (app.setCctv(false), app.setCameraMode(m)) });
+      for (const [m, label] of CAMERA_MODES) out.push({ id: `cam:${m}`, group: "Camera", label, icon: Camera, run: () => (app.setCctv(false), app.setView2d(false), app.setCameraMode(m)) });
       out.push({ id: "cam:grid", group: "Camera", label: "Virtual camera grid", icon: Camera, run: () => app.setCctv(true) });
+      out.push({ id: "cam:2d", group: "Camera", label: app.view2d ? "Back to 3D view" : "Live 2D floor plan", icon: Camera, run: () => app.setView2d(!app.view2d) });
     }
     for (const [k, label] of [["low", "Low · 5/h"], ["medium", "Medium · 20/h"], ["high", "High · 50/h"]] as const)
       out.push({ id: `demand:${k}`, group: "Simulation", label: `Demand: ${label}`, hint: app.arrivalPreset === k ? "current" : undefined, icon: Gauge, run: () => app.setArrivalPreset(k) });

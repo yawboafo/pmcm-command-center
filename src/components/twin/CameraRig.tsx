@@ -128,21 +128,23 @@ export default function CameraRig({ sim }: { sim: BranchSimulation }) {
     tween.current = null;
   };
 
-  // Intro: exterior shot → through the entrance → rise to the dollhouse.
+  // Intro: the "camera feed" boots straight onto the overview with a slow focus pull
+  // (the overlay in FeedBoot.tsx covers the first moments with signal acquisition).
   const introStarted = useRef(false);
   useEffect(() => {
     const { setPhase, setCameraMode } = useApp.getState();
     if (phase === "exterior" && !introStarted.current) {
       introStarted.current = true;
-      const p = entrancePoses(plan);
-      snap(p.exterior);
-      holdUntil.current = clock.current + 2.4;
+      const end = dollhousePose(plan, aspect);
+      const [tx, ty, tz] = end.target;
+      const [px, py, pz] = end.pos;
+      // Start 12% further out and slightly rotated, then settle — like a PTZ camera locking on.
+      snap({ pos: [tx + (px - tx) * 1.12 + 1.5, ty + (py - ty) * 1.12, tz + (pz - tz) * 1.12], target: end.target, fov: (end.fov ?? 45) + 6 });
+      holdUntil.current = clock.current + 1.4;
       seq.current = [
-        { ...p.approach, dur: 2.0, onDone: () => setPhase("entering") },
-        { ...p.inside, dur: 1.3, hold: 0.5 },
         {
-          ...dollhousePose(plan, aspect),
-          dur: 2.2,
+          ...end,
+          dur: 2.4,
           onDone: () => {
             setPhase("inside");
             setCameraMode("dollhouse");

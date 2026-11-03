@@ -10,7 +10,9 @@ import { useApp } from "@/store/app";
 import { sims } from "@/store/sims";
 import CameraRig from "./CameraRig";
 import { CameraDevices, CctvOverlay, MultiViewRenderer, PathsOverlay } from "./CctvGrid";
-import { CameraList, CctvLabel, DemoMenu, FollowBanner, FpsHud, IntroOverlay, Toolbar } from "./Hud";
+import FeedBoot from "./FeedBoot";
+import PlanView2D from "./PlanView2D";
+import { CameraList, CctvLabel, DemoMenu, FollowBanner, FpsHud, Toolbar } from "./Hud";
 import PerfProbe from "./PerfProbe";
 import { StationViews } from "./StationViews";
 import RestaurantModel from "./RestaurantModel";
@@ -31,6 +33,7 @@ export default function TwinView({ branchId }: { branchId: string }) {
   const graphics = useApp((s) => s.graphics);
   const phase = useApp((s) => s.phase);
   const cctvOpen = useApp((s) => s.cctvOpen);
+  const view2d = useApp((s) => s.view2d) && phase === "inside";
   const tick = useApp((s) => s.tick);
   const selection = useApp((s) => s.selection);
   const xray = useApp((s) => s.xray);
@@ -79,11 +82,14 @@ export default function TwinView({ branchId }: { branchId: string }) {
   }, [selection, live, tick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const effects = ceiling.effects && hiQ && !cctvOpen;
-  const dusk = phase !== "inside";
+  // Daylight throughout: the feed-style entry shows the restaurant as it is now.
+  const dusk = false;
 
   return (
     <div id="twin-root" className="relative h-full w-full select-none bg-[#0b0f16]">
       <Canvas
+        // The 2D plan covers the canvas: stop rendering 3D frames meanwhile (the simulation keeps running).
+        frameloop={view2d ? "never" : "always"}
         shadows={graphics === "low" ? false : { type: THREE.PCFShadowMap }}
         dpr={dpr}
         camera={{ fov: 50, near: 0.1, far: 400, position: [0, 20, -30] }}
@@ -117,7 +123,7 @@ export default function TwinView({ branchId }: { branchId: string }) {
             selectedId={selectedEq}
             highlightIds={highlight}
             selectedAgentId={selection?.kind === "agent" ? selection.id : null}
-            overlays={!cctvOpen && phase === "inside"}
+            overlays={!cctvOpen && !view2d && phase === "inside"}
             onSelectEquipment={(id) => select({ kind: "equipment", id })}
             onSelectAgent={(id) => select({ kind: "agent", id })}
             onSelectRoom={(id) => select({ kind: "room", id })}
@@ -137,7 +143,8 @@ export default function TwinView({ branchId }: { branchId: string }) {
       </Canvas>
 
       <CctvOverlay plan={live.plan} />
-      <IntroOverlay branchId={branchId} />
+      <FeedBoot branchId={branchId} />
+      {view2d && <PlanView2D sim={live} />}
       {phase === "inside" && !cctvOpen && (
         <>
           <div className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center px-3">
@@ -155,7 +162,7 @@ export default function TwinView({ branchId }: { branchId: string }) {
           <CctvLabel sim={live} />
           <FollowBanner sim={live} />
           <FpsHud />
-          <Legend />
+          {!view2d && <Legend />}
         </>
       )}
     </div>

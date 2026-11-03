@@ -110,7 +110,7 @@ function Toast() {
   if (!toast) return null;
   const tone = { info: "border-white/15", success: "border-emerald-400/40", warning: "border-amber-400/40", critical: "border-red-500/60" }[toast.tone];
   return (
-    <div role={toast.tone === "critical" ? "alert" : "status"} className={cx("glass animate-fade-in fixed bottom-60 left-1/2 z-50 flex max-w-[min(560px,calc(100vw-2rem))] -translate-x-1/2 items-center gap-3 rounded-lg border px-4 py-2 text-sm text-white", tone)}>
+    <div role={toast.tone === "critical" ? "alert" : "status"} className={cx("glass animate-fade-in fixed left-1/2 top-16 z-50 flex max-w-[min(560px,calc(100vw-2rem))] -translate-x-1/2 items-center gap-3 rounded-lg border px-4 py-2 text-sm text-white", tone)}>
       {toast.tone === "critical" && <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-red-500" aria-hidden />}
       <span className="min-w-0">{toast.text}</span>
       {toast.action && (

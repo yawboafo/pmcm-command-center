@@ -76,6 +76,8 @@ interface AppState {
   graphics: "high" | "balanced" | "low";
   paletteOpen: boolean;
   shortcutsOpen: boolean;
+  /** Inside a branch: show the live 2D operations plan instead of the 3D view. */
+  view2d: boolean;
   /** Equipment rendering: Blender-built glTF models (when available) or the procedural stand-ins. */
   assetMode: "models" | "procedural";
   user: DemoUser;
@@ -104,6 +106,7 @@ interface AppState {
   setGraphics: (g: "high" | "balanced" | "low") => void;
   setAssetMode: (m: "models" | "procedural") => void;
   setPaletteOpen: (b: boolean) => void;
+  setView2d: (b: boolean) => void;
   setShortcutsOpen: (b: boolean) => void;
   setUser: (id: string) => void;
   setFilters: (f: Partial<{ regionFilter: string | null; statusFilter: string | null; search: string }>) => void;
@@ -135,6 +138,7 @@ export const useApp = create<AppState>((set, get) => ({
   graphics: "balanced",
   paletteOpen: false,
   shortcutsOpen: false,
+  view2d: false,
   // `?assets=procedural` starts with the procedural stand-ins (side-by-side QA and performance checks).
   assetMode: typeof window !== "undefined" && new URLSearchParams(window.location.search).get("assets") === "procedural" ? "procedural" : "models",
   user: DEMO_USERS[1],
@@ -162,13 +166,13 @@ export const useApp = create<AppState>((set, get) => ({
   enterBranch: (id) =>
     set({ selectedBranchId: id, enteredBranchId: id, phase: "flying", selection: null, cameraMode: "orbit", activeCameraId: null, followOrderId: null, section: TWIN_SECTIONS.includes(get().section) ? get().section : "twin" }),
   setPhase: (phase) => set({ phase }),
-  exitToMap: () => set({ enteredBranchId: null, phase: "map", section: "network", selection: get().selectedBranchId ? { kind: "branch", id: get().selectedBranchId! } : null, cctvOpen: false, followOrderId: null }),
+  exitToMap: () => set({ view2d: false, enteredBranchId: null, phase: "map", section: "network", selection: get().selectedBranchId ? { kind: "branch", id: get().selectedBranchId! } : null, cctvOpen: false, followOrderId: null }),
   select: (selection) => set({ selection }),
   setCameraMode: (cameraMode) => set({ cameraMode, followOrderId: cameraMode === "follow" ? get().followOrderId : null, activeCameraId: cameraMode === "cctv" ? get().activeCameraId : null }),
   useVirtualCamera: (id) => set({ activeCameraId: id, cameraMode: id ? "cctv" : "orbit", followOrderId: null, selection: id ? { kind: "camera", id } : get().selection }),
   requestCamera: (r) => set({ cameraRequest: { ...r, nonce: (get().cameraRequest?.nonce ?? 0) + 1 }, cameraMode: "focus", activeCameraId: null }),
   followOrder: (id) => set({ followOrderId: id, cameraMode: id ? "follow" : "orbit", selection: id ? { kind: "order", id } : get().selection }),
-  setCctv: (cctvOpen, layout) => set({ cctvOpen, cctvLayout: layout ?? get().cctvLayout }),
+  setCctv: (cctvOpen, layout) => set({ cctvOpen, cctvLayout: layout ?? get().cctvLayout, view2d: cctvOpen ? false : get().view2d }),
   toggle: (k) => set({ [k]: !get()[k] } as Pick<AppState, typeof k>),
   setSpeed: (speed) => set({ speed, paused: false }),
   setPaused: (paused) => set({ paused }),
@@ -178,6 +182,7 @@ export const useApp = create<AppState>((set, get) => ({
   setGraphics: (graphics) => set({ graphics }),
   setAssetMode: (assetMode) => set({ assetMode }),
   setPaletteOpen: (paletteOpen) => set({ paletteOpen, shortcutsOpen: false }),
+  setView2d: (view2d) => set({ view2d, cctvOpen: view2d ? false : get().cctvOpen }),
   setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen, paletteOpen: false }),
   setUser: (id) => set({ user: DEMO_USERS.find((u) => u.id === id) ?? DEMO_USERS[1] }),
   setFilters: (f) => set(f),
