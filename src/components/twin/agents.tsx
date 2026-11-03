@@ -1,12 +1,15 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { memo, useMemo, useRef } from "react";
+import { Suspense, memo, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { Agent } from "@/lib/sim/types";
 import type { BranchSimulation } from "@/lib/sim/engine";
+import { useApp } from "@/store/app";
 import { M, PANTS, SHIRTS, SKIN } from "./materials";
+import { AssetBoundary, useManifest } from "./modelAssets";
 import { G } from "./parts";
+import { CARRY_PROPS, InstancedPeople, type PeopleAsset } from "./people";
 
 interface Look {
   shirt: THREE.Material;
@@ -37,7 +40,7 @@ function lookFor(a: Agent): Look {
 
 const CARRY_COLORS: Record<string, string> = { pizza: "#d9a25a", chicken: "#b8691f", rice: "#d8642a", side: "#e3a33b", drink: "#c0392b", bag: "#f3efe6", box: "#f7f3ea", crate: "#3c7dd9" };
 
-/** Stylised low-poly person; pose and position are driven from the agent each frame. */
+/** Procedural fallback person (boxes and capsules); pose and position are driven from the agent each frame. */
 const Person = memo(function Person({ agent, onSelect, selected }: { agent: Agent; onSelect?: (id: string) => void; selected: boolean }) {
   const look = useMemo(() => lookFor(agent), [agent]);
   const root = useRef<THREE.Group>(null);
@@ -179,7 +182,35 @@ const Person = memo(function Person({ agent, onSelect, selected }: { agent: Agen
 
 const shadowMat = new THREE.MeshBasicMaterial({ color: "#000", transparent: true, opacity: 0.18, depthWrite: false });
 
-export function AgentsLayer({ sim, version, selectedId, onSelect }: { sim: BranchSimulation; version: number; selectedId?: string | null; onSelect?: (id: string) => void }) {
+interface LayerProps {
+  sim: BranchSimulation;
+  version: number;
+  selectedId?: string | null;
+  onSelect?: (id: string) => void;
+}
+
+/**
+ * Staff, customers and riders. Uses the Blender-built, instanced rigid-part people
+ * (see people.tsx) when the manifest has them and Settings → 3D assets is "Blender models";
+ * otherwise, while loading, or on any load error, the procedural people below.
+ */
+export function AgentsLayer(props: LayerProps) {
+  const manifest = useManifest();
+  const mode = useApp((s) => s.assetMode);
+  const people = mode === "models" ? (manifest?.assets.people as PeopleAsset | undefined) : undefined;
+  const fallback = <ProceduralAgents {...props} />;
+  if (!people?.rig || !manifest) return fallback;
+  const propAssets = Object.fromEntries(CARRY_PROPS.filter((n) => manifest.assets[n]).map((n) => [n, manifest.assets[n]]));
+  return (
+    <AssetBoundary fallback={fallback}>
+      <Suspense fallback={fallback}>
+        <InstancedPeople sim={props.sim} asset={people} propAssets={propAssets} selectedId={props.selectedId} onSelect={props.onSelect} />
+      </Suspense>
+    </AssetBoundary>
+  );
+}
+
+function ProceduralAgents({ sim, version, selectedId, onSelect }: LayerProps) {
   // Recomputed on the throttled tick: new arrivals appear, departed agents unmount.
   const list = useMemo(() => sim.agents.filter((a) => !a.gone), [sim, version]); // eslint-disable-line react-hooks/exhaustive-deps
   return (

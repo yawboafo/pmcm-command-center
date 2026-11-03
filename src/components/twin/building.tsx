@@ -3,7 +3,7 @@
 import { memo, useMemo } from "react";
 import * as THREE from "three";
 import type { FloorPlan, Room, Wall } from "@/lib/floorplan/types";
-import { M, badgeTexture, floorMaterial, labelTexture, posterTexture, signTexture, taglineTexture } from "./materials";
+import { BRAND, M, badgeTexture, canopyTexture, floorMaterial, labelTexture, posterTexture, signTexture, taglineTexture, windowBandTexture } from "./materials";
 import { Box, Cyl, G, Slab } from "./parts";
 
 const DOOR_H = 2.15;
@@ -175,20 +175,48 @@ export const Doors = memo(function Doors({ plan, showHeaders }: { plan: FloorPla
   );
 });
 
+/** Manifestation band material per window width (the band texture tiles every 2 m). */
+const bandCache = new Map<number, THREE.MeshBasicMaterial>();
+function bandMaterial(width: number) {
+  const key = Math.round(width * 4) / 4;
+  let m = bandCache.get(key);
+  if (!m) {
+    const t = windowBandTexture().clone();
+    t.needsUpdate = true;
+    t.repeat.set(Math.max(1, Math.round(key / 2)), 1);
+    m = new THREE.MeshBasicMaterial({ map: t, transparent: true, toneMapped: false, side: THREE.DoubleSide, depthWrite: false });
+    bandCache.set(key, m);
+  }
+  return m;
+}
+
 export const Windows = memo(function Windows({ plan }: { plan: FloorPlan }) {
+  const { width: W, length: L } = plan.dimensions;
   return (
     <group>
       {plan.windows.map((w) => {
         const rot = w.axis === "x" ? 0 : Math.PI / 2;
         const mullions = Math.max(1, Math.round(w.width / 1.2));
+        // Street-facing glazing gets a shopfront treatment: deeper aluminium sections, a transom,
+        // a kick rail and the safety manifestation band (brand stripes) at eye level.
+        const shopfront = w.axis === "x" ? w.z < 0.01 || w.z > L - 0.01 : w.x < 0.01 || w.x > W - 0.01;
+        const frameD = shopfront ? 0.16 : 0.12;
+        const bandY = Math.min(w.sill + w.height - 0.3, Math.max(w.sill + 0.25, 1.15));
         return (
           <group key={w.id} position={[w.x, 0, w.z]} rotation={[0, rot, 0]}>
             <Box p={[0, w.sill + w.height / 2, 0]} s={[w.width, w.height, 0.03]} m={M.glass()} shadow={false} />
-            <Box p={[0, w.sill + 0.02, 0]} s={[w.width + 0.04, 0.05, 0.12]} m={M.frame()} />
-            <Box p={[0, w.sill + w.height - 0.02, 0]} s={[w.width + 0.04, 0.05, 0.12]} m={M.frame()} />
+            <Box p={[0, w.sill + 0.02, 0]} s={[w.width + 0.04, 0.05, frameD]} m={M.frame()} />
+            <Box p={[0, w.sill + w.height - 0.02, 0]} s={[w.width + 0.04, 0.05, frameD]} m={M.frame()} />
             {Array.from({ length: mullions + 1 }).map((_, i) => (
-              <Box key={i} p={[-w.width / 2 + (i * w.width) / mullions, w.sill + w.height / 2, 0]} s={[0.05, w.height, 0.1]} m={M.frame()} />
+              <Box key={i} p={[-w.width / 2 + (i * w.width) / mullions, w.sill + w.height / 2, 0]} s={[shopfront ? 0.06 : 0.05, w.height, frameD - 0.02]} m={M.frame()} />
             ))}
+            {shopfront && (
+              <>
+                {w.height > 1.6 && <Box p={[0, w.sill + w.height - 0.42, 0]} s={[w.width, 0.05, frameD - 0.03]} m={M.frame()} />}
+                {w.sill < 0.3 && <Box p={[0, w.sill + 0.17, 0]} s={[w.width, 0.26, 0.05]} m={M.frame()} />}
+                <mesh geometry={G.box} material={bandMaterial(w.width)} position={[0, bandY, 0]} scale={[w.width - 0.04, 0.16, 0.036]} renderOrder={3} />
+              </>
+            )}
           </group>
         );
       })}
@@ -200,23 +228,25 @@ export const Windows = memo(function Windows({ plan }: { plan: FloorPlan }) {
 
 export const Ceilings = memo(function Ceilings({ plan }: { plan: FloorPlan }) {
   const H = plan.dimensions.height;
+  const kitchenish = (t: string) => !["dining", "customer"].includes(t);
   const lights = useMemo(() => {
-    const out: Array<[number, number]> = [];
+    const out: Array<[number, number, boolean]> = [];
     for (const r of plan.rooms) {
       const nx = Math.max(1, Math.round(r.w / 2.2));
       const nz = Math.max(1, Math.round(r.d / 2.2));
-      for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) out.push([r.x + ((i + 0.5) * r.w) / nx, r.z + ((k + 0.5) * r.d) / nz]);
+      const warm = !kitchenish(r.type) || r.type === "counter";
+      for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) out.push([r.x + ((i + 0.5) * r.w) / nx, r.z + ((k + 0.5) * r.d) / nz, warm]);
     }
     return out;
   }, [plan.rooms]);
-  const kitchenish = (t: string) => !["dining", "customer"].includes(t);
   return (
     <group>
       {plan.rooms.map((r) => (
         <mesh key={r.id} geometry={G.plane} material={kitchenish(r.type) ? M.white() : M.ceiling()} position={[r.x + r.w / 2, H - 0.002, r.z + r.d / 2]} rotation={[Math.PI / 2, 0, 0]} scale={[r.w, r.d, 1]} />
       ))}
-      {lights.map(([x, z], i) => (
-        <mesh key={i} geometry={G.circle} material={M.emissive("#fff3dc", 2.2)} position={[x, H - 0.01, z]} rotation={[Math.PI / 2, 0, 0]} scale={0.28} />
+      {/* warm 3000 K downlights front of house, neutral 4000 K over the kitchen */}
+      {lights.map(([x, z, warm], i) => (
+        <mesh key={i} geometry={G.circle} material={M.emissive(warm ? "#ffe2b8" : "#fff3dc", 2.2)} position={[x, H - 0.01, z]} rotation={[Math.PI / 2, 0, 0]} scale={0.28} />
       ))}
     </group>
   );
@@ -247,7 +277,12 @@ export const Exterior = memo(function Exterior({ plan }: { plan: FloorPlan }) {
       <Cyl p={[W * 0.45, H + 0.7, L * 0.45]} radius={0.35} h={1.1} m={M.brushed()} />
       {/* red ACP fascia band across the frontage */}
       <Box p={[W / 2, H + fasciaH / 2 - 0.15, -0.2]} s={[W + 0.5, fasciaH + 0.3, 0.3]} m={M.redCladding()} />
-      <Box p={[W / 2, H - 0.42, -0.36]} s={[W + 0.5, 0.06, 0.04]} m={M.white()} />
+      {/* brand stripes along the fascia soffit edge: white, yellow, green */}
+      <Box p={[W / 2, H - 0.4, -0.36]} s={[W + 0.5, 0.05, 0.04]} m={M.white()} />
+      <Box p={[W / 2, H - 0.45, -0.36]} s={[W + 0.5, 0.05, 0.04]} m={M.yellow()} shadow={false} />
+      <Box p={[W / 2, H - 0.49, -0.36]} s={[W + 0.5, 0.03, 0.04]} m={M.green()} shadow={false} />
+      {/* top cap flashing */}
+      <Box p={[W / 2, H + fasciaH + 0.01, -0.2]} s={[W + 0.56, 0.04, 0.36]} m={M.plastic("#9b1015")} />
       {/* box frames / pilasters around the glazed storefront */}
       {[-0.1, W + 0.1].map((x) => (
         <Box key={x} p={[x, H / 2, -0.2]} s={[0.4, H, 0.32]} m={M.redCladding()} />
@@ -258,9 +293,18 @@ export const Exterior = memo(function Exterior({ plan }: { plan: FloorPlan }) {
       {/* entrance canopy */}
       {entrance && entrance.z < 0.01 && (
         <group position={[entrance.x, 0, 0]}>
+          {/* canopy: red box section with a deeper lettered fascia on the street edge */}
           <Box p={[0, 2.55, -0.75]} s={[entrance.width + 1.4, 0.18, 1.5]} m={M.redCladding()} />
+          <Box p={[0, 2.6, -1.49]} s={[entrance.width + 1.44, 0.34, 0.06]} m={M.redCladding()} />
+          <Box p={[0, 2.425, -1.49]} s={[entrance.width + 1.44, 0.025, 0.065]} m={M.yellow()} shadow={false} />
+          <mesh geometry={G.plane} material={cachedBasic("canopy", canopyTexture)} position={[0, 2.62, -1.522]} rotation={[0, Math.PI, 0]} scale={[entrance.width + 1.3, (entrance.width + 1.3) / 9.6, 1]} />
           <Box p={[0, 2.45, -0.75]} s={[entrance.width + 1.2, 0.02, 1.3]} m={M.emissive("#fff2d6", 1.2)} shadow={false} />
-          <mesh geometry={G.plane} material={cachedBasic("welcome", () => labelTexture("WELCOME", "#EE1D25"))} position={[0, 2.55, -1.51]} rotation={[0, Math.PI, 0]} scale={[1.2, 0.16, 1]} />
+          {/* recessed downlights in the canopy soffit */}
+          {[-1, 0, 1].map((k) => (
+            <mesh key={k} geometry={G.circle} material={M.emissive("#fff6e0", 3)} position={[k * (entrance.width / 2 + 0.3), 2.437, -1.0]} rotation={[Math.PI / 2, 0, 0]} scale={0.14} />
+          ))}
+          {/* door vinyl */}
+          <mesh geometry={G.plane} material={cachedBasic("welcome", () => labelTexture("WELCOME", BRAND.red))} position={[0, 1.55, -0.07]} rotation={[0, Math.PI, 0]} scale={[0.6, 0.15, 1]} />
           {/* artificial-turf entrance strip, as seen at several branches */}
           <mesh geometry={G.plane} material={M.plastic("#3f8a2f")} position={[0, 0.008, -1.2]} rotation={[-Math.PI / 2, 0, 0]} scale={[entrance.width + 0.6, 2.2, 1]} receiveShadow />
         </group>

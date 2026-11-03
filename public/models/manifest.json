@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-03T17:53:24+00:00",
-  "generator": "blender/build_assets.py + blender/postprocess.py",
+  "generatedAt": "2026-11-03T19:30:33+00:00",
+  "generator": "blender/build_assets.py, build_people.py, build_props.py + blender/postprocess.py",
   "units": "metres, +Y up, front +Z",
   "compression": "EXT_meshopt_compression",
   "extensionsRequired": [
@@ -55,7 +55,7 @@
         0.75
       ],
       "triangles": 1540,
-      "bytes": 14564,
+      "bytes": 14592,
       "origin": "floor-centre",
       "source": "scripted",
       "kind": "equipment",
@@ -77,6 +77,154 @@
         "FOOD"
       ],
       "drawCalls": 4,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "chicken-basket": {
+      "path": "models/props/chicken-basket.glb",
+      "lod1": null,
+      "size": [
+        0.33,
+        0.155,
+        0.633
+      ],
+      "triangles": 544,
+      "bytes": 6396,
+      "origin": "bottom-centre",
+      "source": "scripted",
+      "kind": "props",
+      "label": "Fryer basket with chicken",
+      "bounds": {
+        "min": [
+          -0.1652,
+          -0.0002,
+          -0.2032
+        ],
+        "max": [
+          0.1652,
+          0.155,
+          0.43
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 1,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "chicken-bucket": {
+      "path": "models/props/chicken-bucket.glb",
+      "lod1": null,
+      "size": [
+        0.208,
+        0.227,
+        0.208
+      ],
+      "triangles": 590,
+      "bytes": 6240,
+      "origin": "bottom-centre",
+      "source": "scripted",
+      "kind": "props",
+      "label": "Chicken bucket",
+      "bounds": {
+        "min": [
+          -0.104,
+          0.0,
+          -0.104
+        ],
+        "max": [
+          0.104,
+          0.2265,
+          0.104
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 1,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "chicken-drum": {
+      "path": "models/props/chicken-drum.glb",
+      "lod1": null,
+      "size": [
+        0.122,
+        0.051,
+        0.052
+      ],
+      "triangles": 132,
+      "bytes": 3096,
+      "origin": "bottom-centre",
+      "source": "scripted",
+      "kind": "props",
+      "label": "Fried drumstick",
+      "bounds": {
+        "min": [
+          -0.0496,
+          0.0005,
+          -0.0271
+        ],
+        "max": [
+          0.0725,
+          0.052,
+          0.0244
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 1,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "chicken-tray": {
+      "path": "models/props/chicken-tray.glb",
+      "lod1": null,
+      "size": [
+        0.315,
+        0.057,
+        0.2
+      ],
+      "triangles": 592,
+      "bytes": 6280,
+      "origin": "bottom-centre",
+      "source": "scripted",
+      "kind": "props",
+      "label": "Tray of breaded chicken",
+      "bounds": {
+        "min": [
+          -0.1577,
+          -0.0,
+          -0.1
+        ],
+        "max": [
+          0.1577,
+          0.0569,
+          0.1
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 1,
       "lod1Triangles": null,
       "lod1Bytes": null,
       "extensionsRequired": [
@@ -118,6 +266,43 @@
       "drawCalls": 9,
       "lod1Triangles": 1276,
       "lod1Bytes": 19864,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "crate": {
+      "path": "models/props/crate.glb",
+      "lod1": null,
+      "size": [
+        0.41,
+        0.22,
+        0.31
+      ],
+      "triangles": 148,
+      "bytes": 3804,
+      "origin": "bottom-centre",
+      "source": "scripted",
+      "kind": "props",
+      "label": "Rice crate",
+      "bounds": {
+        "min": [
+          -0.205,
+          -0.0,
+          -0.155
+        ],
+        "max": [
+          0.205,
+          0.22,
+          0.155
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 1,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
       "extensionsRequired": [
         "EXT_meshopt_compression",
         "KHR_mesh_quantization"
@@ -170,7 +355,7 @@
         0.5
       ],
       "triangles": 2926,
-      "bytes": 29232,
+      "bytes": 29612,
       "origin": "floor-centre",
       "source": "scripted",
       "kind": "equipment",
@@ -194,7 +379,7 @@
       ],
       "drawCalls": 5,
       "lod1Triangles": 414,
-      "lod1Bytes": 9568,
+      "lod1Bytes": 9944,
       "extensionsRequired": [
         "EXT_meshopt_compression",
         "KHR_mesh_quantization"
@@ -209,7 +394,7 @@
         0.8
       ],
       "triangles": 2176,
-      "bytes": 19272,
+      "bytes": 19584,
       "origin": "floor-centre",
       "source": "scripted",
       "kind": "equipment",
@@ -233,7 +418,81 @@
       ],
       "drawCalls": 6,
       "lod1Triangles": 664,
-      "lod1Bytes": 11964,
+      "lod1Bytes": 12064,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "drink-bottle": {
+      "path": "models/props/drink-bottle.glb",
+      "lod1": null,
+      "size": [
+        0.066,
+        0.204,
+        0.066
+      ],
+      "triangles": 248,
+      "bytes": 3888,
+      "origin": "bottom-centre",
+      "source": "scripted",
+      "kind": "props",
+      "label": "Soft-drink bottle",
+      "bounds": {
+        "min": [
+          -0.033,
+          0.0,
+          -0.033
+        ],
+        "max": [
+          0.033,
+          0.204,
+          0.033
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 1,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "drink-can": {
+      "path": "models/props/drink-can.glb",
+      "lod1": null,
+      "size": [
+        0.066,
+        0.117,
+        0.065
+      ],
+      "triangles": 236,
+      "bytes": 3812,
+      "origin": "bottom-centre",
+      "source": "scripted",
+      "kind": "props",
+      "label": "Soft-drink can",
+      "bounds": {
+        "min": [
+          -0.0332,
+          0.0,
+          -0.0324
+        ],
+        "max": [
+          0.0332,
+          0.1168,
+          0.0324
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 1,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
       "extensionsRequired": [
         "EXT_meshopt_compression",
         "KHR_mesh_quantization"
@@ -248,7 +507,7 @@
         0.7
       ],
       "triangles": 5250,
-      "bytes": 45600,
+      "bytes": 46320,
       "origin": "floor-centre",
       "source": "scripted",
       "kind": "equipment",
@@ -404,7 +663,7 @@
         0.45
       ],
       "triangles": 602,
-      "bytes": 9564,
+      "bytes": 9940,
       "origin": "floor-centre",
       "source": "scripted",
       "kind": "equipment",
@@ -521,7 +780,7 @@
         0.08
       ],
       "triangles": 166,
-      "bytes": 5484,
+      "bytes": 5860,
       "origin": "item-bottom-centre",
       "source": "scripted",
       "kind": "equipment",
@@ -559,7 +818,7 @@
         0.8
       ],
       "triangles": 2504,
-      "bytes": 22892,
+      "bytes": 23296,
       "origin": "floor-centre",
       "source": "scripted",
       "kind": "equipment",
@@ -583,11 +842,171 @@
       ],
       "drawCalls": 7,
       "lod1Triangles": 636,
-      "lod1Bytes": 14800,
+      "lod1Bytes": 14932,
       "extensionsRequired": [
         "EXT_meshopt_compression",
         "KHR_mesh_quantization"
       ]
+    },
+    "people": {
+      "path": "models/characters/people.glb",
+      "lod1": null,
+      "size": [
+        0.6,
+        1.72,
+        0.4
+      ],
+      "triangles": 4990,
+      "bytes": 70300,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "characters",
+      "label": "People (rigid-part rig)",
+      "bounds": {
+        "min": [
+          -0.3,
+          0.0,
+          -0.45
+        ],
+        "max": [
+          0.3,
+          1.86,
+          0.3
+        ]
+      },
+      "nodes": [
+        "apron_bib",
+        "apron_waist",
+        "cap",
+        "delivery_box",
+        "foot",
+        "forearm",
+        "hair_afro",
+        "hair_bun",
+        "hair_short",
+        "hand",
+        "head",
+        "headwrap",
+        "helmet",
+        "pelvis",
+        "pelvis_skirt",
+        "shin",
+        "thigh",
+        "torso_blouse",
+        "torso_jacket",
+        "torso_polo",
+        "torso_shirt",
+        "torso_tee",
+        "upper_arm"
+      ],
+      "drawCalls": 23,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ],
+      "rig": {
+        "joints": {
+          "pelvis": [
+            0.0,
+            0.94,
+            0.0
+          ],
+          "torso": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "head": [
+            0.0,
+            1.47,
+            -0.005
+          ],
+          "hip": [
+            0.092,
+            0.905,
+            0.0
+          ],
+          "knee": [
+            0.092,
+            0.5,
+            0.0
+          ],
+          "ankle": [
+            0.092,
+            0.085,
+            0.0
+          ],
+          "shoulder": [
+            0.176,
+            1.39,
+            -0.012
+          ],
+          "elbow": [
+            0.176,
+            1.11,
+            -0.012
+          ],
+          "wrist": [
+            0.176,
+            0.86,
+            -0.012
+          ]
+        },
+        "armSplay": 0.1,
+        "parts": {
+          "head": "head",
+          "torso_polo": "torso",
+          "torso_tee": "torso",
+          "torso_shirt": "torso",
+          "torso_blouse": "torso",
+          "torso_jacket": "torso",
+          "pelvis": "pelvis",
+          "pelvis_skirt": "pelvis",
+          "upper_arm": "shoulder",
+          "forearm": "elbow",
+          "hand": "wrist",
+          "thigh": "hip",
+          "shin": "knee",
+          "foot": "ankle",
+          "hair_short": "head",
+          "hair_afro": "head",
+          "hair_bun": "head",
+          "headwrap": "head",
+          "cap": "head",
+          "helmet": "head",
+          "apron_bib": "torso",
+          "apron_waist": "pelvis",
+          "delivery_box": "torso"
+        }
+      },
+      "partTriangles": {
+        "head": 440,
+        "torso_polo": 428,
+        "torso_tee": 280,
+        "torso_shirt": 464,
+        "torso_blouse": 308,
+        "torso_jacket": 456,
+        "pelvis": 144,
+        "pelvis_skirt": 168,
+        "upper_arm": 128,
+        "forearm": 96,
+        "hand": 108,
+        "thigh": 140,
+        "shin": 96,
+        "foot": 112,
+        "hair_short": 126,
+        "hair_afro": 130,
+        "hair_bun": 226,
+        "headwrap": 306,
+        "cap": 222,
+        "helmet": 240,
+        "apron_bib": 96,
+        "apron_waist": 100,
+        "delivery_box": 176
+      },
+      "personTriangles": 2350
     },
     "pickup-counter": {
       "path": "models/equipment/pickup-counter.glb",
@@ -598,7 +1017,7 @@
         0.6
       ],
       "triangles": 710,
-      "bytes": 15856,
+      "bytes": 16232,
       "origin": "floor-centre",
       "source": "scripted",
       "kind": "equipment",
@@ -629,6 +1048,117 @@
         "KHR_mesh_quantization"
       ]
     },
+    "pizza": {
+      "path": "models/props/pizza.glb",
+      "lod1": null,
+      "size": [
+        0.3,
+        0.02,
+        0.295
+      ],
+      "triangles": 440,
+      "bytes": 6136,
+      "origin": "bottom-centre",
+      "source": "scripted",
+      "kind": "props",
+      "label": "Baked pizza (12\")",
+      "bounds": {
+        "min": [
+          -0.15,
+          0.0,
+          -0.1477
+        ],
+        "max": [
+          0.15,
+          0.02,
+          0.1477
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 1,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "pizza-box": {
+      "path": "models/props/pizza-box.glb",
+      "lod1": null,
+      "size": [
+        0.35,
+        0.047,
+        0.351
+      ],
+      "triangles": 92,
+      "bytes": 3036,
+      "origin": "bottom-centre",
+      "source": "scripted",
+      "kind": "props",
+      "label": "Pizza box (closed)",
+      "bounds": {
+        "min": [
+          -0.175,
+          -0.0,
+          -0.175
+        ],
+        "max": [
+          0.175,
+          0.0474,
+          0.1762
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 1,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "pizza-box-open": {
+      "path": "models/props/pizza-box-open.glb",
+      "lod1": null,
+      "size": [
+        0.35,
+        0.39,
+        0.413
+      ],
+      "triangles": 496,
+      "bytes": 6668,
+      "origin": "bottom-centre",
+      "source": "scripted",
+      "kind": "props",
+      "label": "Pizza box (open, with pizza)",
+      "bounds": {
+        "min": [
+          -0.175,
+          -0.0,
+          -0.2377
+        ],
+        "max": [
+          0.175,
+          0.39,
+          0.175
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 1,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
     "pizza-makeline": {
       "path": "models/equipment/pizza-makeline.glb",
       "lod1": "models/equipment/pizza-makeline.lod1.glb",
@@ -638,7 +1168,7 @@
         0.8
       ],
       "triangles": 5152,
-      "bytes": 39836,
+      "bytes": 40384,
       "origin": "floor-centre",
       "source": "scripted",
       "kind": "equipment",
@@ -662,7 +1192,81 @@
       ],
       "drawCalls": 10,
       "lod1Triangles": 1324,
-      "lod1Bytes": 22112,
+      "lod1Bytes": 22212,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "pizza-raw": {
+      "path": "models/props/pizza-raw.glb",
+      "lod1": null,
+      "size": [
+        0.3,
+        0.02,
+        0.295
+      ],
+      "triangles": 494,
+      "bytes": 6540,
+      "origin": "bottom-centre",
+      "source": "scripted",
+      "kind": "props",
+      "label": "Topped pizza, unbaked",
+      "bounds": {
+        "min": [
+          -0.15,
+          0.0,
+          -0.1477
+        ],
+        "max": [
+          0.15,
+          0.02,
+          0.1477
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 1,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "pizza-tray": {
+      "path": "models/props/pizza-tray.glb",
+      "lod1": null,
+      "size": [
+        0.34,
+        0.028,
+        0.331
+      ],
+      "triangles": 528,
+      "bytes": 6556,
+      "origin": "bottom-centre",
+      "source": "scripted",
+      "kind": "props",
+      "label": "Cut pizza on tray",
+      "bounds": {
+        "min": [
+          -0.17,
+          0.0,
+          -0.1657
+        ],
+        "max": [
+          0.17,
+          0.028,
+          0.1657
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 1,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
       "extensionsRequired": [
         "EXT_meshopt_compression",
         "KHR_mesh_quantization"
@@ -676,8 +1280,8 @@
         1.05,
         0.7
       ],
-      "triangles": 2156,
-      "bytes": 26620,
+      "triangles": 2098,
+      "bytes": 27612,
       "origin": "floor-centre",
       "source": "scripted",
       "kind": "equipment",
@@ -696,13 +1300,14 @@
       },
       "nodes": [
         "BODY",
+        "LABEL",
         "PROPS",
         "SCREEN",
         "STATUS"
       ],
-      "drawCalls": 11,
-      "lod1Triangles": 816,
-      "lod1Bytes": 19648,
+      "drawCalls": 12,
+      "lod1Triangles": 796,
+      "lod1Bytes": 23708,
       "extensionsRequired": [
         "EXT_meshopt_compression",
         "KHR_mesh_quantization"
@@ -717,7 +1322,7 @@
         0.75
       ],
       "triangles": 1228,
-      "bytes": 12444,
+      "bytes": 12812,
       "origin": "floor-centre",
       "source": "scripted",
       "kind": "equipment",
@@ -755,7 +1360,7 @@
         0.6
       ],
       "triangles": 1304,
-      "bytes": 20720,
+      "bytes": 20732,
       "origin": "floor-centre",
       "source": "scripted",
       "kind": "equipment",
@@ -786,6 +1391,43 @@
         "KHR_mesh_quantization"
       ]
     },
+    "rice-pack": {
+      "path": "models/props/rice-pack.glb",
+      "lod1": null,
+      "size": [
+        0.2,
+        0.2,
+        0.191
+      ],
+      "triangles": 360,
+      "bytes": 4872,
+      "origin": "bottom-centre",
+      "source": "scripted",
+      "kind": "props",
+      "label": "Jollof pack (open)",
+      "bounds": {
+        "min": [
+          -0.1,
+          -0.0,
+          -0.1158
+        ],
+        "max": [
+          0.1,
+          0.2004,
+          0.075
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 1,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
     "rice-warmer": {
       "path": "models/equipment/rice-warmer.glb",
       "lod1": null,
@@ -795,7 +1437,7 @@
         0.7
       ],
       "triangles": 3160,
-      "bytes": 27976,
+      "bytes": 28148,
       "origin": "floor-centre",
       "source": "scripted",
       "kind": "equipment",
@@ -835,7 +1477,7 @@
         0.5
       ],
       "triangles": 3448,
-      "bytes": 28000,
+      "bytes": 28544,
       "origin": "floor-centre",
       "source": "scripted",
       "kind": "equipment",
@@ -857,6 +1499,43 @@
         "STOCK"
       ],
       "drawCalls": 3,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "side-cup": {
+      "path": "models/props/side-cup.glb",
+      "lod1": null,
+      "size": [
+        0.096,
+        0.101,
+        0.096
+      ],
+      "triangles": 272,
+      "bytes": 4912,
+      "origin": "bottom-centre",
+      "source": "scripted",
+      "kind": "props",
+      "label": "Side cup (kelewele)",
+      "bounds": {
+        "min": [
+          -0.048,
+          0.0,
+          -0.048
+        ],
+        "max": [
+          0.048,
+          0.1005,
+          0.048
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 1,
       "lod1Triangles": null,
       "lod1Bytes": null,
       "extensionsRequired": [
@@ -1006,6 +1685,43 @@
         "BODY"
       ],
       "drawCalls": 6,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "takeaway-bag": {
+      "path": "models/props/takeaway-bag.glb",
+      "lod1": null,
+      "size": [
+        0.262,
+        0.334,
+        0.157
+      ],
+      "triangles": 212,
+      "bytes": 4092,
+      "origin": "bottom-centre",
+      "source": "scripted",
+      "kind": "props",
+      "label": "Takeaway bag",
+      "bounds": {
+        "min": [
+          -0.131,
+          -0.0,
+          -0.079
+        ],
+        "max": [
+          0.131,
+          0.3338,
+          0.0782
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 1,
       "lod1Triangles": null,
       "lod1Bytes": null,
       "extensionsRequired": [
