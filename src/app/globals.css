@@ -781,3 +781,120 @@ select {
     background: none;
   }
 }
+
+/*
+ * Design trial, light Ghana Network page only (data-look on the app root, see App.tsx).
+ * Actions are ink rather than red, so red only ever means a problem. Violet only ever means AI.
+ * One typeface in lighter weights. Layers are made with tone, not borders.
+ * To drop the trial, remove this block and the data-look attribute.
+ */
+:root[data-theme="light"] [data-look="refined"] {
+  --bg: #f1f1f3;
+  --panel: #ffffff;
+  --panel-border: rgba(22, 22, 29, 0.06);
+  --panel-highlight: transparent;
+  --surface: #ffffff;
+  --surface-2: #f6f6f8;
+  --surface-3: #ececf0;
+  --color-white: #16161d;
+  --accent: #16161d;
+  --ai: #5b45d6;
+  --ai-tint: #f3f1fd;
+}
+/* Tone instead of lines: the shell sits on the page colour, content lifts off it in white. */
+:root[data-theme="light"] [data-look="refined"] .glass {
+  background: var(--panel);
+  border-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 1px 2px rgba(22, 22, 29, 0.04), 0 12px 32px -20px rgba(22, 22, 29, 0.22);
+}
+:root[data-theme="light"] [data-look="refined"] :is(nav[aria-label="Main"], header).glass {
+  background: var(--bg);
+  box-shadow: none;
+}
+[data-look="refined"] > div > div > main {
+  border-radius: 16px 0 0 0;
+}
+/* One typeface, lighter weights: size and position carry the hierarchy. */
+[data-look="refined"] :is(.font-display, .num, .font-mono) {
+  font-family: var(--font-ui), system-ui, sans-serif;
+}
+[data-look="refined"] .font-display {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+[data-look="refined"] header .font-display {
+  font-size: 17px;
+}
+[data-look="refined"] .num {
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+[data-look="refined"] .font-mono.uppercase {
+  letter-spacing: 0.08em;
+}
+/* Red is for problems: navigation and primary actions use ink, the tenant dot stays the brand mark. */
+[data-look="refined"] nav[aria-label="Main"] button .bg-brand-red {
+  background: var(--accent);
+}
+[data-look="refined"] nav[aria-label="Main"] button .text-brand-red {
+  color: var(--accent);
+}
+[data-look="refined"] .btn-primary {
+  background: var(--accent);
+  box-shadow: none;
+}
+/* Violet is the assistant's colour and nothing else's. */
+[data-look="refined"] button[data-ai] {
+  background: var(--ai);
+  box-shadow: 0 10px 24px -12px var(--ai);
+}
+[data-look="refined"] button[data-ai]:hover {
+  background: color-mix(in oklab, var(--ai) 88%, black);
+}
+:root[data-theme="light"] [data-look="refined"] div[data-ai].glass {
+  background: linear-gradient(180deg, var(--ai-tint), var(--panel) 120px);
+}
+[data-look="refined"] div[data-ai] .text-brand-red {
+  color: var(--ai);
+}
+[data-look="refined"] div[data-ai] :is(.bg-brand-red, [class*="bg-brand-red/"]) {
+  background: var(--ai);
+  color: #fff;
+}
+[data-look="refined"] div[data-ai] .bg-brand-red\/20 {
+  background: color-mix(in oklab, var(--ai) 14%, transparent);
+  color: var(--ai);
+}
+/* Priority rows: tone instead of a border. The severity bar becomes a dot, red stays on the title of what's wrong. */
+[data-look="refined"] ol > li > button.group {
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 10px;
+  border-color: transparent;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+[data-look="refined"] ol > li > button.group:hover {
+  border-color: transparent;
+  background: var(--surface-3);
+}
+[data-look="refined"] ol > li > button.group > span:first-child {
+  width: 6px;
+  height: 6px;
+  margin-top: 5px;
+}
+/* Sparklines are neutral: violet is taken, and the number is the message. */
+[data-look="refined"] .num + svg path[stroke] {
+  stroke: #8a8a96;
+}
+[data-look="refined"] .num + svg path:not([stroke]),
+[data-look="refined"] .num + svg circle {
+  fill: #8a8a96;
+}
+/* A figure's context is part of it, so it wraps instead of being cut off. */
+[data-look="refined"] .num ~ .truncate {
+  overflow: visible;
+  white-space: normal;
+}

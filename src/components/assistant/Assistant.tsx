@@ -138,14 +138,14 @@ export default function Assistant() {
     // The camera centre has its own action buttons in the same corner; the assistant stays one ⌘K away.
     if (cctvOpen) return null;
     return (
-      <button type="button" onClick={() => setOpen(true)} className="fixed bottom-14 right-4 z-40 flex items-center gap-2 rounded-full bg-brand-red px-4 py-2.5 text-sm font-semibold text-white shadow-xl shadow-red-950/50 hover:bg-red-600" aria-label="Open AI assistant">
+      <button type="button" data-ai onClick={() => setOpen(true)} className="fixed bottom-14 right-4 z-40 flex items-center gap-2 rounded-full bg-brand-red px-4 py-2.5 text-sm font-semibold text-white shadow-xl shadow-red-950/50 hover:bg-red-600" aria-label="Open AI assistant">
         <Sparkles size={16} /> Ask Ops AI
       </button>
     );
   }
 
   return (
-    <div className="glass animate-fade-in fixed bottom-14 right-4 z-40 flex h-[min(560px,calc(100vh-7rem))] w-[min(400px,calc(100vw-2rem))] flex-col rounded-2xl" role="dialog" aria-label="AI operations assistant">
+    <div data-ai className="glass animate-fade-in fixed bottom-14 right-4 z-40 flex h-[min(560px,calc(100vh-7rem))] w-[min(400px,calc(100vw-2rem))] flex-col rounded-2xl" role="dialog" aria-label="AI operations assistant">
       <div className="flex items-center gap-2 border-b border-white/5 px-3 py-2.5">
         <div className="grid h-7 w-7 place-items-center rounded-lg bg-brand-red/20 text-brand-red">
           <Bot size={15} />

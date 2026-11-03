@@ -1,6 +1,7 @@
 "use client";
 
 import { Layers, Search, X } from "lucide-react";
+import { MovableCard } from "@/components/ui/MovableCard";
 import { STATUS_COLOR, cx } from "@/components/ui/primitives";
 import { GHANA_REGIONS } from "@/lib/network/branches";
 import { TENANT } from "@/config/platform";
@@ -17,7 +18,7 @@ export default function MapToolbar({ visibleCount }: { visibleCount: number }) {
 
   return (
     <>
-      <div className="glass absolute right-11 top-3 z-10 w-[min(380px,calc(100%-3.5rem))] max-md:right-3 max-md:w-[calc(100%-1.5rem)] rounded-xl p-2.5 max-md:top-auto max-md:bottom-14">
+      <MovableCard area="map" id="filters" title="Search and filters" className="glass absolute right-11 top-3 z-10 w-[min(380px,calc(100%-3.5rem))] max-md:right-3 max-md:w-[calc(100%-1.5rem)] rounded-xl p-2.5 max-md:top-auto max-md:bottom-14">
         <label className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/30 px-2.5 py-1.5">
           <Search size={14} className="text-white/45" />
           <input
@@ -76,9 +77,9 @@ export default function MapToolbar({ visibleCount }: { visibleCount: number }) {
             )}
           </div>
         </div>
-      </div>
+      </MovableCard>
 
-      <div className="glass absolute bottom-3 left-3 z-10 rounded-lg px-3 py-2 text-[10.5px] text-white/70 max-md:hidden" aria-label="Map legend">
+      <MovableCard area="map" id="legend" title="Legend" className="glass absolute bottom-3 left-3 z-10 rounded-lg px-3 py-2 text-[10.5px] text-white/70 max-md:hidden" aria-label="Map legend">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           {(
             [
@@ -103,7 +104,7 @@ export default function MapToolbar({ visibleCount }: { visibleCount: number }) {
           </div>
         )}
         <div className="mt-1 text-[9.5px] text-white/40">Locations verified from the official outlet directory</div>
-      </div>
+      </MovableCard>
     </>
   );
 }

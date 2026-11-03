@@ -22,6 +22,10 @@ export default function App() {
   const toggle = useApp((s) => s.togglePanel);
   const section = useApp((s) => s.section);
   const cctvOpen = useApp((s) => s.cctvOpen);
+  const enteredBranchId = useApp((s) => s.enteredBranchId);
+  const resolvedTheme = useApp((s) => s.resolvedTheme);
+  // Design trial: the refined look (globals.css) runs on the light Ghana Network page only.
+  const refined = section === "network" && !enteredBranchId && resolvedTheme === "light";
   // The camera centre is a full-bleed control-room surface: no inspector or activity feed beside it.
   const fullBleed = section === "editor" || section === "analytics" || section === "settings" || (section === "cameras" && cctvOpen);
   usePhoneLayout();
@@ -30,7 +34,7 @@ export default function App() {
   useThemeSync();
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-[var(--bg)] text-white">
+    <div className="flex h-full w-full overflow-hidden bg-[var(--bg)] text-white" data-look={refined ? "refined" : undefined}>
       <SimDriver />
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
