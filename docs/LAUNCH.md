@@ -2,55 +2,60 @@
 
 Every cold launch of the app runs: **intro → access gate → app** (configurable to
 **gate → intro → app**). Nothing in the app is reachable until the gate passes. Both screens
-share one real-time 3D world: the East Legon twin, rendered live at the device's resolution.
+share one real-time world: the East Legon floor plan as line art, drawn live at the device's resolution.
 
 Files: `src/config/launch.ts` (config), `src/lib/auth/gate.ts` (hashing, attempts, sessions),
-`src/components/launch/` (scene, overlay, gate, controller, score), `public/intro/` (fallback
-video), demo videos under `docs/launch/`.
+`src/components/launch/` (scene, overlay, gate, controller, score), screenshots under `docs/launch/`.
 
-## The intro (17 s, skippable after 3 s)
+## The intro (14 s, skippable after 3 s)
 
-| t | Beat | What happens in the scene |
+Line art, not a film: nothing is modelled, lit or peopled. The East Legon floor plan draws itself
+out of black and the camera takes one slow move around it.
+
+| t | Beat | What happens |
 |---|---|---|
-| 0–3 s | Black. A single light resolves | Fade from black; a key spotlight ramps up over the dark twin while a cage of 5,200 particles (sampled from every wall and equipment top) settles out of the void onto the building; wall edges draw in as steel wire. |
-| 4.5 s | Fryer line ignites | Camera arrives low at the fry station; fryer glows pulse orange, the kitchen zone light comes on, the zone status ring pulses. |
-| 7.5 s | Counter lights come on | Dolly to the front counter; the counter zone light rises, cashiers and the queue (the simulation was warmed with real orders) are in frame. |
-| 10.5 s | Dining fills | Wide dining shot; diners and waiting customers; the dining ring pulses. |
-| 13.2 s | Rider bay | Dispatch rack and the riders' door, which the simulation opens as the camera passes. |
-| 12–16 s | Instrumentation rises | Queue count and longest wait, fryer oil, hot-holding temperature, cold-room temperature and an order tag rise out of the scene as thin instrument chips. |
-| 15.8–17 s | Hero wide + title | Pull back to the hero wide; interior and ambient light complete; the platform name resolves with a light sweep and the tagline; riser and title hit in the score. |
-| 17–18 s | Hold, dissolve | Fade to the gate, where the same world keeps idling. |
+| 0–1 s | Black | Fade from black; a single point of light resolves at the centre of the plan. |
+| 0.8–4.8 s | The plan draws | Walls draw themselves in thin steel lines, radiating out from the centre with a bright tip on every line; a faint 1 m grid comes up underneath; 3,200 particles settle out of the void onto the walls. |
+| 4.8 s | Kitchen line | The kitchen's equipment outlines draw in one box after another; the kitchen status ring locks in and pulses. |
+| 6.8 s | Front counter | Counter equipment draws; red flow dots start running the real customer, staff and rider paths. |
+| 8.6 s | Dining | Table outlines draw; the dining ring locks. |
+| 10.2 s | Rider bay | Dispatch rack and rider door draw; the bay ring locks. |
+| 10.6–12 s | Live instruments | Queue and longest wait, fryer oil, cold-room temperature and an order tag rise out of the drawing as thin instrument chips (real numbers from the warmed simulation). |
+| 12.6 s | Hero + title | Pull back to the hero angle; the platform name resolves with a light sweep and the tagline; riser and hit in the score. |
+| 14–15 s | Dissolve | Fade to the gate, where the same drawing keeps idling. |
 
-Chapter captions (lower-left, monospace) name each beat. The overlay is HTML, so it stays crisp on any screen.
+Chapter captions (upper-left, monospace) name each beat. The overlay is HTML, so it stays crisp on any screen.
 
 ### Technical
 
-- **Real-time**: React Three Fiber + three.js, the same `RestaurantModel` as the twin, lit only by
-  the intro's own lights (`environment={false}`, `lightsScale` brings interior lights up from 0).
-  Camera path: Catmull-Rom through keyframes derived from the zone cameras (so any layout works),
-  piecewise-linear in time so every beat lands on its second, with a hand-held breath.
-- **Post-processing** (`@react-three/postprocessing`): bloom, depth of field (target on the hero
-  point), film grain (soft-light noise), vignette, chromatic aberration (radial), ACES tone
-  mapping, SMAA. Tiers: `cinema` (all), `standard` (no DoF / CA), `lite` (none), `video` (fallback).
-  Chosen by `detectTier()` from cores, memory, coarse pointer, WebGL2 and reduced-motion;
-  override with `?intro=cinema|standard|lite|video`.
-- **Audio**: synthesised in the browser (`audio.ts`): sub drone, detuned pad, filtered air, zone
-  pulses on each pass, riser into the title, title hit, unlock chord, deny thud. Starts only on
-  the first pointer or key gesture (platform autoplay rule); the sound toggle persists per device.
+- **Real-time**: React Three Fiber + three.js. Walls, equipment and tables come straight from the
+  floor plan (`plan.walls`, `plan.equipment`, `plan.furniture`), grouped by the zone whose cameras
+  watch their room, so any branch layout draws correctly. Each line set is a `LineSegments` with a
+  per-vertex draw order and a small shader that reveals the line up to the current progress with a
+  glowing tip; flows follow `plan.navigationPaths`.
+- **Camera**: Catmull-Rom path through keyframes placed outside each zone (looking across the plan
+  at it), sampled by keyframe index so every beat lands on its second, with a hand-held breath.
+- **Post-processing** (`@react-three/postprocessing`): bloom (the line tips and rings glow), film
+  grain, vignette, SMAA; `cinema` adds a touch of chromatic aberration at full pixel ratio. Tiers:
+  `cinema`, `standard`, `lite` (no post), `none` (no WebGL or reduced motion: the intro is skipped
+  and the gate sits on a plain dark background). Chosen by `detectTier()`; override with
+  `?intro=cinema|standard|lite|none`.
+- **Palette**: one neutral steel for all line work, the brand red only for the flow dots and the
+  skip ring, green / amber / red only on the zone status rings. Nothing else is coloured.
+- **Audio**: synthesised in the browser (`audio.ts`): sub drone, detuned pad, filtered air, a pulse on
+  each zone beat, riser into the title, title hit, unlock chord, deny thud. Starts only on the first
+  pointer or key gesture (platform autoplay rule); the sound toggle persists per device.
 - **Skip**: bottom-right after 3 s, with a progress ring; `Esc` / `Enter` / `Space` also skip.
   "Don't show again" is stored per device (`ops.intro.skip.v1`); Settings → Launch & access →
   *Play intro* and ⌘K → *Play the intro* force it (`/?intro=play`).
-- **Fallback video**: `public/intro/intro-fallback.mp4` (H.264) rendered from the same scene at
-  1280×720 by `scripts/render-intro.cjs`; `IntroVideo` drives the overlay timeline from the
-  video clock. Missing file → the intro is skipped, not broken.
 - **Dev hooks** (development builds only): `window.__opsLaunch.seek(t)` freezes the intro at a
   second, `.resume()`, `.phase("gate")`.
 
 ## The access gate
 
-- One frosted card over the idling twin (slow orbit, breathing key light, status rings pulsing).
+- One frosted card over the idling drawing (slow orbit, lines breathing, status rings pulsing).
 - Mark · "Enter access key" · key field with show / hide · **Unlock** · *Keep me signed in* (on by default).
-- Correct key: rings flip green one by one, the camera dollies in, bloom lifts, the card lifts
+- Correct key: rings flip green one by one, the lines brighten, the camera dollies in, the card lifts
   away, dissolve to the app. Wrong key: shake, field clears, "Incorrect password", attempts-left
   hint. Five failures: 30-second cooldown with a live countdown (the field and button disable).
 - Sessions: *Keep me signed in* stores the session in `localStorage` for 7 days; off stores it in
@@ -93,22 +98,22 @@ globally; the per-device "Don't show again" turns it off locally.
 
 ## Proof
 
-Captured from the real scene in headless Chromium (software GL, so the post stack is the
-`cinema` tier at 1440×900 and iPhone 13 at 2×). Intro beats, then the gate states, then the app:
+Captured from the real scene in headless Chromium (`cinema` tier at 1440×900, and iPhone 13 at 2×).
+Intro beats, then the gate states, then the app, all under `docs/launch/`:
 
 | Beat | Desktop | Phone |
 |---|---|---|
-| 0.8 s · black, one light | `desktop-intro-0_8s.png` | `phone-intro-0_8s.png` |
-| 2.6 s · particles settle | `desktop-intro-2_6s.png` | `phone-intro-2_6s.png` |
-| 5 s · fryer line | `desktop-intro-5s.png` | `phone-intro-5s.png` |
-| 8 s · counter | `desktop-intro-8s.png` | `phone-intro-8s.png` |
-| 11 s · dining | `desktop-intro-11s.png` | `phone-intro-11s.png` |
-| 13.6 s · rider bay + instruments | `desktop-intro-13_6s.png` | `phone-intro-13_6s.png` |
-| 16.6 s · hero + title | `desktop-intro-16_6s.png` | `phone-intro-16_6s.png` |
+| 0.6 s · black, one light | `desktop-intro-0_6s.png` | `phone-intro-0_6s.png` |
+| 2.4 s · walls draw, particles settle | `desktop-intro-2_4s.png` | `phone-intro-2_4s.png` |
+| 4.2 s · plan complete | `desktop-intro-4_2s.png` | `phone-intro-4_2s.png` |
+| 6 s · kitchen line | `desktop-intro-6s.png` | `phone-intro-6s.png` |
+| 7.8 s · counter, flows | `desktop-intro-7_8s.png` | `phone-intro-7_8s.png` |
+| 9.6 s · dining | `desktop-intro-9_6s.png` | `phone-intro-9_6s.png` |
+| 11.4 s · rider bay, instruments | `desktop-intro-11_4s.png` | `phone-intro-11_4s.png` |
+| 13 s · hero + title | `desktop-intro-13s.png` | `phone-intro-13s.png` |
 | Gate | `desktop-gate.png` | `phone-gate.png` |
 | Wrong key | `desktop-gate-wrong.png` | `phone-gate-wrong.png` |
 | Unlock | `desktop-unlock.png` | `phone-unlock.png` |
 | App | `desktop-app.png` | `phone-app.png` |
 
-Demo videos of the whole flow (intro → gate → wrong key → unlock → app):
-`docs/launch/launch-desktop.mp4` and `docs/launch/launch-phone.mp4`. All files live in `docs/launch/`.
+Light theme (the launch follows the app theme): `desktop-light-intro-13s.png`, `desktop-light-gate.png`.
