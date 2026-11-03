@@ -159,13 +159,13 @@ export function OrderComposer({ sim }: { sim: BranchSimulation }) {
   const place = (ls: Array<{ menuId: string; qty: number }>) => {
     const o = sim.placeOrder(ls, channel, fulfilment);
     followOrder(o.id);
-    notify(`Simulated order #${o.number} sent to the kitchen`, "success");
+    notify(`Order #${o.number} sent to the kitchen`, "success");
     setLines([]);
   };
 
   return (
     <div className="rounded-lg border border-white/[0.08] bg-white/[0.03] p-2.5">
-      <SectionTitle>New simulated order</SectionTitle>
+      <SectionTitle>New order</SectionTitle>
       <div className="flex gap-1.5">
         <select value={pick} onChange={(e) => setPick(e.target.value)} className="min-w-0 flex-1 rounded-md border border-white/10 bg-black/40 px-1.5 py-1 text-[11px] text-white" aria-label="Menu item">
           {cats.map((c) => (
@@ -215,7 +215,7 @@ export function OrderComposer({ sim }: { sim: BranchSimulation }) {
           Demo order
         </Btn>
       </div>
-      <p className="mt-1.5 text-[10px] text-white/35">Menu names and prices from the public Chris B catalogue; the order itself is simulated.</p>
+      <p className="mt-1.5 text-[10px] text-white/35">Menu names and prices from the public Chris B catalogue.</p>
     </div>
   );
 }

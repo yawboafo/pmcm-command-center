@@ -1,12 +1,11 @@
 "use client";
 
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { SimBadge, Stat, cx } from "@/components/ui/primitives";
-import { ghs, ghsCompact } from "@/lib/format";
-import { BRANCH_BY_ID } from "@/lib/network/branches";
+import { Readout, SimBadge, cx } from "@/components/ui/primitives";
+import { ghsCompact } from "@/lib/format";
 import type { BranchSnapshot } from "@/lib/network/network";
-import { useApp } from "@/store/app";
-import { requestFlyTo, useMapFilters } from "./mapState";
+import { sims } from "@/store/sims";
+import { useMapFilters } from "./mapState";
 
 export function nationalTotals(snaps: BranchSnapshot[]) {
   const open = snaps.filter((s) => s.open);
@@ -29,64 +28,53 @@ export function nationalTotals(snaps: BranchSnapshot[]) {
   };
 }
 
-/** Floating national KPI card on the Ghana map (simulated metrics). */
+/**
+ * National telemetry ribbon on the Ghana map: the network's state in one line of readouts
+ * (simulated metrics), with today's revenue curve. Ranked issues and top branches live in the
+ * inspector, so nothing here is duplicated.
+ */
 export default function NationalDashboard({ snaps }: { snaps: BranchSnapshot[] }) {
   const open = useMapFilters((s) => s.dashboardOpen);
   const toggle = useMapFilters((s) => s.toggleDashboard);
-  const selectBranch = useApp((s) => s.selectBranch);
   const t = nationalTotals(snaps);
-  const top = [...snaps].sort((a, b) => b.salesToday - a.salesToday).slice(0, 5);
-  const max = top[0]?.salesToday || 1;
+  const hour = new Date(sims().clock).getUTCHours();
+  // Revenue per hour across the network so far today, and cumulative revenue.
+  const hourly = Array.from({ length: hour + 1 }, (_, h) => snaps.reduce((a, s) => a + (s.hourlySales[h] ?? 0), 0));
+  const cumulative = hourly.reduce<number[]>((acc, v) => (acc.push((acc.at(-1) ?? 0) + v), acc), []);
+  const thisHour = hourly.at(-1) ?? 0;
+  const lastHour = hourly.at(-2) ?? 0;
+  const delta = lastHour ? (thisHour - lastHour) / lastHour : 0;
 
   return (
-    <div className="glass absolute left-3 top-3 z-10 w-[min(330px,calc(100%-1.5rem))] rounded-xl">
-      <button type="button" onClick={toggle} className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left" aria-expanded={open}>
-        <div className="min-w-0 flex-1">
-          <div className="font-display text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">National overview</div>
-          <div className="font-display text-xl font-bold tabular-nums text-white">
-            {ghs(t.sales)} <span className="text-[11px] font-medium text-white/45">revenue today</span>
-          </div>
-        </div>
+    <div className="glass absolute left-3 top-3 z-10 max-w-[calc(100%-28.5rem)] rounded-xl max-md:max-w-[calc(100%-1.5rem)]">
+      <div className="flex items-center gap-2 px-3.5 pt-2.5">
+        <span className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-white/45">Network telemetry</span>
         <SimBadge />
-        {open ? <ChevronUp size={15} className="text-white/50" /> : <ChevronDown size={15} className="text-white/50" />}
-      </button>
-      {open && (
-        <div className="border-t border-white/5 px-3.5 pb-3 pt-2.5">
-          <div className="grid grid-cols-3 gap-x-3 gap-y-2.5">
-            <Stat label="Branches" value={t.total} sub={`${t.open} open now`} />
-            <Stat label="Active orders" value={t.active.toLocaleString()} />
-            <Stat label="Orders today" value={t.orders.toLocaleString()} />
-            <Stat label="Avg prep" value={`${t.avgPrep.toFixed(1)}m`} />
-            <Stat label="Kitchen util." value={`${Math.round(t.avgLoad * 100)}%`} />
-            <Stat label="Staff on duty" value={t.staff} />
-            <Stat label="Critical" value={t.critical} tone={t.critical ? "red" : "green"} sub="branches" />
-            <Stat label="Warnings" value={t.warning} tone={t.warning ? "yellow" : "default"} sub="branches" />
-            <Stat label="Equip. health" value={`${Math.round(t.equipmentHealth * 100)}%`} sub={`${t.lowStock} low-stock`} />
-          </div>
-          <div className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-white/45">Top revenue today</div>
-          <ol className="mt-1.5 space-y-1">
-            {top.map((s, i) => (
-              <li key={s.branchId}>
-                <button
-                  type="button"
-                  className="group flex w-full items-center gap-2 text-left text-[11.5px]"
-                  onClick={() => {
-                    selectBranch(s.branchId);
-                    requestFlyTo(s.branchId);
-                  }}
-                >
-                  <span className="w-3 font-mono text-white/35">{i + 1}</span>
-                  <span className="w-24 truncate text-white/80 group-hover:text-white">{BRANCH_BY_ID.get(s.branchId)?.name}</span>
-                  <span className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
-                    <span className="absolute inset-y-0 left-0 rounded-full bg-[#3987e5]" style={{ width: `${(s.salesToday / max) * 100}%` }} />
-                  </span>
-                  <span className={cx("w-14 text-right font-mono tabular-nums text-white/75")}>{ghsCompact(s.salesToday)}</span>
-                </button>
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
+        <button type="button" onClick={toggle} aria-expanded={open} aria-label={open ? "Collapse telemetry" : "Expand telemetry"} className="ml-auto rounded p-0.5 text-white/40 hover:bg-white/10 hover:text-white">
+          {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+      </div>
+      <div className={cx("grid gap-x-6 gap-y-3 px-3.5 pb-3 pt-2", open ? "grid-cols-[repeat(2,minmax(128px,1fr))] xl:grid-cols-[repeat(4,minmax(128px,1fr))]" : "grid-cols-[repeat(2,minmax(128px,1fr))]")}>
+        <Readout label="Revenue today" value={ghsCompact(t.sales)} trend={cumulative} sub={`${ghsCompact(thisHour)} this hour · ${delta >= 0 ? "+" : ""}${Math.round(delta * 100)}% vs last`} />
+        <Readout label="Active orders" value={t.active.toLocaleString()} trend={hourly} trendColor="#a5b4fc" sub={`${t.orders.toLocaleString()} today`} />
+        {open && (
+          <>
+            <Readout label="Avg prep" value={t.avgPrep.toFixed(1)} unit="min" tone={t.avgPrep > 15 ? "yellow" : "default"} sub={`${Math.round(t.avgLoad * 100)}% kitchen load`} />
+            <Readout
+              label="Branches"
+              value={`${t.open}/${t.total}`}
+              unit="open"
+              sub={
+                <span className="flex items-center gap-2">
+                  <span className={t.critical ? "text-red-300" : ""}>{t.critical} critical</span>
+                  <span className={t.warning ? "text-amber-200" : ""}>{t.warning} warning</span>
+                  <span>{Math.round(t.equipmentHealth * 100)}% equip.</span>
+                </span>
+              }
+            />
+          </>
+        )}
+      </div>
     </div>
   );
 }

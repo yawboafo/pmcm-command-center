@@ -1,3 +1,4 @@
+import { UI_POLICY } from "../../config/platform";
 import { NavGrid } from "../floorplan/nav";
 import { roomAt } from "../floorplan/derive";
 import type { Equipment, FloorPlan, Sensor, Vec2, Workstation, WorkstationType } from "../floorplan/types";
@@ -6,11 +7,13 @@ import { CHICKEN_BATCH, MENU, MENU_BY_ID, stagesFor } from "./menu";
 import { Rng, hashString } from "./rng";
 import {
   ORDER_FLOW,
+  isDeviceSource,
   type Agent,
   type Alert,
   type BranchMetrics,
   type Channel,
   type CleaningRecord,
+  type DataSource,
   type EquipmentState,
   type Fulfilment,
   type InventoryItem,
@@ -28,12 +31,17 @@ import {
 } from "./types";
 
 export const STEP = 0.25;
+
+/** How alert text names where a reading came from. */
+// Alert wording names the source only when the UI policy shows simulated labels; LIVE is always named.
+const SOURCE_WORD: Record<DataSource, string> = UI_POLICY.showSimulatedLabels ? { live: "Live ", simulated: "Simulated ", virtual: "Simulated-device " } : { live: "Live ", simulated: "", virtual: "" };
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const DAY = 86400;
 
 const STAFF_NAMES = ["Kwame", "Ama", "Kofi", "Akosua", "Yaw", "Efua", "Kojo", "Abena", "Kwesi", "Esi", "Kwabena", "Adwoa", "Fiifi", "Selorm", "Elikem", "Naa", "Nii", "Afia", "Kobby", "Dzifa"];
 const SURNAMES = ["Mensah", "Owusu", "Boateng", "Asante", "Agyeman", "Addo", "Tetteh", "Quaye", "Darko", "Ofori", "Amoah", "Lartey", "Nkansah", "Appiah", "Sarpong"];
 
-const ROLE_SKILLS: Record<StaffRole, WorkstationType[]> = {
+export const ROLE_SKILLS: Record<StaffRole, WorkstationType[]> = {
   cashier: ["order-counter", "pickup"],
   pizza: ["pizza-prep", "oven", "qc"],
   chicken: ["chicken-prep", "fryer", "qc"],
@@ -42,7 +50,7 @@ const ROLE_SKILLS: Record<StaffRole, WorkstationType[]> = {
   supervisor: ["qc", "packaging", "pizza-prep", "chicken-prep", "rice", "pickup", "dispatch"],
 };
 
-const ROLE_LABEL: Record<StaffRole, string> = {
+export const ROLE_LABEL: Record<StaffRole, string> = {
   cashier: "Cashier",
   pizza: "Pizza Cook",
   chicken: "Chicken Cook",
@@ -55,7 +63,7 @@ export function roleLabel(r: StaffRole) {
   return ROLE_LABEL[r];
 }
 
-const ROSTER: Record<string, StaffRole[]> = {
+export const ROSTER: Record<string, StaffRole[]> = {
   A: ["cashier", "pizza", "chicken", "rice", "packer"],
   B: ["cashier", "cashier", "pizza", "pizza", "chicken", "rice", "packer", "supervisor"],
   C: ["cashier", "cashier", "pizza", "pizza", "pizza", "chicken", "chicken", "rice", "rice", "packer", "packer", "supervisor"],
@@ -167,7 +175,7 @@ export class BranchSimulation {
     this.initSeats();
     this.initStaff();
     this.nextArrival = this.rng.exp(this.arrivalRatePerSec()) * 0.5;
-    this.log("system", "info", `Simulation started for ${this.branchName} (${opts.plan.name}). All activity is simulated demo data.`);
+    this.log("system", "info", `Twin started for ${this.branchName} (${opts.plan.name})`);
   }
 
   // ───────────────────────────── clock ─────────────────────────────
@@ -407,6 +415,15 @@ export class BranchSimulation {
     return order;
   }
 
+  /** Simulated payment (method mix is a documented demo assumption). */
+  private pay(order: Order) {
+    if (order.payment) return;
+    const counter = order.channel === "walk-in" || order.channel === "pos";
+    const r = this.rng.next();
+    const method = counter ? (r < 0.5 ? "mobile-money" : r < 0.65 ? "card" : "cash") : r < 0.8 ? "mobile-money" : "card";
+    order.payment = { method, paidAt: this.t };
+  }
+
   /** Manually inject an order (used by the demo "new order" control and the AI assistant). */
   placeOrder(lines: Array<{ menuId: string; qty: number }>, channel: Channel = "demo", fulfilment: Fulfilment = "delivery") {
     const o = this.createOrder(lines, channel, fulfilment);
@@ -416,19 +433,23 @@ export class BranchSimulation {
 
   /**
    * Apply an order event from a connected POS / ordering system (already validated and
-   * de-duplicated upstream). New orders enter the simulated kitchen marked LIVE with the
-   * source system's prices; later events update status. Returns the order, or null if
-   * no line maps to a known menu item.
+   * de-duplicated upstream). New orders enter the simulated kitchen marked LIVE (physical
+   * source) or SIM DEVICE (virtual terminal, `origin: "virtual"`) with the source system's
+   * prices; later events update status. Returns the order, or null if no line maps to a
+   * known menu item.
    */
-  ingestOrderEvent(e: { externalRef: string; channel: Exclude<Channel, "demo">; fulfilment: Fulfilment; status: string; lines: Array<{ menuId: string; qty: number; unitPriceGhs: number }> }): Order | null {
-    let o = [...this.orders.values()].find((x) => x.source === "live" && x.externalRef === e.externalRef);
+  ingestOrderEvent(e: { externalRef: string; channel: Exclude<Channel, "demo">; fulfilment: Fulfilment; status: string; lines: Array<{ menuId: string; qty: number; unitPriceGhs: number }>; origin?: "physical" | "virtual" }): Order | null {
+    const source: DataSource = e.origin === "virtual" ? "virtual" : "live";
+    let o = [...this.orders.values()].find((x) => x.source === source && x.externalRef === e.externalRef);
     if (!o) {
       if (!["RECEIVED", "ACCEPTED"].includes(e.status)) return null;
       const lines = e.lines.filter((l) => MENU_BY_ID.has(l.menuId));
       if (!lines.length) return null;
       o = this.createOrder(lines, e.channel, e.fulfilment);
-      o.source = "live";
+      o.source = source;
       o.externalRef = e.externalRef;
+      // Payment is not part of the order webhook: never show a simulated payment on a live order.
+      o.payment = undefined;
       // The source system's prices are authoritative.
       o.lines.forEach((l, i) => (l.price = lines[i].unitPriceGhs));
       o.total = o.lines.reduce((s, l) => s + l.qty * l.price, 0);
@@ -443,6 +464,7 @@ export class BranchSimulation {
   }
 
   private accept(order: Order) {
+    if (order.source === "simulated") this.pay(order);
     this.setStatus(order, "ACCEPTED");
     order.acceptedAt = this.t;
     for (const l of order.lines) {
@@ -455,6 +477,9 @@ export class BranchSimulation {
         }
     }
     this.setStatus(order, "KITCHEN_QUEUE");
+    // Theoretical usage: the recipe is deducted at the moment of sale, as a POS-driven
+    // inventory system would, so stock and shortages react as soon as an order lands.
+    if (this.consumeForOrder(order)) this.log("inventory", "info", `Recipe stock deducted for order #${order.number}`, { orderId: order.id });
     for (const uid of order.unitIds) this.advanceUnit(this.units.get(uid)!);
     this.checkOrderUnitsDone(order);
   }
@@ -505,7 +530,10 @@ export class BranchSimulation {
   cancelOrder(orderId: string, reason = "Cancelled by manager") {
     const o = this.orders.get(orderId);
     if (!o || ["COMPLETED", "CANCELLED", "REFUNDED"].includes(o.status)) return false;
+    const started = [...this.tasks.values()].some((t) => t.orderId === orderId && t.kind === "stage" && (t.state === "working" || t.state === "machine" || t.state === "done"));
     for (const t of this.tasks.values()) if (t.orderId === orderId && t.state !== "done") this.releaseTask(t, true);
+    // Nothing produced yet: the deducted ingredients are still on the shelf.
+    if (o.inventoryConsumed && !started && this.restock(`order-cancel:${o.id}`, o)) this.log("inventory", "info", `Recipe stock returned for cancelled order #${o.number}`, { orderId });
     this.setStatus(o, "CANCELLED", reason);
     o.note = reason;
     this.log("order", "warning", `Order #${o.number} cancelled — ${reason}`, { orderId });
@@ -518,7 +546,7 @@ export class BranchSimulation {
   refundOrder(orderId: string) {
     const o = this.orders.get(orderId);
     if (!o || !["COMPLETED", "CANCELLED", "FAILED"].includes(o.status)) return false;
-    const how = o.source === "live" ? "recorded in source system" : "simulated";
+    const how = isDeviceSource(o.source) ? "recorded in source system" : "simulated";
     this.setStatus(o, "REFUNDED", `Refund ${how}`);
     this.log("order", "info", `Order #${o.number} refunded (${how})`, { orderId });
     this.version++;
@@ -529,7 +557,6 @@ export class BranchSimulation {
     this.setStatus(o, "COMPLETED");
     o.completedAt = this.t;
     if (o.acceptedAt !== undefined && o.readyAt !== undefined) this.prepTimes.push((o.readyAt - o.acceptedAt) / 60);
-    this.consumeForOrder(o);
     this.log("order", "success", `Order #${o.number} completed (${fulfilmentLabel(o.fulfilment)})`, { orderId: o.id });
   }
 
@@ -659,10 +686,58 @@ export class BranchSimulation {
       if (st) st.activeJobs++;
     }
     const order = task.orderId ? this.orders.get(task.orderId) : undefined;
-    if (order && task.unitId) {
-      const phase = this.units.get(task.unitId)!.stages[this.units.get(task.unitId)!.stageIndex]?.phase;
-      if (phase) this.setStatus(order, phase);
+    if (order && task.unitId) this.syncOrderPhase(order);
+  }
+
+  /**
+   * Order status follows its least-advanced item: an order is COOKING until every item has
+   * at least reached cooking, and so on. (setStatus never moves an order backwards.)
+   */
+  private syncOrderPhase(order: Order) {
+    const flow = ["KITCHEN_QUEUE", "PREPARATION", "COOKING", "QUALITY_CHECK"] as const;
+    let least: number = flow.length - 1;
+    for (const uid of order.unitIds) {
+      const u = this.units.get(uid);
+      if (!u || u.done) continue;
+      const started = [...this.tasks.values()].some((t) => t.unitId === uid && t.kind === "stage" && (t.state === "working" || t.state === "machine"));
+      const stage = started ? u.stages[u.stageIndex] : u.stages[u.stageIndex - 1];
+      least = Math.min(least, stage ? flow.indexOf(stage.phase) : 0);
     }
+    if (least > 0) this.setStatus(order, flow[least]);
+  }
+
+  /**
+   * ESTIMATED time (sim seconds) the order will be ready: remaining stage time of the slowest
+   * item, plus work already queued at each station, plus packing and hand-over. Recomputed on
+   * every call, so it reacts to queue changes.
+   */
+  estimateReadyAt(order: Order): number | null {
+    if (order.readyAt !== undefined) return order.readyAt;
+    if (["CANCELLED", "FAILED", "REFUNDED"].includes(order.status)) return null;
+    const queued = new Map<string, number>();
+    for (const t of this.tasks.values()) if (t.state === "pending") queued.set(t.ws, (queued.get(t.ws) ?? 0) + t.duration);
+    const capacity = (ws: string) => Math.max(1, this.plan.workstations.filter((w) => w.type === ws).reduce((n, w) => n + Math.max(1, w.capacity), 0));
+    let slowest = 0;
+    // Not accepted yet: items have not been expanded into production units, so use the menu's stages.
+    if (!order.unitIds.length)
+      for (const l of order.lines)
+        for (const spec of MENU_BY_ID.get(l.menuId)?.units ?? []) {
+          const stages = stagesFor(spec);
+          const first = stages[0];
+          const wait = first ? (queued.get(first.ws) ?? 0) / capacity(first.ws) : 0;
+          slowest = Math.max(slowest, wait + stages.reduce((a, st) => a + st.duration, 0));
+        }
+    for (const uid of order.unitIds) {
+      const u = this.units.get(uid);
+      if (!u || u.done) continue;
+      const cur = [...this.tasks.values()].find((t) => t.unitId === uid && t.kind === "stage" && t.state !== "done");
+      let rest = cur?.endsAt !== undefined ? Math.max(0, cur.endsAt - this.t) : (u.stages[u.stageIndex]?.duration ?? 0) + (queued.get(u.stages[u.stageIndex]?.ws ?? "") ?? 0) / capacity(u.stages[u.stageIndex]?.ws ?? "");
+      for (const st of u.stages.slice(u.stageIndex + 1)) rest += st.duration;
+      slowest = Math.max(slowest, rest);
+    }
+    const packed = ["READY", "OUT_FOR_DELIVERY", "COMPLETED"].includes(order.status);
+    const start = order.acceptedAt ?? this.t + 25;
+    return Math.max(this.t, start) + slowest + (packed ? 0 : 20 + 5 * order.unitIds.length + 4);
   }
 
   private finishWork(agent: Agent, task: Task) {
@@ -858,6 +933,54 @@ export class BranchSimulation {
   }
 
   /**
+   * Apply a staff badge position fix (RTLS, already calibrated to the floor plan). From the
+   * first fix the person is *shown* where the badge says; their simulated work continues on a
+   * shadow position. Returns the staff id, or null if that person is not on shift.
+   */
+  ingestStaffLocation(r: { staffId: string; tagId: string; x: number; z: number; accuracy: number; technology: "uwb" | "ble"; source: "live" | "virtual"; battery?: number }): string | null {
+    const a = this.agents.find((x) => x.id === r.staffId && x.kind === "staff" && !x.gone);
+    if (!a) return null;
+    const shadow: [number, number] = a.tracked ? a.tracked.shadow : [a.pos[0], a.pos[1]];
+    if (!a.tracked) {
+      // Show them where the badge says from the first fix; their simulated work carries on.
+      a.pos = [r.x, r.z];
+      this.log("staff", "info", `${a.name} is now located by badge ${r.tagId} (${r.source === "live" ? "live" : "virtual"})`, { agentId: a.id });
+    }
+    a.tracked = { tagId: r.tagId, source: r.source, technology: r.technology, target: [r.x, r.z], accuracy: r.accuracy, seenAt: this.t, battery: r.battery, lost: false, shadow };
+    return a.id;
+  }
+
+  /** Badge-driven movement: glide to the latest fix; flag the badge lost after 30 s, hand back to the simulation after 10 min. */
+  private updateTrackedStaff(a: Agent, dt: number) {
+    const tr = a.tracked!;
+    const silent = this.t - tr.seenAt;
+    if (silent > 600) {
+      a.pos = tr.shadow;
+      a.tracked = undefined;
+      this.log("staff", "warning", `${a.name}: badge ${tr.tagId} silent for 10 min — no longer tracked`, { agentId: a.id });
+      return;
+    }
+    if (silent > 30 && !tr.lost) {
+      tr.lost = true;
+      this.log("staff", "warning", `${a.name}: badge ${tr.tagId} signal lost — showing last known position`, { agentId: a.id });
+    }
+    if (tr.lost) {
+      a.anim = "idle";
+      return;
+    }
+    const dx = tr.target[0] - a.pos[0];
+    const dz = tr.target[1] - a.pos[1];
+    const d = Math.hypot(dx, dz);
+    if (d > 6) a.pos = [tr.target[0], tr.target[1]]; // teleport-size jumps: snap rather than glide through walls
+    else if (d > 0.04) {
+      const step = Math.min(d, Math.max(1.4, d * 2) * dt);
+      a.pos = [a.pos[0] + (dx / d) * step, a.pos[1] + (dz / d) * step];
+      a.heading = Math.atan2(dx, dz);
+    }
+    a.anim = d > 0.08 ? "walk" : "idle";
+  }
+
+  /**
    * Local avoidance: a walking agent is pushed away from anyone within reach and sidesteps to
    * its right when someone is ahead, so people pass instead of walking through each other.
    * Standing, working and seated agents hold their position; walls are never crossed.
@@ -904,6 +1027,23 @@ export class BranchSimulation {
   }
 
   private updateStaff(a: Agent, dt: number) {
+    if (a.tracked) {
+      // Position comes from the badge; the person's simulated work runs on a shadow position so
+      // the kitchen keeps producing (there is no KDS feed to say what they are really doing).
+      const shown: Vec2 = a.pos;
+      const heading = a.heading;
+      a.pos = a.tracked.shadow;
+      this.updateStaffWork(a, dt);
+      if (!a.tracked) return; // handed back to the simulation during this step
+      a.tracked.shadow = a.pos;
+      a.pos = shown;
+      a.heading = heading;
+      return this.updateTrackedStaff(a, dt);
+    }
+    this.updateStaffWork(a, dt);
+  }
+
+  private updateStaffWork(a: Agent, dt: number) {
     const task = a.taskId ? this.tasks.get(a.taskId) : undefined;
     if (a.taskId && !task) {
       a.taskId = undefined;
@@ -1071,7 +1211,7 @@ export class BranchSimulation {
     const a: Agent = { id, kind: "rider", name: `Rider ${this.seq}`, pos: start, heading: 0, path: [], speed: 1.3, anim: "walk", carrying: null, orderId: order.id, phase: "to-wait", timer: 0, seed: this.rng.int(0, 1e6), arrivedAt: this.t };
     this.agents.push(a);
     order.riderId = id;
-    order.delivery = { ...order.delivery!, status: "RIDER_ASSIGNED", rider: order.channel === "delivery-partner" ? "Partner courier (simulated)" : "Branch dispatch rider (simulated)" };
+    order.delivery = { ...order.delivery!, status: "RIDER_ASSIGNED", rider: order.channel === "delivery-partner" ? "Partner courier" : "Branch dispatch rider" };
     const w = this.plan.anchors.riderWait;
     this.goTo(a, [w[0] + this.rng.range(-0.4, 0.4), w[1] + this.rng.range(-0.4, 0.4)]);
   }
@@ -1179,7 +1319,7 @@ export class BranchSimulation {
       const st = this.sensors.get(s.id)!;
       const e = s.equipmentId ? this.eqById.get(s.equipmentId) : undefined;
       const es = e ? this.equipment.get(e.id) : undefined;
-      if (st.source === "live") {
+      if (isDeviceSource(st.source)) {
         if (at === undefined) this.evaluateLiveSensor(s, st, tNow);
         continue;
       }
@@ -1239,7 +1379,7 @@ export class BranchSimulation {
     }
   }
 
-  /** Live sensors: flag the device offline after 3 missed intervals, otherwise apply the normal limits. */
+  /** Device-fed sensors (live or virtual): flag the device offline after 3 missed intervals, otherwise apply the normal limits. */
   private evaluateLiveSensor(s: Sensor, st: SensorState, tNow: number) {
     const stale = st.lastSeen === undefined || this.now() - st.lastSeen > (st.expectedIntervalSec ?? 60) * 3000;
     if (stale) {
@@ -1266,18 +1406,22 @@ export class BranchSimulation {
       openedAt: this.now(),
       status: "open",
       correctiveActions: [],
-      source: "live",
+      source: st.source,
     };
     this.alerts.unshift(alert);
     this.log("safety", "warning", `WARNING — ${alert.title}`, { alertId: alert.id, equipmentId: s.equipmentId });
   }
 
   /**
-   * Apply a reading from a physical device (already authenticated, de-duplicated and
-   * calibrated server-side). The bound sensor switches to live mode permanently for
-   * this session. Returns the floor-plan sensor id, or null if the plan has no match.
+   * Apply a reading from a device (already authenticated, de-duplicated and calibrated
+   * server-side). The bound sensor switches to device mode permanently for this session:
+   * "live" for physical hardware, "virtual" for simulated hardware (`origin: "virtual"`)
+   * that came through the same pipeline. Returns the floor-plan sensor id (or
+   * `equipment:<id>` for a status reading on equipment without a health sensor), or null
+   * if the plan has no match.
    */
-  ingestReading(r: { equipmentId?: string; sensorCode?: string; metric: string; value: number; ts: number; deviceId: string; expectedIntervalSec: number }): string | null {
+  ingestReading(r: { equipmentId?: string; sensorCode?: string; metric: string; value: number; ts: number; deviceId: string; expectedIntervalSec: number; origin?: "physical" | "virtual" }): string | null {
+    const source: DataSource = r.origin === "virtual" ? "virtual" : "live";
     const kindFor: Record<string, Sensor["kind"][]> = {
       temperature_c: ["fridge-temp", "freezer-temp", "hot-holding-temp"],
       oil_quality_pct: ["oil-quality"],
@@ -1287,14 +1431,26 @@ export class BranchSimulation {
     };
     const kinds = kindFor[r.metric] ?? [];
     const s = r.sensorCode ? this.plan.sensors.find((x) => x.code === r.sensorCode) : this.plan.sensors.find((x) => x.equipmentId === r.equipmentId && kinds.includes(x.kind));
-    if (!s) return null;
+    if (!s) {
+      // Equipment controllers (e.g. fryers) report status even where the plan has no health sensor.
+      const es = r.metric === "status" && r.equipmentId ? this.equipment.get(r.equipmentId) : undefined;
+      if (!es) return null;
+      const wasFault = es.fault?.kind === "reported";
+      es.fault = r.value ? (wasFault ? undefined : es.fault) : wasFault ? es.fault : { kind: "reported", since: this.t };
+      if (!r.value && !wasFault) this.log("equipment", "warning", `Device ${r.deviceId} reports a fault on ${this.eqById.get(r.equipmentId!)?.name ?? r.equipmentId}`, { equipmentId: r.equipmentId });
+      this.version++;
+      return `equipment:${r.equipmentId}`;
+    }
     const st = this.sensors.get(s.id)!;
     const es = s.equipmentId ? this.equipment.get(s.equipmentId) : undefined;
-    const firstLive = st.source !== "live";
-    st.source = "live";
-    st.deviceId = r.deviceId;
+    const firstLive = st.source !== source;
+    st.source = source;
+    // A door contact shares the cabinet's sensor; it must not take over the temperature probe's identity or interval.
+    if (firstLive || r.metric !== "door_open") {
+      st.deviceId = r.deviceId;
+      st.expectedIntervalSec = r.expectedIntervalSec;
+    }
     st.lastSeen = Math.max(st.lastSeen ?? 0, r.ts);
-    st.expectedIntervalSec = r.expectedIntervalSec;
     st.connected = true;
     if (st.status === "offline") st.status = "normal";
     if (firstLive) {
@@ -1302,7 +1458,7 @@ export class BranchSimulation {
       st.history = [];
       st.outOfRangeSince = undefined;
       if (es?.fault && es.fault.kind !== "reported") es.fault = undefined;
-      this.log("system", "info", `Live device ${r.deviceId} connected to ${s.name}`);
+      this.log("system", "info", `${source === "live" ? "Live device" : "Device"} ${r.deviceId} connected to ${s.name}`);
     }
     if (r.metric === "door_open") {
       st.note = r.value ? "Door open" : "Door closed";
@@ -1321,7 +1477,7 @@ export class BranchSimulation {
         this.cookChecks.push({ t: r.ts, unitId: `live:${r.deviceId}`, orderId: "", valueC: st.value, pass });
         if (this.cookChecks.length > 200) this.cookChecks.shift();
         st.status = pass ? "normal" : "warning";
-        if (!pass) this.log("safety", "warning", `LIVE probe ${st.value} °C below ${this.safety.cookCoreMinC} °C at ${s.name} — re-cook required`);
+        if (!pass) this.log("safety", "warning", `${source === "virtual" ? "SIM DEVICE" : "LIVE"} probe ${st.value} °C below ${this.safety.cookCoreMinC} °C at ${s.name} — re-cook required`);
       } else this.evaluateLimits(s, st, this.t);
     }
     this.version++;
@@ -1339,8 +1495,8 @@ export class BranchSimulation {
       sensorId: s.id,
       title: isOil ? `${e?.name}: oil change due` : `${e?.name ?? s.name}: temperature ${lim.kind === "max" ? "above" : "below"} configured limit`,
       issue: isOil
-        ? `${st.source === "live" ? "Live" : "Simulated"} oil quality ${st.value}% below configured minimum ${lim.value}%`
-        : `${st.source === "live" ? "Live" : "Simulated"} reading ${st.value} °C ${lim.kind === "max" ? ">" : "<"} limit ${lim.value} °C for ≥ ${this.safety.alertDelayMin} min`,
+        ? cap(`${SOURCE_WORD[st.source]}oil quality ${st.value}% below configured minimum ${lim.value}%`)
+        : cap(`${SOURCE_WORD[st.source]}reading ${st.value} °C ${lim.kind === "max" ? ">" : "<"} limit ${lim.value} °C for ≥ ${this.safety.alertDelayMin} min`),
       openedAt: this.now(),
       status: "open",
       correctiveActions: [],
@@ -1398,7 +1554,7 @@ export class BranchSimulation {
     if (!e || !st) return false;
     const k = kind ?? (e.category === "refrigeration" ? "compressor" : ["hot-holding", "rice-warmer", "qc-pass"].includes(e.type) ? "thermostat" : "sensor-offline");
     st.fault = { kind: k, since: this.t };
-    this.log("equipment", "warning", `Simulated fault injected: ${e.name} (${k})`, { equipmentId });
+    this.log("equipment", "warning", `Fault injected: ${e.name} (${k})`, { equipmentId });
     if (preRollMin > 0) {
       const sensor = this.plan.sensors.find((s) => s.equipmentId === equipmentId && s.unit === "°C");
       if (sensor) {
@@ -1418,7 +1574,7 @@ export class BranchSimulation {
     if (!st?.fault) return false;
     st.fault = undefined;
     st.lastMaintenance = this.t;
-    this.log("equipment", "info", `Simulated fault cleared: ${this.eqById.get(equipmentId)?.name} — readings will recover gradually`, { equipmentId });
+    this.log("equipment", "info", `Fault cleared: ${this.eqById.get(equipmentId)?.name} — readings will recover gradually`, { equipmentId });
     this.version++;
     return true;
   }
@@ -1477,16 +1633,33 @@ export class BranchSimulation {
     return true;
   }
 
-  /** Deduct recipe quantities once per order (idempotent via the ledger key). */
-  consumeForOrder(o: Order) {
-    if (o.inventoryConsumed) return false;
+  /** Credit an order's recipe back to stock once (idempotent via the ledger key). */
+  private restock(key: string, o: Order) {
+    if (this.ledgerKeys.has(key)) return false;
+    this.ledgerKeys.add(key);
+    for (const [sku, q] of Object.entries(this.recipeTotals(o))) {
+      const item = this.inventory.find((i) => i.sku === sku);
+      if (!item || !q) continue;
+      item.qty = Math.round((item.qty + q) * 1000) / 1000;
+      this.ledger.push({ id: `${this.branchId}-led-${++this.seq}`, key, t: this.now(), sku, delta: q, reason: "adjustment", ref: o.id });
+    }
+    return true;
+  }
+
+  private recipeTotals(o: Order) {
     const total: Record<string, number> = { "PKG-BAG": 1 };
     for (const l of o.lines) {
       const m = MENU_BY_ID.get(l.menuId);
       if (!m) continue;
       for (const u of m.units) for (const [sku, q] of Object.entries(u.recipe)) total[sku] = (total[sku] ?? 0) + q * l.qty;
     }
-    const ok = this.consume(`order:${o.id}`, total, "order", o.id);
+    return total;
+  }
+
+  /** Deduct recipe quantities once per order (idempotent via the ledger key). */
+  consumeForOrder(o: Order) {
+    if (o.inventoryConsumed) return false;
+    const ok = this.consume(`order:${o.id}`, this.recipeTotals(o), "order", o.id);
     o.inventoryConsumed = true;
     return ok;
   }

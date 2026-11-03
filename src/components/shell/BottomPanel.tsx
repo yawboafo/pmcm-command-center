@@ -2,6 +2,7 @@
 
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
+import { statusLabel } from "@/components/panels/InspectOrder";
 import { SimBadge, cx } from "@/components/ui/primitives";
 import { clock, ghs } from "@/lib/format";
 import { useSnapshots, useTick } from "@/lib/hooks/useSim";
@@ -79,7 +80,7 @@ export default function BottomPanel() {
                 ))}
               </ul>
             ) : (
-              <p className="text-white/40">No simulation is running yet. Open a branch from the map to start its kitchen simulation — network markers already show lightweight simulated metrics.</p>
+              <p className="text-white/40">No branch is open yet. Open a branch from the map to start its digital twin — network markers already show summary metrics.</p>
             ))}
           {tab === "Incoming orders" &&
             (orders.length ? (
@@ -93,7 +94,7 @@ export default function BottomPanel() {
                       <td className="max-w-80 truncate text-white/70">{o.lines.map((l) => `${l.qty}× ${l.name}`).join(", ")}</td>
                       <td className="font-mono text-white/70">{ghs(o.total)}</td>
                       <td>
-                        <span className={cx("rounded px-1.5 py-px text-[10px] font-semibold", o.delayed ? "bg-red-500/20 text-red-300" : o.status === "READY" ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-white/70")}>{o.status.replace(/_/g, " ")}</span>
+                        <span className={cx("rounded px-1.5 py-px text-[10px] font-semibold", o.delayed ? "bg-red-500/20 text-red-300" : o.status === "READY" ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-white/70")}>{statusLabel(o.status, o)}</span>
                       </td>
                       <td>
                         {entered && (
@@ -133,9 +134,9 @@ export default function BottomPanel() {
               {[
                 ["Simulation engine", `Running · ${sims().sims.size} full branch simulation(s)${sims().realtime ? " · real-time clock" : ""}`, "ok"],
                 ["Branch directory", "Official outlet list · verified 2026-11-03", "ok"],
-                ["Live telemetry stream", `${live.status}${live.readings ? ` · ${live.readings} readings, last ${live.lastReadingAt ? clock(live.lastReadingAt) : "—"}` : " · no readings yet"}${live.unmatched ? ` · ${live.unmatched} unmatched` : ""}`, live.status === "connected" ? "ok" : "warn"],
-                ["IoT devices", integ ? `${online} online / ${integ.devices.length} registered (${bound} with keys)${online ? "" : " — sensors use simulated readings"}` : "Checking…", online ? "ok" : "off"],
-                ["POS / Chris B orders", integ?.posWebhookConfigured ? "Webhook secret configured — awaiting integration" : "Not connected — simulated orders only", "off"],
+                ["Live telemetry stream", `${live.status}${live.readings ? ` · ${live.readings} readings, last ${live.lastReadingAt ? clock(live.lastReadingAt) : "—"}` : " · no readings yet"}${live.virtualEvents ? ` · ${live.virtualEvents} events from virtual hardware` : ""}${live.unmatched ? ` · ${live.unmatched} unmatched` : ""}`, live.status === "connected" ? "ok" : "warn"],
+                ["IoT devices", integ ? `${online} online / ${integ.devices.length} registered (${bound} with keys)${online ? "" : " — sensors use twin readings"}` : "Checking…", online ? "ok" : "off"],
+                ["POS / Chris B orders", integ?.posWebhookConfigured ? "Webhook secret configured — awaiting integration" : "Not connected — twin orders only", "off"],
                 ["Physical CCTV", integ?.cameras.some((c) => c.enabled) ? `${integ.cameras.filter((c) => c.enabled).length} authorised camera(s)` : "Not connected — virtual cameras only", integ?.cameras.some((c) => c.enabled) ? "ok" : "off"],
                 ["Rider GPS", "Not connected — no live coordinates shown", "off"],
                 ["AI assistant", integ?.assistantConfigured ? "Claude API configured" : "Offline rule-based mode", integ?.assistantConfigured ? "ok" : "off"],

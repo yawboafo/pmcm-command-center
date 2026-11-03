@@ -45,7 +45,7 @@ export function CustomersModule({ sim }: { sim: BranchSimulation }) {
         <Stat label="Completed /h" value={throughput} sub="last sim hour" />
       </div>
       <div>
-        <SectionTitle>Simulated demand</SectionTitle>
+        <SectionTitle>Demand</SectionTitle>
         <div className="flex gap-1">
           {(["low", "medium", "high"] as const).map((p) => (
             <Btn key={p} size="xs" active={preset === p} disabled={!can(user, "control:simulation")} onClick={() => setPreset(p)}>
@@ -128,7 +128,7 @@ export function StaffModule({ sim }: { sim: BranchSimulation }) {
               onClick={() => {
                 const changes = sim.rebalanceStaff();
                 setBase({ at: sim.t, pending, queue: m.queueLength, prep: m.avgPrepMin, changes });
-                notify("Staff assignments rebalanced (simulated)", "success");
+                notify("Staff assignments rebalanced", "success");
               }}
             >
               <Sparkles size={12} /> Optimise
@@ -159,7 +159,7 @@ export function StaffModule({ sim }: { sim: BranchSimulation }) {
                 </div>
               ))}
             </div>
-            <p className="text-[10px] text-white/40">Measured {mins(sim.t - base.at)} of simulated time after the change{sim.t - base.at < 600 ? " — give it ~10 sim-minutes to settle" : ""}.</p>
+            <p className="text-[10px] text-white/40">Measured {mins(sim.t - base.at)} after the change{sim.t - base.at < 600 ? " — give it ~10 sim-minutes to settle" : ""}.</p>
           </div>
         )}
       </div>
@@ -224,7 +224,7 @@ export function DeliveryModule({ sim }: { sim: BranchSimulation }) {
           </div>
         ))}
       </div>
-      <p className="text-[10.5px] text-white/45">Avg order-to-door (simulated): {avgTotal ? mins(avgTotal) : "—"}. Live rider GPS is not connected, so no rider coordinates are shown.</p>
+      <p className="text-[10.5px] text-white/45">Avg order-to-door: {avgTotal ? mins(avgTotal) : "—"}. Live rider GPS is not connected, so no rider coordinates are shown.</p>
       <table className="w-full text-[11px]">
         <thead>
           <tr className="text-left text-[9.5px] uppercase tracking-wider text-white/35">

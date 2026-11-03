@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { LiveBadge } from "@/components/ui/primitives";
+import MjpegCameraPlayer from "./MjpegCameraPlayer";
 
 type PlayerState = { kind: "connecting" } | { kind: "playing" } | { kind: "error"; message: string };
 
@@ -28,11 +29,21 @@ function iceGathered(pc: RTCPeerConnection, timeoutMs = 2000) {
 }
 
 /**
+ * Camera player for registered cameras. WebRTC (WHEP) for real cameras through the media
+ * gateway; MJPEG (e.g. the simulated cameras from scripts/camera-sim.ts) in a sibling
+ * player. Always a separate, clearly labelled player — never blended into the 3D simulation.
+ */
+export default function LiveCameraPlayer({ cameraId, name, className, protocol = "webrtc-whep", virtual = false }: { cameraId: string; name: string; className?: string; protocol?: string; virtual?: boolean }) {
+  if (protocol === "mjpeg") return <MjpegCameraPlayer cameraId={cameraId} name={name} virtual={virtual} className={className} />;
+  return <WhepCameraPlayer cameraId={cameraId} name={name} className={className} />;
+}
+
+/**
  * Real camera video over WebRTC (WHEP), signalled through /api/cameras/{id}/whep
  * so camera addresses and credentials stay server-side. Always rendered as a
  * separate, clearly labelled LIVE player — never blended into the 3D simulation.
  */
-export default function LiveCameraPlayer({ cameraId, name, className }: { cameraId: string; name: string; className?: string }) {
+function WhepCameraPlayer({ cameraId, name, className }: { cameraId: string; name: string; className?: string }) {
   const video = useRef<HTMLVideoElement>(null);
   const [state, setState] = useState<PlayerState>({ kind: "connecting" });
   const [attempt, setAttempt] = useState(0);

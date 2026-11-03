@@ -1,13 +1,15 @@
 "use client";
 
 import { Video } from "lucide-react";
-import { Btn, LiveBadge, SectionTitle, SimBadge } from "@/components/ui/primitives";
+import { Btn, LiveBadge, SectionTitle, SimBadge, SimDeviceBadge, SourceBadge } from "@/components/ui/primitives";
 import { EQUIPMENT_CATALOG } from "@/lib/floorplan/catalog";
 import { mins, pct } from "@/lib/format";
+import { can } from "@/lib/auth/rbac";
+import { badgeLine, cameraFor, locationProvenance } from "@/lib/ops/staffLocation";
 import { roleLabel, type BranchSimulation } from "@/lib/sim/engine";
 import { useApp } from "@/store/app";
 import { Card, HistoryChart, KV, Pill, ProgressBar, focusEquipment, focusPoint, limitFor, statusTone } from "./common";
-import { taskProgress } from "./InspectOrder";
+import { statusLabel, taskProgress } from "./InspectOrder";
 
 const CUSTOMER_PHASE: Record<string, string> = {
   "to-queue": "Walking to queue",
@@ -25,12 +27,16 @@ const RIDER_PHASE: Record<string, string> = { "to-wait": "Arriving", waiting: "W
 
 export function InspectAgent({ sim, id }: { sim: BranchSimulation; id: string }) {
   const select = useApp((s) => s.select);
+  const user = useApp((s) => s.user);
+  const followAgent = useApp((s) => s.followAgent);
+  const goToCamera = useApp((s) => s.useVirtualCamera);
   const a = sim.agents.find((x) => x.id === id);
   if (!a) return <p className="p-4 text-xs text-white/50">This person has left the restaurant.</p>;
   const m = sim.staff.get(a.id);
   const task = a.taskId ? sim.tasks.get(a.taskId) : undefined;
   const order = a.orderId ? sim.orders.get(a.orderId) : undefined;
   const room = sim.roomAtPoint(a.pos);
+  const cam = cameraFor(sim.plan, a.pos[0], a.pos[1], room?.id);
   return (
     <div className="space-y-3 p-4">
       <div>
@@ -43,14 +49,33 @@ export function InspectAgent({ sim, id }: { sim: BranchSimulation; id: string })
       </div>
       <Card>
         <KV k="Currently in" v={room?.name ?? "Outside"} />
+        <KV
+          k="Position from"
+          v={
+            <span className="inline-flex items-center gap-1.5">
+              {a.tracked ? `Badge ${a.tracked.tagId}` : "Simulation"} <SourceBadge source={locationProvenance(a)} />
+            </span>
+          }
+        />
+        {a.tracked && <KV k="Badge" v={badgeLine(a, sim.t)} mono tone={a.tracked.lost ? "yellow" : undefined} />}
         {m && <KV k="Shift" v={m.shift} />}
-        {m && <KV k="Status" v={a.phase === "working" ? "Working" : a.phase === "to-task" ? "Moving to task" : "Available"} />}
+        {m && <KV k="Status" v={a.tracked ? `${a.phase === "working" ? "Working" : "Available"} · position from badge` : a.phase === "working" ? "Working" : a.phase === "to-task" ? "Moving to task" : "Available"} />}
         {m && <KV k="Tasks completed" v={m.tasksDone} mono />}
         {m && <KV k="Utilisation" v={pct(m.busySeconds / Math.max(1, sim.t))} mono />}
         {a.kind === "customer" && <KV k="Activity" v={CUSTOMER_PHASE[a.phase] ?? a.phase} />}
         {a.kind === "customer" && <KV k="Time in store" v={mins(sim.t - a.arrivedAt)} mono />}
         {a.kind === "rider" && <KV k="Activity" v={RIDER_PHASE[a.phase] ?? a.phase} />}
       </Card>
+      <div className="flex flex-wrap gap-1.5">
+        <Btn size="xs" disabled={a.kind === "staff" && !can(user, "view:staff-location")} title={a.kind === "staff" && !can(user, "view:staff-location") ? "Named staff locations need a manager or supervisor role" : "Fly to this person and follow"} onClick={() => followAgent(a.id)}>
+          Locate &amp; follow
+        </Btn>
+        {cam && (
+          <Btn size="xs" onClick={() => goToCamera(cam.id)} title="Virtual camera with the best view of this person">
+            View on {cam.code}
+          </Btn>
+        )}
+      </div>
       {task && (
         <div>
           <SectionTitle>Current task</SectionTitle>
@@ -80,7 +105,7 @@ export function InspectAgent({ sim, id }: { sim: BranchSimulation; id: string })
       )}
       {order && (
         <Btn size="xs" onClick={() => select({ kind: "order", id: order.id })}>
-          Order #{order.number} · {order.status.replace(/_/g, " ")}
+          Order #{order.number} · {statusLabel(order.status, order)}
         </Btn>
       )}
       {a.kind === "staff" && <p className="text-[10px] leading-snug text-white/35">Fictional demo staff. A production deployment must not track real employees&apos; locations without consent, a lawful basis, privacy controls and dedicated tracking infrastructure.</p>}
@@ -137,7 +162,7 @@ export function InspectCamera({ sim, id }: { sim: BranchSimulation; id: string }
             {orders.slice(0, 10).map((o) => (
               <li key={o.id}>
                 <button type="button" className="text-white/75 hover:underline" onClick={() => select({ kind: "order", id: o.id })}>
-                  #{o.number} · {o.status.replace(/_/g, " ")}
+                  #{o.number} · {statusLabel(o.status, o)}
                 </button>
               </li>
             ))}
@@ -250,7 +275,7 @@ export function InspectSensor({ sim, id }: { sim: BranchSimulation; id: string }
       <div>
         <div className="flex items-center gap-2">
           <span className="font-mono text-[10px] tracking-[0.16em] text-white/40">{s.code}</span>
-          {st.source === "live" ? <LiveBadge label={`LIVE · ${st.deviceId}`} /> : <SimBadge label="CONCEPTUAL SENSOR" />}
+          {st.source === "live" ? <LiveBadge label={`LIVE · ${st.deviceId}`} /> : st.source === "virtual" ? <SimDeviceBadge label={`SIM DEVICE · ${st.deviceId}`} /> : <SimBadge label="CONCEPTUAL SENSOR" />}
         </div>
         <h2 className="font-display text-sm font-bold text-white">{s.name}</h2>
       </div>
@@ -259,7 +284,7 @@ export function InspectSensor({ sim, id }: { sim: BranchSimulation; id: string }
         <KV k="Room" v={sim.roomName(s.roomId)} />
         <KV k="Reading" v={st.value === null ? st.note ?? "—" : `${st.value} ${s.unit === "status" ? "" : s.unit}`} mono />
         <KV k="Status" v={<Pill tone={statusTone(st.status)}>{st.status}</Pill>} />
-        <KV k="Connectivity" v={st.source === "live" ? (st.connected ? `Live device ${st.deviceId}` : `No data from ${st.deviceId}`) : st.connected ? "Connected (simulated)" : "Offline"} tone={st.connected ? "green" : "yellow"} />
+        <KV k="Connectivity" v={st.source !== "simulated" ? (st.connected ? `${st.source === "virtual" ? "Device" : "Live device"} ${st.deviceId}` : `No data from ${st.deviceId}`) : st.connected ? "Connected (simulated)" : "Offline"} tone={st.connected ? "green" : "yellow"} />
         {limit && <KV k="Configured limit" v={limit.label} mono />}
       </Card>
       {st.history.length > 1 && <HistoryChart data={st.history} limit={limit} unit={s.unit === "%" ? "%" : "°C"} />}

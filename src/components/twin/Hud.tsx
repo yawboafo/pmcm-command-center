@@ -13,6 +13,7 @@ import {
   Grid2x2,
   Home,
   LayoutGrid,
+  Map as MapIcon,
   Minus,
   Plus,
   Route,
@@ -25,7 +26,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { BRANCH_BY_ID } from "@/lib/network/branches";
+import { statusLabel } from "@/components/panels/InspectOrder";
 import { clockSec } from "@/lib/format";
 import type { BranchSimulation } from "@/lib/sim/engine";
 import { useApp, type CameraMode } from "@/store/app";
@@ -57,15 +58,19 @@ export function Toolbar() {
   const toggle = useApp((s) => s.toggle);
   const cctvOpen = useApp((s) => s.cctvOpen);
   const setCctv = useApp((s) => s.setCctv);
+  const view2d = useApp((s) => s.view2d);
+  const setView2d = useApp((s) => s.setView2d);
   return (
     <div className="glass pointer-events-auto flex items-center gap-0.5 rounded-xl p-1" role="toolbar" aria-label="Camera modes">
       {MODES.map((m) => (
-        <ToolBtn key={m.id} active={mode === m.id && !cctvOpen} onClick={() => (setCctv(false), setCameraMode(m.id))} icon={m.icon} label={m.label} title={m.hint} />
+        <ToolBtn key={m.id} active={mode === m.id && !cctvOpen && !view2d} onClick={() => (setCctv(false), setView2d(false), setCameraMode(m.id))} icon={m.icon} label={m.label} title={m.hint} />
       ))}
       <span className="mx-1 h-5 w-px bg-white/10" />
       <ToolBtn active={xray} onClick={() => toggle("xray")} icon={ScanEye} label="X-ray" title="Transparent walls" />
       <ToolBtn active={showPaths} onClick={() => toggle("showPaths")} icon={Route} label="Paths" title="Show customer, staff, delivery and exit paths" />
       <ToolBtn active={cctvOpen} onClick={() => setCctv(!cctvOpen)} icon={LayoutGrid} label="Camera grid" title="Monitor several virtual cameras at once" />
+      <span className="mx-1 h-5 w-px bg-white/10" />
+      <ToolBtn active={view2d} onClick={() => setView2d(!view2d)} icon={MapIcon} label="2D plan" title="Live 2D operations floor plan (V)" />
     </div>
   );
 }
@@ -186,7 +191,6 @@ export function CctvLabel({ sim }: { sim: BranchSimulation }) {
           <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
           {c.code} · {c.name} · {room}
         </div>
-        <div className="mt-1 font-mono text-[10px] font-semibold tracking-wider text-amber-300">VIRTUAL CAMERA — SIMULATED VIEW, NOT CCTV</div>
       </div>
       <div className="pointer-events-none absolute bottom-6 left-6 font-mono text-[12px] text-white/80">{new Date(sims().clock).toISOString().slice(0, 10)} {clockSec(sims().clock)} GMT</div>
       <div className="glass pointer-events-auto absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-lg p-1 text-white">
@@ -280,34 +284,12 @@ export function FollowBanner({ sim }: { sim: BranchSimulation }) {
       <button type="button" className="font-semibold hover:underline" onClick={() => select({ kind: "order", id })}>
         Following order #{o.number}
       </button>
-      <span className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[10px]">{o.status.replace(/_/g, " ")}</span>
+      <span className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[10px]">{statusLabel(o.status, o)}</span>
       {task && <span className="max-w-64 truncate text-white/60">{task.label}</span>}
       <button type="button" onClick={() => followOrder(null)} className="rounded-md p-1 text-white/60 hover:bg-white/10 hover:text-white" aria-label="Stop following">
         <X size={13} />
       </button>
     </div>
-  );
-}
-
-export function IntroOverlay({ branchId }: { branchId: string }) {
-  const phase = useApp((s) => s.phase);
-  const setPhase = useApp((s) => s.setPhase);
-  const setCameraMode = useApp((s) => s.setCameraMode);
-  if (phase !== "exterior" && phase !== "entering") return null;
-  const b = BRANCH_BY_ID.get(branchId);
-  return (
-    <>
-      <div className="pointer-events-none absolute bottom-10 left-8 max-w-lg animate-fade-in">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.25em] text-brand-yellow">Pizzaman Chickenman · {b?.region}</div>
-        <div className="mt-1 font-display text-4xl font-extrabold text-white drop-shadow-lg">{b?.name}</div>
-        <div className="mt-2 text-[12px] text-white/70">
-          Conceptual Model {sims().peek(branchId)?.plan.format} layout · generated from floor-plan data · simulated operations
-        </div>
-      </div>
-      <button type="button" onClick={() => (setPhase("inside"), setCameraMode("dollhouse"))} className="glass pointer-events-auto absolute bottom-10 right-8 rounded-lg px-4 py-2 text-[12px] font-semibold text-white hover:bg-white/10">
-        Skip intro →
-      </button>
-    </>
   );
 }
 

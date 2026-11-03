@@ -3,9 +3,9 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 /**
  * Request signing for device and webhook ingestion (server-side only).
  *
- *   x-pmcm-device:    device id (or webhook source id)
- *   x-pmcm-timestamp: unix epoch milliseconds when the request was signed
- *   x-pmcm-signature: hex HMAC-SHA256(secret, `${timestamp}.${rawBody}`)
+ *   x-ops-device:    device id (or webhook source id)
+ *   x-ops-timestamp: unix epoch milliseconds when the request was signed
+ *   x-ops-signature: hex HMAC-SHA256(secret, `${timestamp}.${rawBody}`)
  *
  * The timestamp window blocks replays of captured requests; message ids are
  * de-duplicated separately. Production devices should additionally use mTLS

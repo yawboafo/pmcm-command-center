@@ -29,6 +29,7 @@ export default function MainView() {
   const entered = useApp((s) => s.enteredBranchId);
   const phase = useApp((s) => s.phase);
   const enterBranch = useApp((s) => s.enterBranch);
+  const resolvedTheme = useApp((s) => s.resolvedTheme);
   const [readyFor, setReadyFor] = useState<string | null>(null);
 
   // Fetch the twin code during the flight but build the scene only near its end.
@@ -56,7 +57,8 @@ export default function MainView() {
   return (
     <div className="relative h-full w-full">
       <div className={cx("absolute inset-0 transition-opacity duration-700", twinVisible ? "pointer-events-none opacity-0" : "opacity-100")}>
-        <GhanaMap visible={!twinVisible} />
+        {/* Remount on theme change: the basemap style and our layer colours are set at creation. */}
+        <GhanaMap key={resolvedTheme} visible={!twinVisible} />
       </div>
       {entered && mountTwin && (
         <div className={cx("absolute inset-0 transition-opacity duration-700", twinVisible ? "opacity-100" : "pointer-events-none opacity-0")}>

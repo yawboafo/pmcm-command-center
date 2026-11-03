@@ -5,12 +5,13 @@ import { Btn, ConceptBadge, SectionTitle, SimBadge, Stat, StatusDot, VerifiedBad
 import { canSeeBranch } from "@/lib/auth/rbac";
 import { ghs, ghsCompact, mins, pct } from "@/lib/format";
 import { useSnapshots } from "@/lib/hooks/useSim";
-import { BRANCHES, BRANCH_BY_ID, demoBranchIds } from "@/lib/network/branches";
+import { BRANCH_BY_ID, demoBranchIds } from "@/lib/network/branches";
 import type { BranchSimulation } from "@/lib/sim/engine";
 import type { WorkstationType } from "@/lib/floorplan/types";
+import PriorityQueue from "@/components/ops/PriorityQueue";
 import { useApp } from "@/store/app";
 import { sims } from "@/store/sims";
-import { Card, HourlyBars, KV, Pill } from "./common";
+import { Card, HourlyBars, KV } from "./common";
 
 export function InspectBranch({ id }: { id: string }) {
   const snaps = useSnapshots();
@@ -65,7 +66,7 @@ export function InspectBranch({ id }: { id: string }) {
               <Stat label="Food safety" value={snap.safetyStatus.toUpperCase()} tone={snap.safetyStatus === "critical" ? "red" : snap.safetyStatus === "attention" ? "yellow" : "green"} />
             </div>
             <div className="mt-3">
-              <div className="mb-1 text-[10px] uppercase tracking-wider text-white/40">Simulated sales by hour</div>
+              <div className="mb-1 text-[10px] uppercase tracking-wider text-white/40">Sales by hour</div>
               <HourlyBars values={snap.hourlySales} format={ghs} nowHour={nowH} />
             </div>
             <p className="mt-1 text-[10px] text-white/35">{snap.live ? "From this branch's full kitchen simulation." : "Lightweight network model — open the twin for a full simulation."}</p>
@@ -103,10 +104,8 @@ export function InspectBranch({ id }: { id: string }) {
 const QUEUE_LABEL: Partial<Record<WorkstationType, string>> = { "order-counter": "Counter", "pizza-prep": "Pizza prep", oven: "Oven", "chicken-prep": "Chicken prep", fryer: "Fryer", rice: "Rice", qc: "QC", packaging: "Packing", pickup: "Collection", dispatch: "Dispatch" };
 
 export function BranchLive({ sim }: { sim: BranchSimulation }) {
-  const select = useApp((s) => s.select);
   const setSection = useApp((s) => s.setSection);
   const m = sim.metrics();
-  const alerts = sim.alerts.filter((a) => a.status !== "resolved");
   const q = new Map<WorkstationType, number>();
   for (const t of sim.tasks.values()) if (t.ws in QUEUE_LABEL && t.kind !== "clean") q.set(t.ws, (q.get(t.ws) ?? 0) + 1);
   return (
@@ -141,19 +140,7 @@ export function BranchLive({ sim }: { sim: BranchSimulation }) {
           ))}
         </div>
       </div>
-      <div>
-        <SectionTitle>Open alerts</SectionTitle>
-        {alerts.length ? (
-          alerts.slice(0, 6).map((a) => (
-            <button key={a.id} type="button" onClick={() => select({ kind: "alert", id: a.id })} className="mb-1 flex w-full items-center gap-2 text-left text-[11px] hover:underline">
-              <Pill tone={a.severity === "critical" ? "red" : "yellow"}>{a.status}</Pill>
-              <span className="truncate text-white/75">{a.title}</span>
-            </button>
-          ))
-        ) : (
-          <p className="text-[11px] text-white/40">No open alerts.</p>
-        )}
-      </div>
+      <PriorityQueue branchId={sim.branchId} limit={6} />
       <div className="flex flex-wrap gap-1.5">
         {(["kitchen", "orders", "safety", "inventory", "staff"] as const).map((s) => (
           <Btn key={s} size="xs" onClick={() => setSection(s)}>
@@ -169,10 +156,7 @@ export function NationalSummary() {
   const snaps = useSnapshots();
   const enterBranch = useApp((s) => s.enterBranch);
   const selectB = useApp((s) => s.selectBranch);
-  const open = snaps.filter((s) => s.open);
-  const sales = snaps.reduce((s, x) => s + x.salesToday, 0);
   const top = [...snaps].sort((a, b) => b.salesToday - a.salesToday).slice(0, 5);
-  const issues = snaps.filter((s) => s.status === "critical" || s.status === "warning");
   return (
     <div className="space-y-3 p-4">
       <div>
@@ -180,16 +164,9 @@ export function NationalSummary() {
           <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">National summary</span>
           <SimBadge />
         </div>
-        <p className="text-[11px] text-white/45">Select a branch marker on the map for details.</p>
+        <p className="text-[11px] text-white/45">Select a branch on the map, or press ⌘K to jump anywhere.</p>
       </div>
-      <div className="grid grid-cols-3 gap-3">
-        <Stat label="Branches" value={BRANCHES.length} sub="official directory" />
-        <Stat label="Open now" value={open.length} />
-        <Stat label="Revenue" value={ghsCompact(sales)} />
-        <Stat label="Active orders" value={snaps.reduce((s, x) => s + x.activeOrders, 0)} />
-        <Stat label="Critical" value={snaps.filter((s) => s.status === "critical").length} tone="red" />
-        <Stat label="Warnings" value={snaps.filter((s) => s.status === "warning").length} tone="yellow" />
-      </div>
+      <PriorityQueue />
       <div>
         <SectionTitle>Top branches by revenue</SectionTitle>
         {top.map((s, i) => (
@@ -201,18 +178,6 @@ export function NationalSummary() {
           </button>
         ))}
       </div>
-      {issues.length > 0 && (
-        <div>
-          <SectionTitle>Needs attention</SectionTitle>
-          {issues.slice(0, 8).map((s) => (
-            <button key={s.branchId} type="button" onClick={() => selectB(s.branchId)} className="flex w-full items-center gap-2 py-0.5 text-left text-[11px] hover:underline">
-              <StatusDot status={s.status} />
-              <span className="w-24 shrink-0 truncate text-white/75">{BRANCH_BY_ID.get(s.branchId)?.name}</span>
-              <span className="truncate text-white/50">{s.issue}</span>
-            </button>
-          ))}
-        </div>
-      )}
       <div>
         <SectionTitle>Demonstration branches</SectionTitle>
         <div className="flex flex-wrap gap-1.5">

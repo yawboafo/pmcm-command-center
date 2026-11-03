@@ -8,6 +8,7 @@ import { ghs, ghsCompact } from "@/lib/format";
 import { useSnapshots, useTick } from "@/lib/hooks/useSim";
 import { BRANCH_BY_ID, BRANCHES } from "@/lib/network/branches";
 import { SUPPLY_HUBS, hubFor, transferStatus, transfersForDay } from "@/lib/network/supply";
+import { TENANT } from "@/config/platform";
 import { useApp } from "@/store/app";
 import { sims } from "@/store/sims";
 import BranchCard from "./BranchCard";
@@ -48,10 +49,17 @@ function fitPadding(el: HTMLElement | null) {
   return w > 900 ? { top: 40, bottom: 60, left: 360, right: 60 } : { top: 30, bottom: 120, left: 20, right: 20 };
 }
 
-function styleUrl() {
+function styleUrl(theme: "dark" | "light") {
   const key = process.env.NEXT_PUBLIC_MAPTILER_KEY;
-  return key ? `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${key}` : "https://tiles.openfreemap.org/styles/dark";
+  if (key) return `https://api.maptiler.com/maps/${theme === "light" ? "dataviz-light" : "streets-v2-dark"}/style.json?key=${key}`;
+  return `https://tiles.openfreemap.org/styles/${theme === "light" ? "positron" : "dark"}`;
 }
+
+/** Colours of our own layers on top of the basemap, per UI theme (the map remounts when it changes). */
+const MAP_INK = {
+  dark: { surface: "#0e1117", edge: "#07090d", text: "#ffffff", textSoft: "rgba(255,255,255,0.42)", halo: "rgba(7,9,13,0.9)", regionFill: "#ffffff", sales: "#9ec5f4", hubText: "#d9f2d5" },
+  light: { surface: "#ffffff", edge: "#ffffff", text: "#0b1220", textSoft: "rgba(11,18,32,0.5)", halo: "rgba(255,255,255,0.92)", regionFill: "#0b1220", sales: "#1d4ed8", hubText: "#14532d" },
+} as const;
 
 type Bbox = [number, number, number, number];
 type RegionFC = GeoJSON.FeatureCollection<GeoJSON.Polygon | GeoJSON.MultiPolygon, { name: string; iso: string }>;
@@ -123,6 +131,10 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
   const mapRef = useRef<MLMap | null>(null);
   const bboxesRef = useRef<Map<string, Bbox>>(new Map());
   const [loaded, setLoaded] = useState(false);
+  // Resolved UI theme at mount; MainView remounts the map when it changes.
+  const theme = useApp((s) => s.resolvedTheme);
+  // Fixed for this map instance: a theme change remounts the map (see MainView).
+  const ink = MAP_INK[theme];
   const [styleTick, setStyleTick] = useState(0);
   const [mapError, setMapError] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -141,7 +153,7 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
     if (!container.current) return;
     const map = new MLMap({
       container: container.current,
-      style: styleUrl(),
+      style: styleUrl(theme),
       bounds: GHANA_BOUNDS,
       fitBoundsOptions: { padding: fitPadding(container.current) },
       maxBounds: MAX_BOUNDS,
@@ -170,7 +182,7 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
 
       map.addSource("regions", { type: "geojson", data: regions, promoteId: "name" });
       map.addSource("region-labels", { type: "geojson", data: { type: "FeatureCollection", features: labels } });
-      map.addLayer({ id: "region-fill", type: "fill", source: "regions", paint: { "fill-color": "#ffffff", "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.07, 0.015] } });
+      map.addLayer({ id: "region-fill", type: "fill", source: "regions", paint: { "fill-color": ink.regionFill, "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.07, 0.015] } });
       map.addLayer({ id: "region-line", type: "line", source: "regions", paint: { "line-color": "rgba(255,255,255,0.28)", "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.6, 9, 1.4] } });
       map.addLayer({ id: "region-selected", type: "line", source: "regions", filter: ["==", ["get", "name"], ""], paint: { "line-color": "#FFD400", "line-width": 2.2 } });
       map.addLayer({
@@ -179,7 +191,7 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
         source: "region-labels",
         maxzoom: 8.5,
         layout: { "text-field": ["upcase", ["get", "name"]], "text-font": FONT_BOLD, "text-size": ["interpolate", ["linear"], ["zoom"], 5, 9, 8, 12], "text-letter-spacing": 0.12, "text-allow-overlap": false },
-        paint: { "text-color": "rgba(255,255,255,0.42)", "text-halo-color": "rgba(7,9,13,0.8)", "text-halo-width": 1.2 },
+        paint: { "text-color": ink.textSoft, "text-halo-color": ink.halo, "text-halo-width": 1.2 },
       });
 
       // Supply chain (shown in Central Kitchens section)
@@ -187,9 +199,9 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
       map.addSource("supply-hubs", { type: "geojson", data: EMPTY });
       map.addSource("supply-trucks", { type: "geojson", data: EMPTY });
       map.addLayer({ id: "supply-routes", type: "line", source: "supply-routes", layout: { visibility: "none", "line-cap": "round" }, paint: { "line-color": ["case", ["get", "active"], "#FFD400", "rgba(255,212,0,0.4)"], "line-width": ["case", ["get", "active"], 1.8, 1], "line-dasharray": [2, 2] } });
-      map.addLayer({ id: "supply-trucks", type: "circle", source: "supply-trucks", layout: { visibility: "none" }, paint: { "circle-radius": 4.5, "circle-color": "#FFD400", "circle-stroke-color": "#07090d", "circle-stroke-width": 2 } });
-      map.addLayer({ id: "supply-hubs", type: "circle", source: "supply-hubs", layout: { visibility: "none" }, paint: { "circle-radius": 10, "circle-color": ["case", ["get", "verified"], "#5AB350", "#0e1117"], "circle-stroke-color": ["case", ["get", "verified"], "#ffffff", "#5AB350"], "circle-stroke-width": 2.5 } });
-      map.addLayer({ id: "supply-hub-label", type: "symbol", source: "supply-hubs", layout: { visibility: "none", "text-field": ["get", "label"], "text-font": FONT_BOLD, "text-size": 11, "text-offset": [0, 1.5], "text-anchor": "top" }, paint: { "text-color": "#d9f2d5", "text-halo-color": "#07090d", "text-halo-width": 1.5 } });
+      map.addLayer({ id: "supply-trucks", type: "circle", source: "supply-trucks", layout: { visibility: "none" }, paint: { "circle-radius": 4.5, "circle-color": "#FFD400", "circle-stroke-color": ink.edge, "circle-stroke-width": 2 } });
+      map.addLayer({ id: "supply-hubs", type: "circle", source: "supply-hubs", layout: { visibility: "none" }, paint: { "circle-radius": 10, "circle-color": ["case", ["get", "verified"], "#5AB350", ink.surface], "circle-stroke-color": ["case", ["get", "verified"], "#ffffff", "#5AB350"], "circle-stroke-width": 2.5 } });
+      map.addLayer({ id: "supply-hub-label", type: "symbol", source: "supply-hubs", layout: { visibility: "none", "text-field": ["get", "label"], "text-font": FONT_BOLD, "text-size": 11, "text-offset": [0, 1.5], "text-anchor": "top" }, paint: { "text-color": ink.hubText, "text-halo-color": ink.halo, "text-halo-width": 1.5 } });
 
       // Branches
       map.addSource("branches", {
@@ -201,8 +213,8 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
         clusterProperties: { sev: ["max", ["get", "sev"]], sales: ["+", ["get", "sales"]] },
       });
       const sevColor = ["match", ["get", "sev"], 3, STATUS_COLOR.critical, 2, STATUS_COLOR.warning, 1, STATUS_COLOR.normal, STATUS_COLOR.closed] as unknown as string;
-      map.addLayer({ id: "cluster", type: "circle", source: "branches", filter: ["has", "point_count"], paint: { "circle-color": "#0e1117", "circle-stroke-color": sevColor, "circle-stroke-width": 3, "circle-radius": ["step", ["get", "point_count"], 15, 5, 19, 15, 24], "circle-opacity": 0.92 } });
-      map.addLayer({ id: "cluster-count", type: "symbol", source: "branches", filter: ["has", "point_count"], layout: { "text-field": ["get", "point_count_abbreviated"], "text-font": FONT_BOLD, "text-size": 12, "text-allow-overlap": true }, paint: { "text-color": "#ffffff" } });
+      map.addLayer({ id: "cluster", type: "circle", source: "branches", filter: ["has", "point_count"], paint: { "circle-color": ink.surface, "circle-stroke-color": sevColor, "circle-stroke-width": 3, "circle-radius": ["step", ["get", "point_count"], 15, 5, 19, 15, 24], "circle-opacity": 0.92 } });
+      map.addLayer({ id: "cluster-count", type: "symbol", source: "branches", filter: ["has", "point_count"], layout: { "text-field": ["get", "point_count_abbreviated"], "text-font": FONT_BOLD, "text-size": 12, "text-allow-overlap": true }, paint: { "text-color": ink.text } });
       map.addLayer({ id: "branch-pulse", type: "circle", source: "branches", filter: ["all", ["!", ["has", "point_count"]], ["==", ["get", "sev"], 3]], paint: { "circle-color": STATUS_COLOR.critical, "circle-radius": 10, "circle-opacity": 0.35 } });
       map.addLayer({
         id: "branch",
@@ -212,7 +224,7 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
         paint: {
           "circle-color": sevColor,
           "circle-radius": ["interpolate", ["linear"], ["zoom"], 5, 5.5, 10, 7.5, 15, 10],
-          "circle-stroke-color": ["case", ["boolean", ["get", "selected"], false], "#ffffff", "#07090d"],
+          "circle-stroke-color": ["case", ["boolean", ["get", "selected"], false], ink.text, ink.edge],
           "circle-stroke-width": ["case", ["boolean", ["get", "selected"], false], 3, 2],
         },
       });
@@ -223,14 +235,14 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
         filter: ["!", ["has", "point_count"]],
         minzoom: 8.5,
         layout: {
-          "text-field": ["format", ["get", "name"], { "font-scale": 1, "text-font": ["literal", FONT_BOLD] }, "\n", {}, ["get", "salesLabel"], { "font-scale": 0.85, "text-font": ["literal", FONT], "text-color": "#9ec5f4" }],
+          "text-field": ["format", ["get", "name"], { "font-scale": 1, "text-font": ["literal", FONT_BOLD] }, "\n", {}, ["get", "salesLabel"], { "font-scale": 0.85, "text-font": ["literal", FONT], "text-color": ink.sales }],
           "text-font": FONT,
           "text-size": 12,
           "text-offset": [0, 1.25],
           "text-anchor": "top",
           "text-optional": true,
         },
-        paint: { "text-color": "#ffffff", "text-halo-color": "rgba(7,9,13,0.9)", "text-halo-width": 1.6 },
+        paint: { "text-color": ink.text, "text-halo-color": ink.halo, "text-halo-width": 1.6 },
       });
 
       // Fly-in building
@@ -315,7 +327,7 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
       map.remove();
       mapRef.current = null;
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- created once; a theme change remounts the map
 
   // ── branch data ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -341,7 +353,7 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
     if (deferUntilStyleReady(map, () => setStyleTick((n) => n + 1))) return;
     map.setFilter("region-selected", ["==", ["get", "name"], regionFilter ?? ""]);
     if (!regionalPerformance) {
-      map.setPaintProperty("region-fill", "fill-color", "#ffffff");
+      map.setPaintProperty("region-fill", "fill-color", ink.regionFill);
       map.setPaintProperty("region-fill", "fill-opacity", ["case", ["boolean", ["feature-state", "hover"], false], 0.07, 0.015]);
       return;
     }
@@ -359,7 +371,7 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
     match.push("#1b1f27");
     map.setPaintProperty("region-fill", "fill-color", match as never);
     map.setPaintProperty("region-fill", "fill-opacity", ["case", ["boolean", ["feature-state", "hover"], false], 0.75, 0.55]);
-  }, [loaded, regionFilter, regionalPerformance, snaps, styleTick]);
+  }, [loaded, regionFilter, regionalPerformance, snaps, styleTick, ink.regionFill]);
 
   // ── supply chain layer (Central Kitchens section) ────────────────────
   const dayStart = useMemo(() => {
@@ -499,8 +511,8 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
   const flying = phase === "flying";
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#0b0e13]">
-      <div ref={container} className="!absolute inset-0 h-full w-full" aria-label="Map of Ghana showing Pizzaman Chickenman branches" role="region" />
+    <div className="relative h-full w-full overflow-hidden bg-[var(--surface)]">
+      <div ref={container} className="!absolute inset-0 h-full w-full" aria-label={`Map of Ghana showing ${TENANT.name} branches`} role="region" />
       {!flying && !(section === "branches" && !enteredBranchId) && (
         <>
           {section !== "central" && <NationalDashboard snaps={visibleBranches.map((x) => x.s)} />}
@@ -535,7 +547,7 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
               <span className="h-3 w-3 rounded-full border-2 border-white bg-[#5AB350]" /> Named publicly
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded-full border-2 border-[#5AB350] bg-[#0e1117]" /> Conceptual hub
+              <span className="h-3 w-3 rounded-full border-2 border-[#5AB350] bg-black" /> Conceptual hub
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-full bg-brand-yellow" /> Truck in transit

@@ -20,7 +20,7 @@ export default function BranchCard({ b, s, onClose, compact }: { b: Branch; s: B
   const safetyTone = s.safetyStatus === "critical" ? "text-red-400" : s.safetyStatus === "attention" ? "text-amber-300" : "text-emerald-400";
 
   return (
-    <div className="glass animate-fade-in w-[300px] rounded-xl !bg-[#0e1117]/95 p-3.5 text-white">
+    <div className="glass animate-fade-in w-[300px] rounded-xl !bg-[var(--surface-2)]/95 p-3.5 text-white">
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">

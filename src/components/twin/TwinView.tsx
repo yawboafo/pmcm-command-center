@@ -10,7 +10,13 @@ import { useApp } from "@/store/app";
 import { sims } from "@/store/sims";
 import CameraRig from "./CameraRig";
 import { CameraDevices, CctvOverlay, MultiViewRenderer, PathsOverlay } from "./CctvGrid";
-import { CameraList, CctvLabel, DemoMenu, FollowBanner, FpsHud, IntroOverlay, Toolbar } from "./Hud";
+import BadgeMarkers from "./BadgeMarkers";
+import FeedBoot from "./FeedBoot";
+import PlanView2D from "./PlanView2D";
+import { CameraList, CctvLabel, DemoMenu, FollowBanner, FpsHud, Toolbar } from "./Hud";
+import PerfProbe from "./PerfProbe";
+import { PersonFollowBanner, StaffLocator } from "./StaffLocator";
+import { StationViews } from "./StationViews";
 import RestaurantModel from "./RestaurantModel";
 
 const QUALITY = {
@@ -29,6 +35,7 @@ export default function TwinView({ branchId }: { branchId: string }) {
   const graphics = useApp((s) => s.graphics);
   const phase = useApp((s) => s.phase);
   const cctvOpen = useApp((s) => s.cctvOpen);
+  const view2d = useApp((s) => s.view2d) && phase === "inside";
   const tick = useApp((s) => s.tick);
   const selection = useApp((s) => s.selection);
   const xray = useApp((s) => s.xray);
@@ -77,11 +84,14 @@ export default function TwinView({ branchId }: { branchId: string }) {
   }, [selection, live, tick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const effects = ceiling.effects && hiQ && !cctvOpen;
-  const dusk = phase !== "inside";
+  // Daylight throughout: the feed-style entry shows the restaurant as it is now.
+  const dusk = false;
 
   return (
     <div id="twin-root" className="relative h-full w-full select-none bg-[#0b0f16]">
       <Canvas
+        // The 2D plan covers the canvas: stop rendering 3D frames meanwhile (the simulation keeps running).
+        frameloop={view2d ? "never" : "always"}
         shadows={graphics === "low" ? false : { type: THREE.PCFShadowMap }}
         dpr={dpr}
         camera={{ fov: 50, near: 0.1, far: 400, position: [0, 20, -30] }}
@@ -92,6 +102,7 @@ export default function TwinView({ branchId }: { branchId: string }) {
         }}
         onPointerMissed={() => useApp.getState().selection?.kind !== "order" && select(null)}
       >
+        {process.env.NODE_ENV !== "production" && <PerfProbe />}
         <PerformanceMonitor
           onDecline={() => {
             setDpr(1);
@@ -114,7 +125,7 @@ export default function TwinView({ branchId }: { branchId: string }) {
             selectedId={selectedEq}
             highlightIds={highlight}
             selectedAgentId={selection?.kind === "agent" ? selection.id : null}
-            overlays={!cctvOpen && phase === "inside"}
+            overlays={!cctvOpen && !view2d && phase === "inside"}
             onSelectEquipment={(id) => select({ kind: "equipment", id })}
             onSelectAgent={(id) => select({ kind: "agent", id })}
             onSelectRoom={(id) => select({ kind: "room", id })}
@@ -123,6 +134,7 @@ export default function TwinView({ branchId }: { branchId: string }) {
           />
           <CameraDevices cameras={live.plan.cameras} activeId={activeCameraId} />
           {showPaths && <PathsOverlay plan={live.plan} version={tick} />}
+          <BadgeMarkers sim={live} />
         </Suspense>
         <CameraRig key={live.plan.restaurantId} sim={live} />
         <MultiViewRenderer cameras={live.plan.cameras} composerActive={effects} />
@@ -134,7 +146,8 @@ export default function TwinView({ branchId }: { branchId: string }) {
       </Canvas>
 
       <CctvOverlay plan={live.plan} />
-      <IntroOverlay branchId={branchId} />
+      <FeedBoot branchId={branchId} />
+      {view2d && <PlanView2D sim={live} />}
       {phase === "inside" && !cctvOpen && (
         <>
           <div className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center px-3">
@@ -143,13 +156,18 @@ export default function TwinView({ branchId }: { branchId: string }) {
           <div className="pointer-events-none absolute right-3 top-14 z-10">
             <CameraList sim={live} />
           </div>
+          <div className="pointer-events-none absolute left-3 top-14 z-10 flex items-start gap-2">
+            <StationViews plan={live.plan} />
+            <StaffLocator sim={live} />
+          </div>
           <div className="pointer-events-none absolute bottom-3 right-3 z-10">
             <DemoMenu sim={live} />
           </div>
           <CctvLabel sim={live} />
           <FollowBanner sim={live} />
+          <PersonFollowBanner sim={live} />
           <FpsHud />
-          <Legend />
+          {!view2d && <Legend />}
         </>
       )}
     </div>
@@ -168,7 +186,7 @@ function Legend() {
       <span className="flex items-center gap-1">
         <span className="h-2 w-2 rounded-full bg-gray-400" /> Offline
       </span>
-      <span className="text-amber-300">◆ Simulated operations · conceptual layout</span>
+      <span className="text-white/40">Conceptual layout</span>
     </div>
   );
 }

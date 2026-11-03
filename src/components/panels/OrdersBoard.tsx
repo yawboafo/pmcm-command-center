@@ -9,7 +9,7 @@ import { channelLabel, type BranchSimulation } from "@/lib/sim/engine";
 import type { Channel, Order } from "@/lib/sim/types";
 import { useApp } from "@/store/app";
 import { Pill, simMs } from "./common";
-import { orderTone } from "./InspectOrder";
+import { orderTone, statusLabel } from "./InspectOrder";
 
 const GROUPS: Array<{ key: string; label: string; match: (o: Order) => boolean }> = [
   { key: "all", label: "All", match: () => true },
@@ -87,6 +87,7 @@ export default function OrdersBoard({ sim }: { sim: BranchSimulation }) {
                   <td className="py-1 pr-1 font-mono text-white">
                     {o.number}
                     {o.source === "live" && <span title="Live order from a connected ordering system" className="ml-1 text-[9px] font-semibold text-emerald-300">LIVE</span>}
+                    {o.source === "virtual" && <span title="SIM DEVICE — order from a simulated POS terminal through the real pipeline" className="ml-1 text-[9px] font-semibold text-fuchsia-300">SIM</span>}
                   </td>
                   <td className="pr-1 font-mono text-white/45">
                     {clock(simMs(sim, o.createdAt))}
@@ -96,7 +97,7 @@ export default function OrdersBoard({ sim }: { sim: BranchSimulation }) {
                     {o.lines.map((l) => `${l.qty}× ${l.name}`).join(", ")}
                   </td>
                   <td className="pr-1">
-                    <Pill tone={orderTone(o)}>{o.delayed && active ? "delayed" : o.status.replace(/_/g, " ").toLowerCase()}</Pill>
+                    <Pill tone={orderTone(o)}>{o.delayed && active ? "delayed" : statusLabel(o.status, o).toLowerCase()}</Pill>
                   </td>
                   <td className="pr-1 text-right font-mono text-white/70">{ghs(o.total)}</td>
                   <td className="whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
@@ -111,7 +112,7 @@ export default function OrdersBoard({ sim }: { sim: BranchSimulation }) {
                       </button>
                     )}
                     {["COMPLETED", "CANCELLED"].includes(o.status) && (
-                      <button type="button" disabled={!canAct} title={canAct ? "Refund (simulated)" : "Your role cannot refund orders"} className="text-[10.5px] text-white/45 enabled:hover:text-white disabled:opacity-40" onClick={() => sim.refundOrder(o.id)}>
+                      <button type="button" disabled={!canAct} title={canAct ? "Refund" : "Your role cannot refund orders"} className="text-[10.5px] text-white/45 enabled:hover:text-white disabled:opacity-40" onClick={() => sim.refundOrder(o.id)}>
                         Refund
                       </button>
                     )}

@@ -256,7 +256,7 @@ export async function offlineAnswer(q: string): Promise<string> {
   if (/take me|show|go to|switch to|open the/.test(t) && /oven|fry|frying|pizza|rice|dispatch|fridge|refrigerat|freez|counter|entrance|kitchen|packag|cold|storage/.test(t)) {
     if (/camera/.test(t) && /kitchen/.test(t)) {
       await executeTool("open_view", { view: "cameras" });
-      return "Opened the virtual camera grid (simulated views, not CCTV).";
+      return "Opened the virtual camera grid.";
     }
     if (branch && useApp.getState().enteredBranchId !== branch.id) await executeTool("open_branch", { branch: branch.name });
     const r = await executeTool("show_in_3d", { target: t });
@@ -269,11 +269,11 @@ export async function offlineAnswer(q: string): Promise<string> {
   if (/delay/.test(t)) {
     const r = (await executeTool("list_branches", { region: null, city: null, status: null, sort_by: "delayed", limit: 10 })).result as { branches: Array<ReturnType<typeof row>> };
     const d = r.branches.filter((b) => b.delayed_orders > 0);
-    return d.length ? `Branches with delayed orders (simulated):\n${d.map((b) => `• ${b.branch}: ${b.delayed_orders} delayed, ${b.active_orders} active`).join("\n")}` : "No branches currently report delayed orders (simulated).";
+    return d.length ? `Branches with delayed orders:\n${d.map((b) => `• ${b.branch}: ${b.delayed_orders} delayed, ${b.active_orders} active`).join("\n")}` : "No branches currently report delayed orders.";
   }
   if (/safety|alert/.test(t)) {
     const r = (await executeTool("safety_alerts", { branch: branch?.name ?? null })).result as { branches_with_issues: Array<{ branch: string; status: string; issue: string }> };
-    return r.branches_with_issues.length ? `Branches with food-safety or equipment issues (simulated):\n${r.branches_with_issues.map((b) => `• ${b.branch} — ${b.status.toUpperCase()}: ${b.issue}`).join("\n")}` : "No open safety alerts (simulated).";
+    return r.branches_with_issues.length ? `Branches with food-safety or equipment issues:\n${r.branches_with_issues.map((b) => `• ${b.branch} — ${b.status.toUpperCase()}: ${b.issue}`).join("\n")}` : "No open safety alerts.";
   }
   if (/offline/.test(t)) {
     const out: string[] = [];
@@ -282,15 +282,15 @@ export async function offlineAnswer(q: string): Promise<string> {
   }
   if (/compare/.test(t) && /accra|kumasi/.test(t)) {
     const r = (await executeTool("compare", { dimension: "city", names: ["Accra", "Kumasi"] })).result as { groups: Array<Json> };
-    return `Accra vs Kumasi (simulated, today so far):\n${r.groups.map((g) => `• ${g.name}: ${g.branches} branches, ${ghs(g.sales_today_ghs)} sales, ${g.orders_today} orders, avg prep ${g.avg_prep_min} min`).join("\n")}`;
+    return `Accra vs Kumasi (today so far):\n${r.groups.map((g) => `• ${g.name}: ${g.branches} branches, ${ghs(g.sales_today_ghs)} sales, ${g.orders_today} orders, avg prep ${g.avg_prep_min} min`).join("\n")}`;
   }
   if (/best|highest|top|revenue|performing/.test(t)) {
     const r = (await executeTool("list_branches", { region: null, city: null, status: null, sort_by: "sales", limit: 5 })).result as { branches: Array<ReturnType<typeof row>> };
-    return `Top branches by simulated sales today:\n${r.branches.map((b, i) => `${i + 1}. ${b.branch} — ${ghs(b.sales_today_ghs)} (${b.orders_today} orders)`).join("\n")}`;
+    return `Top branches by sales today:\n${r.branches.map((b, i) => `${i + 1}. ${b.branch} — ${ghs(b.sales_today_ghs)} (${b.orders_today} orders)`).join("\n")}`;
   }
   if (/how many|being prepared|active orders|across ghana|summary|overview/.test(t)) {
     const r = (await executeTool("network_summary", {})).result;
-    return `Across ${r.branches} branches (${r.open_now} open): ${r.active_orders} active orders, ${r.orders_today} orders today, ${ghs(r.sales_today_ghs)} simulated sales, avg prep ${r.avg_prep_min} min, ${r.critical} critical / ${r.warning} warning.`;
+    return `Across ${r.branches} branches (${r.open_now} open): ${r.active_orders} active orders, ${r.orders_today} orders today, ${ghs(r.sales_today_ghs)} sales, avg prep ${r.avg_prep_min} min, ${r.critical} critical / ${r.warning} warning.`;
   }
   return "Offline mode understands: branch rankings, delayed orders, safety alerts, offline equipment, Accra vs Kumasi, network summary, 'show me the kitchen at <branch>', and 'take me to the pizza oven / frying station / dispatch / refrigerator with the alert'. Add ANTHROPIC_API_KEY to enable the full AI assistant.";
 }

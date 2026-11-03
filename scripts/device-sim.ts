@@ -41,7 +41,7 @@ let sent = 0;
 async function send() {
   const body = JSON.stringify({ v: 1, messageId: randomUUID(), deviceId, ts: new Date().toISOString(), readings: [{ metric, value: Math.round((value + (Math.random() - 0.5) * 0.2) * 100) / 100 }], battery_pct: 87, rssi_dbm: -71, firmware: "bench-1.0" });
   const ts = Date.now();
-  const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json", "x-pmcm-device": deviceId, "x-pmcm-timestamp": String(ts), "x-pmcm-signature": sign(secret, ts, body) }, body });
+  const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json", "x-ops-device": deviceId, "x-ops-timestamp": String(ts), "x-ops-signature": sign(secret, ts, body) }, body });
   console.log(`${new Date().toISOString()} ${deviceId} ${metric}=${value.toFixed(2)} → ${res.status} ${await res.text()}`);
   value += drift;
   if (count && ++sent >= count) process.exit(0);

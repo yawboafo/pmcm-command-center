@@ -19,7 +19,7 @@ const event = (over: Record<string, unknown> = {}) => ({
 
 function call(body: unknown, { secret = SECRET, source = "chris-b", ts = Date.now() } = {}) {
   const raw = JSON.stringify(body);
-  return POST(new Request("http://localhost/api/ingest/pos", { method: "POST", body: raw, headers: { "x-pmcm-source": source, "x-pmcm-timestamp": String(ts), "x-pmcm-signature": sign(secret, ts, raw) } }));
+  return POST(new Request("http://localhost/api/ingest/pos", { method: "POST", body: raw, headers: { "x-ops-source": source, "x-ops-timestamp": String(ts), "x-ops-signature": sign(secret, ts, raw) } }));
 }
 
 describe("POS webhook", () => {

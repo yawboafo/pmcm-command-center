@@ -20,14 +20,16 @@ export type Permission =
   | "edit:floorplan"
   | "control:simulation"
   | "view:cctv"
+  /** See named staff positions (badge tracking). Personal data: managers and floor supervisors only. */
+  | "view:staff-location"
   | "admin";
 
 const ROLE_PERMS: Record<Role, Permission[]> = {
-  "system-admin": ["view:branch", "view:safety", "act:safety", "view:inventory", "act:inventory", "act:orders", "edit:floorplan", "control:simulation", "view:cctv", "admin"],
-  "national-ops": ["view:branch", "view:safety", "act:safety", "view:inventory", "act:inventory", "act:orders", "control:simulation", "edit:floorplan"],
-  "regional-manager": ["view:branch", "view:safety", "act:safety", "view:inventory", "act:inventory", "act:orders", "control:simulation"],
-  "branch-manager": ["view:branch", "view:safety", "act:safety", "view:inventory", "act:inventory", "act:orders", "control:simulation"],
-  "kitchen-supervisor": ["view:branch", "view:safety", "act:safety", "view:inventory", "act:orders"],
+  "system-admin": ["view:branch", "view:safety", "act:safety", "view:inventory", "act:inventory", "act:orders", "edit:floorplan", "control:simulation", "view:cctv", "view:staff-location", "admin"],
+  "national-ops": ["view:branch", "view:safety", "act:safety", "view:inventory", "act:inventory", "act:orders", "control:simulation", "edit:floorplan", "view:staff-location"],
+  "regional-manager": ["view:branch", "view:safety", "act:safety", "view:inventory", "act:inventory", "act:orders", "control:simulation", "view:staff-location"],
+  "branch-manager": ["view:branch", "view:safety", "act:safety", "view:inventory", "act:inventory", "act:orders", "control:simulation", "view:staff-location"],
+  "kitchen-supervisor": ["view:branch", "view:safety", "act:safety", "view:inventory", "act:orders", "view:staff-location"],
   "food-safety-officer": ["view:branch", "view:safety", "act:safety"],
   "inventory-manager": ["view:branch", "view:inventory", "act:inventory"],
   viewer: ["view:branch", "view:safety", "view:inventory"],

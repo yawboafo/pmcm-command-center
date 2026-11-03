@@ -13,7 +13,7 @@ export const TEMPLATES: Record<"A" | "B" | "C", FloorPlan> = {
   C: modelCJson as unknown as FloorPlan,
 };
 
-const PLAN_KEY = "pmcm.floorplans.v1";
+const PLAN_KEY = "ops.floorplans.v1";
 
 /** Simulated minutes a branch runs before it is shown (≈50 ms of compute). */
 const WARMUP_SEC = 20 * 60;
@@ -181,7 +181,7 @@ class SimRegistry {
 }
 
 // Kept on globalThis so development hot reloads don't wipe running simulations.
-const g = globalThis as unknown as { __pmcmSims?: SimRegistry };
+const g = globalThis as unknown as { __opsSims?: SimRegistry };
 export function sims() {
-  return (g.__pmcmSims ??= new SimRegistry());
+  return (g.__opsSims ??= new SimRegistry());
 }

@@ -372,8 +372,103 @@ const MENU_PANELS = [
   ["PACKS", "#7d3c98", ["Gen-Z Pack", "Borgaman Pack", "Family Pack"]],
 ] as const;
 
+/** The brand font as loaded by next/font (falls back to a heavy system face). */
+function brandFont(weight: number, px: number) {
+  let fam = "";
+  if (typeof document !== "undefined") fam = getComputedStyle(document.documentElement).getPropertyValue("--font-brand").trim() || getComputedStyle(document.body).getPropertyValue("--font-brand").trim();
+  return `${weight} ${px}px ${fam ? `${fam}, ` : ""}Montserrat, 'Arial Black', Arial, sans-serif`;
+}
+
+/* Small food illustrations for menu boards and graphics (flat, brand palette). */
+function drawPizza(ctx: CanvasRenderingContext2D, x: number, y: number, r: number) {
+  ctx.fillStyle = "#c98a3e";
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#f3c24f";
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.84, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#b5311d";
+  for (let i = 0; i < 7; i++) {
+    const a = i * 2.4 + 0.3;
+    const rr = r * (0.2 + 0.5 * ((i * 0.618) % 1));
+    ctx.beginPath();
+    ctx.arc(x + Math.cos(a) * rr, y + Math.sin(a) * rr, r * 0.12, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = BRAND.green;
+  for (let i = 0; i < 5; i++) {
+    const a = i * 1.7 + 1.1;
+    ctx.fillRect(x + Math.cos(a) * r * 0.45 - r * 0.06, y + Math.sin(a) * r * 0.45 - r * 0.02, r * 0.12, r * 0.04);
+  }
+  ctx.strokeStyle = "rgba(120,70,20,0.55)";
+  ctx.lineWidth = Math.max(1, r * 0.03);
+  for (let k = 0; k < 4; k++) {
+    const a = (k * Math.PI) / 4;
+    ctx.beginPath();
+    ctx.moveTo(x - Math.cos(a) * r * 0.84, y - Math.sin(a) * r * 0.84);
+    ctx.lineTo(x + Math.cos(a) * r * 0.84, y + Math.sin(a) * r * 0.84);
+    ctx.stroke();
+  }
+}
+
+function drawDrumstick(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, rot: number) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.fillStyle = "#efe6d2";
+  ctx.fillRect(s * 0.35, -s * 0.07, s * 0.45, s * 0.14);
+  ctx.beginPath();
+  ctx.arc(s * 0.82, -s * 0.07, s * 0.09, 0, Math.PI * 2);
+  ctx.arc(s * 0.82, s * 0.07, s * 0.09, 0, Math.PI * 2);
+  ctx.fill();
+  const g = ctx.createRadialGradient(-s * 0.1, -s * 0.12, s * 0.05, 0, 0, s * 0.5);
+  g.addColorStop(0, "#e09a42");
+  g.addColorStop(1, "#9a5418");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, s * 0.48, s * 0.33, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawJollof(ctx: CanvasRenderingContext2D, x: number, y: number, r: number) {
+  ctx.fillStyle = "#f4f1ea";
+  ctx.beginPath();
+  ctx.ellipse(x, y + r * 0.1, r, r * 0.55, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#d4572a";
+  ctx.beginPath();
+  ctx.ellipse(x, y, r * 0.86, r * 0.42, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#e2733a";
+  for (let i = 0; i < 26; i++) ctx.fillRect(x + Math.cos(i * 2.3) * r * 0.6 * ((i * 0.37) % 1), y + Math.sin(i * 2.3) * r * 0.3 * ((i * 0.53) % 1), r * 0.06, r * 0.04);
+  drawDrumstick(ctx, x + r * 0.25, y - r * 0.05, r * 0.7, -0.5);
+  ctx.fillStyle = BRAND.green;
+  ctx.beginPath();
+  ctx.ellipse(x - r * 0.45, y, r * 0.16, r * 0.08, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawPack(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
+  ctx.fillStyle = "#f6f4ee";
+  ctx.fillRect(x - s * 0.55, y - s * 0.1, s * 0.75, s * 0.5);
+  ctx.fillStyle = BRAND.red;
+  ctx.fillRect(x - s * 0.55, y + s * 0.08, s * 0.75, s * 0.12);
+  ctx.fillStyle = BRAND.yellow;
+  ctx.fillRect(x - s * 0.55, y + s * 0.2, s * 0.75, s * 0.03);
+  // bottle
+  ctx.fillStyle = "#3b1f12";
+  ctx.fillRect(x + s * 0.32, y - s * 0.3, s * 0.18, s * 0.7);
+  ctx.fillRect(x + s * 0.37, y - s * 0.45, s * 0.08, s * 0.16);
+  ctx.fillStyle = BRAND.red;
+  ctx.fillRect(x + s * 0.32, y - s * 0.05, s * 0.18, s * 0.15);
+  drawDrumstick(ctx, x - s * 0.2, y - s * 0.22, s * 0.45, 0.3);
+}
+
 export function menuBoardTexture(index: number): THREE.Texture {
-  return canvasTexture(`menu:${index}`, 1024, 320, (ctx, w, h) => {
+  return canvasTexture(`menu:${index}`, 1536, 480, (ctx, w, h) => {
     ctx.fillStyle = "#0b0b0d";
     ctx.fillRect(0, 0, w, h);
     const panels = [MENU_PANELS[index % 4], MENU_PANELS[(index + 1) % 4], MENU_PANELS[(index + 2) % 4]];
@@ -384,24 +479,175 @@ export function menuBoardTexture(index: number): THREE.Texture {
       g.addColorStop(0, color);
       g.addColorStop(1, "#1a0a06");
       ctx.fillStyle = g;
-      ctx.fillRect(x + 6, 6, pw - 12, h - 12);
-      // food "photo" blob
-      ctx.fillStyle = "rgba(255,210,120,0.85)";
-      ctx.beginPath();
-      ctx.ellipse(x + pw * 0.72, h * 0.62, pw * 0.2, h * 0.24, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "rgba(190,60,30,0.9)";
-      ctx.beginPath();
-      ctx.ellipse(x + pw * 0.72, h * 0.62, pw * 0.15, h * 0.17, 0, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillRect(x + 8, 8, pw - 16, h - 16);
+      // light burst behind the food
+      const cx = x + pw * 0.7;
+      const cy = h * 0.6;
+      const burst = ctx.createRadialGradient(cx, cy, 10, cx, cy, pw * 0.34);
+      burst.addColorStop(0, "rgba(255,214,120,0.55)");
+      burst.addColorStop(1, "rgba(255,214,120,0)");
+      ctx.fillStyle = burst;
+      ctx.fillRect(x + 8, 8, pw - 16, h - 16);
+      if (title === "PIZZA") drawPizza(ctx, cx, cy, pw * 0.2);
+      else if (title === "CHICKEN") {
+        drawDrumstick(ctx, cx - pw * 0.08, cy + h * 0.05, pw * 0.22, -0.4);
+        drawDrumstick(ctx, cx + pw * 0.06, cy - h * 0.07, pw * 0.22, 0.5);
+        drawDrumstick(ctx, cx + pw * 0.02, cy + h * 0.14, pw * 0.2, 2.6);
+      } else if (title === "JOLLOF") drawJollof(ctx, cx, cy, pw * 0.2);
+      else drawPack(ctx, cx, cy, pw * 0.36);
+      // title band
       ctx.fillStyle = BRAND.yellow;
-      ctx.font = "900 44px Montserrat, 'Arial Black', Arial, sans-serif";
-      ctx.fillText(title, x + 24, 62);
+      ctx.font = brandFont(900, 66);
+      ctx.textBaseline = "alphabetic";
+      ctx.fillText(title, x + 34, 92);
+      ctx.fillStyle = BRAND.yellow;
+      ctx.fillRect(x + 34, 108, pw * 0.3, 6);
       ctx.fillStyle = "#fff";
-      ctx.font = "600 24px Montserrat, Arial, sans-serif";
-      (items as readonly string[]).forEach((it, k) => ctx.fillText(it, x + 24, 110 + k * 38));
+      ctx.font = brandFont(600, 34);
+      (items as readonly string[]).forEach((it, k) => ctx.fillText(it, x + 34, 168 + k * 56));
+      // brand stripe along the bottom of each panel
+      ctx.fillStyle = BRAND.red;
+      ctx.fillRect(x + 8, h - 30, pw - 16, 10);
+      ctx.fillStyle = BRAND.yellow;
+      ctx.fillRect(x + 8, h - 20, pw - 16, 6);
+      ctx.fillStyle = BRAND.green;
+      ctx.fillRect(x + 8, h - 14, pw - 16, 6);
     });
   });
+}
+
+/** Text strip at the right aspect (w / h metres) so lettering is never stretched. */
+export function stripTexture(text: string, bg: string, fg: string, aspect: number, accent?: string): THREE.Texture {
+  const H = 96;
+  const W = Math.min(2048, Math.max(128, Math.round(H * aspect)));
+  return canvasTexture(`strip:${text}:${bg}:${fg}:${W}`, W, H, (ctx, w, h) => {
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+    if (accent) {
+      ctx.fillStyle = accent;
+      ctx.fillRect(0, h - 10, w, 10);
+    }
+    ctx.fillStyle = fg;
+    let px = 60;
+    ctx.font = brandFont(800, px);
+    while (ctx.measureText(text).width > w * 0.9 && px > 14) ctx.font = brandFont(800, (px -= 2));
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, w / 2, h * (accent ? 0.46 : 0.52));
+  });
+}
+
+/** Customer-facing POS counter front: red panel, yellow / green brand swoosh, call to order. */
+export function counterFrontTexture(aspect: number): THREE.Texture {
+  const a = Math.max(2, Math.min(8, Math.round(aspect * 2) / 2));
+  const H = 256;
+  const W = Math.round(H * a);
+  return canvasTexture(`counterFront:${a}`, W, H, (ctx, w, h) => {
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, "#f02a30");
+    g.addColorStop(1, "#c8151c");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    // diagonal "flame" streaks
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = "#fff";
+    for (let x = -h; x < w; x += 70) {
+      ctx.beginPath();
+      ctx.moveTo(x, h);
+      ctx.lineTo(x + 26, h);
+      ctx.lineTo(x + 26 + h * 0.6, 0);
+      ctx.lineTo(x + h * 0.6, 0);
+      ctx.fill();
+    }
+    ctx.restore();
+    // swoosh band
+    ctx.fillStyle = BRAND.yellow;
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.72);
+    ctx.bezierCurveTo(w * 0.3, h * 0.6, w * 0.6, h * 0.92, w, h * 0.7);
+    ctx.lineTo(w, h * 0.82);
+    ctx.bezierCurveTo(w * 0.6, h * 1.02, w * 0.3, h * 0.72, 0, h * 0.84);
+    ctx.fill();
+    ctx.fillStyle = BRAND.green;
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.88);
+    ctx.bezierCurveTo(w * 0.3, h * 0.78, w * 0.6, h * 1.05, w, h * 0.86);
+    ctx.lineTo(w, h * 0.9);
+    ctx.bezierCurveTo(w * 0.6, h * 1.09, w * 0.3, h * 0.82, 0, h * 0.92);
+    ctx.fill();
+    // lettering
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#fff";
+    ctx.font = brandFont(900, 74);
+    ctx.fillText("ORDER HERE", h * 0.32, h * 0.3);
+    ctx.fillStyle = BRAND.yellow;
+    ctx.font = brandFont(700, 34);
+    ctx.fillText("PIZZA  ·  CHICKEN  ·  JOLLOF", h * 0.34, h * 0.52);
+    // food icons on the right
+    const r = h * 0.27;
+    drawPizza(ctx, w - r * 1.35, h * 0.4, r);
+    if (w > h * 4) drawDrumstick(ctx, w - r * 3.6, h * 0.42, r * 1.5, -0.35);
+  });
+}
+
+/** Illuminated drinks-fridge header (white lettering over the red light box). */
+export function fridgeHeaderTexture(): THREE.Texture {
+  return canvasTexture("fridgeHeader", 640, 112, (ctx, w, h) => {
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = "#fff";
+    ctx.font = brandFont(900, 58);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("ICE COLD DRINKS", w / 2, h * 0.54);
+  });
+}
+
+/** Lettering for the entrance canopy fascia: brand name in white and yellow (text only, no logo). */
+export function canopyTexture(): THREE.Texture {
+  return canvasTexture("canopy", 1536, 160, (ctx, w, h) => {
+    ctx.clearRect(0, 0, w, h);
+    ctx.font = brandFont(900, 104);
+    ctx.textBaseline = "middle";
+    const a = "PIZZAMAN";
+    const b = "CHICKENMAN";
+    const gap = 46;
+    const aw = ctx.measureText(a).width;
+    const bw = ctx.measureText(b).width;
+    const x0 = (w - aw - bw - gap) / 2;
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = "#7a1010";
+    ctx.strokeText(a, x0, h * 0.54);
+    ctx.strokeText(b, x0 + aw + gap, h * 0.54);
+    ctx.fillStyle = "#fff";
+    ctx.fillText(a, x0, h * 0.54);
+    ctx.fillStyle = BRAND.yellow;
+    ctx.fillText(b, x0 + aw + gap, h * 0.54);
+  });
+}
+
+/**
+ * Glazing manifestation band (safety marking on shopfront glass): brand stripes and a
+ * repeating product line. Tiles horizontally every 2 m; clone it per window for the repeat.
+ */
+export function windowBandTexture(): THREE.Texture {
+  return canvasTexture("windowBand", 1024, 96, (ctx, w, h) => {
+    ctx.fillStyle = "rgba(255,255,255,0.86)";
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = BRAND.red;
+    ctx.fillRect(0, 0, w, 12);
+    ctx.fillStyle = BRAND.yellow;
+    ctx.fillRect(0, 12, w, 6);
+    ctx.fillStyle = BRAND.green;
+    ctx.fillRect(0, h - 8, w, 8);
+    ctx.fillStyle = "#c8151c";
+    ctx.font = brandFont(800, 38);
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+    ctx.fillText("FRESH PIZZA  •  CRISPY CHICKEN  •  JOLLOF  •", w / 2, h * 0.56);
+  }, [1, 1]);
 }
 
 export function posterTexture(): THREE.Texture {

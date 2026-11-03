@@ -41,7 +41,7 @@ const base = {
 async function post(status: string) {
   const body = JSON.stringify({ ...base, status, idempotencyKey: randomUUID(), ts: new Date().toISOString() });
   const ts = Date.now();
-  const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json", "x-pmcm-source": source, "x-pmcm-timestamp": String(ts), "x-pmcm-signature": sign(secret!, ts, body) }, body });
+  const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json", "x-ops-source": source, "x-ops-timestamp": String(ts), "x-ops-signature": sign(secret!, ts, body) }, body });
   console.log(`${new Date().toISOString()} ${base.externalRef} ${status} → ${res.status} ${await res.text()}`);
 }
 

@@ -63,6 +63,8 @@ interface AppState {
   activeCameraId: string | null;
   cameraRequest: CameraRequest | null;
   followOrderId: string | null;
+  /** Person the follow camera tracks (staff located by badge, or any simulated person). */
+  followAgentId: string | null;
   cctvLayout: 1 | 4 | 9;
   cctvOpen: boolean;
   xray: boolean;
@@ -74,11 +76,23 @@ interface AppState {
   tick: number;
   panels: { left: boolean; right: boolean; bottom: boolean };
   graphics: "high" | "balanced" | "low";
+  paletteOpen: boolean;
+  shortcutsOpen: boolean;
+  /** UI theme preference; "auto" follows the operating system. */
+  theme: ThemePref;
+  /** The theme actually applied (auto resolved). */
+  resolvedTheme: "dark" | "light";
+  /** Start-up prototype notice (see PrototypeNotice); re-openable from Settings and ⌘K. */
+  noticeOpen: boolean;
+  /** Inside a branch: show the live 2D operations plan instead of the 3D view. */
+  view2d: boolean;
+  /** Equipment rendering: Blender-built glTF models (when available) or the procedural stand-ins. */
+  assetMode: "models" | "procedural";
   user: DemoUser;
   regionFilter: string | null;
   statusFilter: string | null;
   search: string;
-  toast: { id: number; text: string; tone: "info" | "success" | "warning" | "critical" } | null;
+  toast: { id: number; text: string; tone: "info" | "success" | "warning" | "critical"; action?: { label: string; run: () => void } } | null;
 
   setSection: (s: Section) => void;
   selectBranch: (id: string | null) => void;
@@ -90,6 +104,7 @@ interface AppState {
   useVirtualCamera: (id: string | null) => void;
   requestCamera: (r: Omit<CameraRequest, "nonce">) => void;
   followOrder: (id: string | null) => void;
+  followAgent: (id: string | null) => void;
   setCctv: (open: boolean, layout?: 1 | 4 | 9) => void;
   toggle: (k: "xray" | "showPaths") => void;
   setSpeed: (s: number) => void;
@@ -98,9 +113,44 @@ interface AppState {
   bumpTick: () => void;
   togglePanel: (p: "left" | "right" | "bottom") => void;
   setGraphics: (g: "high" | "balanced" | "low") => void;
+  setAssetMode: (m: "models" | "procedural") => void;
+  setPaletteOpen: (b: boolean) => void;
+  setNoticeOpen: (b: boolean) => void;
+  setTheme: (t: ThemePref) => void;
+  setResolvedTheme: (t: "dark" | "light") => void;
+  setView2d: (b: boolean) => void;
+  setShortcutsOpen: (b: boolean) => void;
   setUser: (id: string) => void;
   setFilters: (f: Partial<{ regionFilter: string | null; statusFilter: string | null; search: string }>) => void;
-  notify: (text: string, tone?: "info" | "success" | "warning" | "critical") => void;
+  notify: (text: string, tone?: "info" | "success" | "warning" | "critical", action?: { label: string; run: () => void }) => void;
+}
+
+export type ThemePref = "dark" | "light" | "auto";
+export const THEME_KEY = "ops.theme";
+
+function storedTheme(): ThemePref {
+  if (typeof window === "undefined") return "dark";
+  try {
+    const t = window.localStorage.getItem(THEME_KEY);
+    return t === "light" || t === "auto" || t === "dark" ? t : "dark";
+  } catch {
+    return "dark";
+  }
+}
+
+export function resolveTheme(t: ThemePref): "dark" | "light" {
+  if (t !== "auto") return t;
+  return typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
+/** Show the prototype notice on start-up unless the viewer ticked "Don't show this again". */
+function noticeDue() {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem("ops.prototypeNotice.v1") !== "dismissed";
+  } catch {
+    return true;
+  }
 }
 
 export const ARRIVAL_PRESETS = { low: 5, medium: 20, high: 50 } as const;
@@ -115,6 +165,7 @@ export const useApp = create<AppState>((set, get) => ({
   activeCameraId: null,
   cameraRequest: null,
   followOrderId: null,
+  followAgentId: null,
   cctvLayout: 4,
   cctvOpen: false,
   xray: false,
@@ -126,6 +177,14 @@ export const useApp = create<AppState>((set, get) => ({
   // Phones start with every side panel folded so the map or twin gets the screen (the app is client-only).
   panels: typeof window !== "undefined" && window.innerWidth < 768 ? { left: false, right: false, bottom: false } : { left: true, right: true, bottom: true },
   graphics: "balanced",
+  paletteOpen: false,
+  shortcutsOpen: false,
+  noticeOpen: noticeDue(),
+  theme: storedTheme(),
+  resolvedTheme: resolveTheme(storedTheme()),
+  view2d: false,
+  // `?assets=procedural` starts with the procedural stand-ins (side-by-side QA and performance checks).
+  assetMode: typeof window !== "undefined" && new URLSearchParams(window.location.search).get("assets") === "procedural" ? "procedural" : "models",
   user: DEMO_USERS[1],
   regionFilter: null,
   statusFilter: null,
@@ -151,13 +210,14 @@ export const useApp = create<AppState>((set, get) => ({
   enterBranch: (id) =>
     set({ selectedBranchId: id, enteredBranchId: id, phase: "flying", selection: null, cameraMode: "orbit", activeCameraId: null, followOrderId: null, section: TWIN_SECTIONS.includes(get().section) ? get().section : "twin" }),
   setPhase: (phase) => set({ phase }),
-  exitToMap: () => set({ enteredBranchId: null, phase: "map", section: "network", selection: get().selectedBranchId ? { kind: "branch", id: get().selectedBranchId! } : null, cctvOpen: false, followOrderId: null }),
+  exitToMap: () => set({ view2d: false, enteredBranchId: null, phase: "map", section: "network", selection: get().selectedBranchId ? { kind: "branch", id: get().selectedBranchId! } : null, cctvOpen: false, followOrderId: null }),
   select: (selection) => set({ selection }),
-  setCameraMode: (cameraMode) => set({ cameraMode, followOrderId: cameraMode === "follow" ? get().followOrderId : null, activeCameraId: cameraMode === "cctv" ? get().activeCameraId : null }),
+  setCameraMode: (cameraMode) => set({ cameraMode, followOrderId: cameraMode === "follow" ? get().followOrderId : null, followAgentId: cameraMode === "follow" ? get().followAgentId : null, activeCameraId: cameraMode === "cctv" ? get().activeCameraId : null }),
   useVirtualCamera: (id) => set({ activeCameraId: id, cameraMode: id ? "cctv" : "orbit", followOrderId: null, selection: id ? { kind: "camera", id } : get().selection }),
   requestCamera: (r) => set({ cameraRequest: { ...r, nonce: (get().cameraRequest?.nonce ?? 0) + 1 }, cameraMode: "focus", activeCameraId: null }),
-  followOrder: (id) => set({ followOrderId: id, cameraMode: id ? "follow" : "orbit", selection: id ? { kind: "order", id } : get().selection }),
-  setCctv: (cctvOpen, layout) => set({ cctvOpen, cctvLayout: layout ?? get().cctvLayout }),
+  followOrder: (id) => set({ followOrderId: id, followAgentId: null, cameraMode: id ? "follow" : "orbit", selection: id ? { kind: "order", id } : get().selection }),
+  followAgent: (id) => set({ followAgentId: id, followOrderId: null, cameraMode: id ? "follow" : "orbit", cctvOpen: false, view2d: false, selection: id ? { kind: "agent", id } : get().selection }),
+  setCctv: (cctvOpen, layout) => set({ cctvOpen, cctvLayout: layout ?? get().cctvLayout, view2d: cctvOpen ? false : get().view2d }),
   toggle: (k) => set({ [k]: !get()[k] } as Pick<AppState, typeof k>),
   setSpeed: (speed) => set({ speed, paused: false }),
   setPaused: (paused) => set({ paused }),
@@ -165,7 +225,21 @@ export const useApp = create<AppState>((set, get) => ({
   bumpTick: () => set({ tick: get().tick + 1 }),
   togglePanel: (p) => set({ panels: { ...get().panels, [p]: !get().panels[p] } }),
   setGraphics: (graphics) => set({ graphics }),
+  setAssetMode: (assetMode) => set({ assetMode }),
+  setPaletteOpen: (paletteOpen) => set({ paletteOpen, shortcutsOpen: false }),
+  setNoticeOpen: (noticeOpen) => set({ noticeOpen, paletteOpen: false }),
+  setTheme: (theme) => {
+    try {
+      window.localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      /* not persisted */
+    }
+    set({ theme, resolvedTheme: resolveTheme(theme) });
+  },
+  setResolvedTheme: (resolvedTheme) => set({ resolvedTheme }),
+  setView2d: (view2d) => set({ view2d, cctvOpen: view2d ? false : get().cctvOpen }),
+  setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen, paletteOpen: false }),
   setUser: (id) => set({ user: DEMO_USERS.find((u) => u.id === id) ?? DEMO_USERS[1] }),
   setFilters: (f) => set(f),
-  notify: (text, tone = "info") => set({ toast: { id: Date.now(), text, tone } }),
+  notify: (text, tone = "info", action) => set({ toast: { id: Date.now(), text, tone, action } }),
 }));
