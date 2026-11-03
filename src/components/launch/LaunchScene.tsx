@@ -88,8 +88,9 @@ function LaunchRig({ plan, sim }: { plan: FloorPlan; sim: BranchSimulation }) {
       const b = keys[i + 1];
       const f = Math.max(0, Math.min(1, (t - a.t) / Math.max(0.01, b.t - a.t)));
       const u = (i + f) / (keys.length - 1);
-      posCurve.getPointAt(Math.max(0, Math.min(1, u)), tmpP);
-      tgtCurve.getPointAt(Math.max(0, Math.min(1, u)), tmpT);
+      // getPoint (not getPointAt): parameter by keyframe index, so each beat lands on its second
+      posCurve.getPoint(Math.max(0, Math.min(1, u)), tmpP);
+      tgtCurve.getPoint(Math.max(0, Math.min(1, u)), tmpT);
       // Hand-held breath: tiny drift so nothing is ever perfectly still.
       const breathe = Math.sin(state.clock.elapsedTime * 0.7) * 0.03;
       camera.position.set(tmpP.x, tmpP.y + breathe, tmpP.z);
