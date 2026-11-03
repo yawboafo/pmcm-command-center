@@ -2,6 +2,25 @@
 
 Read `README.md`, `docs/AUDIT.md`, `docs/ARCHITECTURE.md`, `docs/INTEGRATION.md`, `docs/ASSETS.md`, then this file.
 
+## Session 5 — camera centre (branch `claude/friendly-lamport-rhpjp2`)
+The final upgrade of the camera experience, built on the merged main (PR #3). Read `docs/CAMERAS.md`
+(audit, gap list, zones, data model, adapter layer, demo script) and `docs/STYLE-GUIDE.md`.
+- **Engine** (`src/lib/sim/zones.ts`, `rules.ts`, `scenarios.ts`, `calendar.ts`, `baseline.ts`): eight
+  owner zones with floor-plan-derived cameras and plain-language metrics; doors, till drawer, breaks,
+  spills, stock runs; 13 alert rules with cause + action, hold / auto-clear / escalation; weekday,
+  payday and seeded rain; modelled baselines; per-second history (one hour) for replay.
+- **Renderer**: `MultiViewRenderer` paints any registered DOM element (`feedStore.ts`) as a zone
+  camera viewport, round-robin; replay drives the instanced people and doors; sun/sky/interior
+  lights follow the simulated clock; rain; full walls for feed cameras; canvas snapshots.
+- **UI** (`src/components/cameras/`): grid, zone screen, overlays, metrics, timeline, alert cards,
+  quick actions (persisted incidents, `src/lib/ops/incidents.ts`), onboarding, demo director.
+- 84 tests; tsc and eslint clean. Section "Cameras" (`G`) opens the centre; `Esc` back, `← →`, `Space`.
+- Gotchas: the canvas now uses `preserveDrawingBuffer: true` (tiles persist between frames);
+  `RestaurantModel` forces full walls while `cctvOpen`; the zone screen must contain exactly one
+  `FeedTile` per id (a hidden duplicate would overwrite the viewport registration).
+- Not done: a physical camera stream inside a zone tile (registry + players exist; see CAMERAS.md §6);
+  `door_open` readings are not yet bound to `sim.doors`; KDS events for live orders.
+
 ## Session 4 — platform, hardware simulation, staff badges, UX (branch `feat/ux-sim-hardware-artist`)
 Builds on PR #2. The product is now **Operations Ops** (one line in `src/config/platform.ts`), with Pizzaman Chickenman as the tenant workspace. In this branch:
 - **UX**: ⌘K command palette, keyboard shortcuts (`?`), network telemetry ribbon, readout primitives, critical-alert toasts, compact top bar; Light / Dark / Auto theme (token remap in `globals.css`, Settings → Appearance).

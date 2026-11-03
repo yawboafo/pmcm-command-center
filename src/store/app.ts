@@ -208,7 +208,7 @@ export const useApp = create<AppState>((set, get) => ({
   },
   selectBranch: (id) => set({ selectedBranchId: id, selection: id ? { kind: "branch", id } : null }),
   enterBranch: (id) =>
-    set({ selectedBranchId: id, enteredBranchId: id, phase: "flying", selection: null, cameraMode: "orbit", activeCameraId: null, followOrderId: null, section: TWIN_SECTIONS.includes(get().section) ? get().section : "twin" }),
+    set({ selectedBranchId: id, enteredBranchId: id, phase: "flying", selection: null, cameraMode: "orbit", activeCameraId: null, followOrderId: null, section: TWIN_SECTIONS.includes(get().section) ? get().section : "twin", cctvOpen: get().section === "cameras" }),
   setPhase: (phase) => set({ phase }),
   exitToMap: () => set({ view2d: false, enteredBranchId: null, phase: "map", section: "network", selection: get().selectedBranchId ? { kind: "branch", id: get().selectedBranchId! } : null, cctvOpen: false, followOrderId: null }),
   select: (selection) => set({ selection }),

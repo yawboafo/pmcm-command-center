@@ -45,7 +45,7 @@ export function entrancePoses(plan: FloorPlan) {
 }
 
 /** Pose for a virtual camera including the user's zoom / nudge adjustments. */
-export function virtualPose(c: VirtualCamera, adj?: { fov: number; yaw: number; pitch: number }) {
+export function virtualPose(c: Pick<VirtualCamera, "position" | "target" | "fov">, adj?: { fov: number; yaw: number; pitch: number }) {
   const pos = new THREE.Vector3(...c.position);
   const dir = new THREE.Vector3(...c.target).sub(pos);
   if (adj && (adj.yaw || adj.pitch)) {

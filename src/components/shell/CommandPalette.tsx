@@ -81,7 +81,7 @@ export default function CommandPalette() {
       for (const e of sim.plan.equipment)
         out.push({ id: `eq:${e.id}`, group: "Equipment", label: e.name, hint: e.type, icon: Wrench, run: () => (app.setCctv(false), app.select({ kind: "equipment", id: e.id }), focusEquipment(sim, e.id)) });
       for (const [m, label] of CAMERA_MODES) out.push({ id: `cam:${m}`, group: "Camera", label, icon: Camera, run: () => (app.setCctv(false), app.setView2d(false), app.setCameraMode(m)) });
-      out.push({ id: "cam:grid", group: "Camera", label: "Virtual camera grid", icon: Camera, run: () => app.setCctv(true) });
+      out.push({ id: "cam:grid", group: "Camera", label: "Camera centre — all zones", icon: Camera, run: () => app.setCctv(true) });
       out.push({ id: "cam:2d", group: "Camera", label: app.view2d ? "Back to 3D view" : "Live 2D floor plan", icon: Camera, run: () => app.setView2d(!app.view2d) });
     }
     for (const [k, label] of [["low", "Low · 5/h"], ["medium", "Medium · 20/h"], ["high", "High · 50/h"]] as const)

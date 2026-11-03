@@ -15,7 +15,7 @@ export const SHORTCUTS: Array<[string, string, "anywhere" | "twin"]> = [
   ["V", "Live 2D floor plan / back to 3D", "twin"],
   ["S", "Stations & zones", "twin"],
   ["L", "Staff locator", "twin"],
-  ["G", "Virtual camera grid", "twin"],
+  ["G", "Camera centre", "twin"],
   ["X", "X-ray walls", "twin"],
   ["P", "Show paths", "twin"],
 ];

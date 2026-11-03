@@ -16,7 +16,7 @@ const ZONE_FILL: Record<string, string> = { public: "#141b26", raw: "#24161a", c
 const EQ_FILL: Record<EquipStatus, string> = { idle: "#2b3340", active: "#1d4f7a", fault: "#7f1d1d", offline: "#3a3a3a", cleaning: "#4c1d95" };
 const EQ_STROKE: Record<EquipStatus, string> = { idle: "#4b5563", active: "#38bdf8", fault: "#f87171", offline: "#6b7280", cleaning: "#a78bfa" };
 const SENSOR_COLOR = { normal: "#34d399", warning: "#fbbf24", critical: "#f87171", offline: "#6b7280" } as const;
-const AGENT_COLOR = { staff: "#ef4444", customer: "#e5e7eb", rider: "#facc15" } as const;
+const AGENT_COLOR = { staff: "#f0483e", customer: "#e5e7eb", rider: "#facc15" } as const;
 
 type Layers = { labels: boolean; sensors: boolean; cameras: boolean; queues: boolean };
 
@@ -213,7 +213,7 @@ export default function PlanView2D({ sim }: { sim: BranchSimulation }) {
         <div className="flex flex-wrap gap-x-3 gap-y-1">
           {(
             [
-              ["#ef4444", "Staff"],
+              ["#f0483e", "Staff"],
               ["#e5e7eb", "Customer"],
               ["#facc15", "Rider"],
               ["#38bdf8", "Equipment active"],

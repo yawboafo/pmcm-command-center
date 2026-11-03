@@ -669,3 +669,78 @@ model SimulationEvent {
 
   @@unique([sessionId, seq])
 }
+
+// ───────────────────────── Camera centre (owner zones) ─────────────────────────
+
+/// One fixed owner camera per zone, derived from the floor plan (position, target, fov) and
+/// optionally backed by a physical camera. Zone ids: front-counter, kitchen, pass, dining,
+/// pickup-bay, cold-room, entrance, back-door.
+model CameraZone {
+  id               String   @id @default(cuid())
+  branchId         String
+  zoneId           String
+  code             String
+  pose             Json
+  doorId           String?
+  physicalCameraId String?
+  samples          ZoneMetricSample[]
+  alerts           OperationalAlert[]
+  incidents        Incident[]
+
+  @@unique([branchId, zoneId])
+}
+
+/// Per-second (or per-5-second) zone metrics, the basis for timelines and real baselines.
+model ZoneMetricSample {
+  id      String     @id @default(cuid())
+  zoneId  String
+  zone    CameraZone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  at      DateTime
+  level   String // ok | watch | act
+  metrics Json // { queue: 7, frontWait: 340, tills: 1, ... }
+
+  @@index([zoneId, at])
+}
+
+/// Rule-based operational alerts (queue, tickets, staff, riders, drawer, doors, spills), kept
+/// apart from food-safety threshold alerts but sharing the same lifecycle.
+model OperationalAlert {
+  id               String     @id @default(cuid())
+  zoneId           String
+  zone             CameraZone @relation(fields: [zoneId], references: [id])
+  ruleId           String
+  severity         Severity
+  title            String
+  cause            String
+  action           String
+  status           AlertStatus @default(OPEN)
+  escalation       Int        @default(0)
+  openedAt         DateTime
+  escalatedAt      DateTime?
+  acknowledgedAt   DateTime?
+  acknowledgedById String?
+  assignedToId     String?
+  resolvedAt       DateTime?
+  resolvedById     String?
+  autoResolved     Boolean    @default(false)
+
+  @@index([zoneId, status])
+}
+
+/// Saved moments from the camera centre: snapshot, clip, share, flag, note.
+model Incident {
+  id        String     @id @default(cuid())
+  zoneId    String
+  zone      CameraZone @relation(fields: [zoneId], references: [id])
+  kind      String // snapshot | clip | share | flag | note
+  at        DateTime
+  createdBy String
+  note      String?
+  imageRef  String?
+  clipFrom  DateTime?
+  clipTo    DateTime?
+  alertId   String?
+  sharedWith String?
+
+  @@index([zoneId, at])
+}

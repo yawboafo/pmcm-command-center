@@ -95,7 +95,11 @@ the same tools). The map uses OpenFreeMap tiles by default; set `NEXT_PUBLIC_MAP
    the map flies in, the exterior appears, the camera enters through the front door.
 4. **Demo scenarios** (in the twin) — inject order #… (Large Chicken Pizza + PlayMan Jollof) and
    follow it through the kitchen; simulate a refrigerator compressor fault and handle the alert.
-5. **Virtual Cameras** — 1/4/9 simultaneous views generated from the floor plan.
+5. **Cameras** — the camera centre: eight owner zones (front counter, kitchen & fryers, heat
+   lamp & pass, dining, pickup & rider bay, cold room, entrance, back door) sorted worst first;
+   tap one for the feed with people, queue, order-age and door overlays, the zone's numbers
+   against yesterday, a scrubbable last hour with replay, and alerts that say what to do.
+   **Rehearse** runs incident scenarios or the two-minute lunch-rush story. See `docs/CAMERAS.md`.
 6. **Food Safety / Inventory / Staff / Delivery / Kitchen Operations** — live module panels.
 7. **Floor Plan Editor** — move equipment, validate circulation, save, and see the twin update.
 8. **Ops AI** — "Which branch is performing best?", "Take me to the pizza oven".
@@ -111,12 +115,12 @@ src/lib/network     verified branches, lightweight network model, conceptual sup
 src/lib/assistant   AI tool schemas + client-side tool executor
 src/lib/integration contracts, signing, in-process hub, live client (devices, POS, cameras)
 src/store           Zustand app store, simulation registry, versioned floor plan repository
-src/components      shell · map · twin · panels · editor · analytics · assistant · integration
+src/components      shell · map · twin · cameras (camera centre) · panels · editor · analytics · assistant · integration
 src/data            branches.json (from research), floorplans/model-{a,b,c}.json, devices.json, devices.virtual.json
 scripts             generate-floorplans.ts, import-branches.py, device-sim.ts, pos-sim.ts,
                     generate-fleet.ts, hardware-sim.ts, camera-sim.ts (simulated hardware)
 prisma              target production schema (backend not yet built)
-docs                ARCHITECTURE.md, AUDIT.md, ASSETS.md, INTEGRATION.md, HANDOVER.md, research/, floorplans/*.svg
+docs                ARCHITECTURE.md, AUDIT.md, ASSETS.md, CAMERAS.md, STYLE-GUIDE.md, INTEGRATION.md, HANDOVER.md, research/, floorplans/*.svg, cameras/ (before/after screens)
 blender             scripted Blender → glTF asset pipeline (output in public/models)
 ```
 

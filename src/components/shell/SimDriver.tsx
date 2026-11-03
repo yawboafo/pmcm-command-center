@@ -21,6 +21,8 @@ export default function SimDriver() {
   useEffect(() => startLiveTelemetry(), []);
 
   useEffect(() => {
+    // Dev probe for QA scripts (fast-forward, inspect state); not set in production builds.
+    if (process.env.NODE_ENV !== "production") (window as unknown as { __opsSims?: unknown }).__opsSims = sims();
     let raf = 0;
     let last = performance.now();
     let sinceTick = 0;

@@ -1,5 +1,9 @@
 import { UI_POLICY } from "../../config/platform";
 import { NavGrid } from "../floorplan/nav";
+import { dayMultiplier, rainShift, SHIFT_CHANGES, weatherAt, type Weather } from "./calendar";
+import { enrichSensorAlert, evaluateRules, type Rule, type RuleHit } from "./rules";
+import { runScenario, scheduledScenarios } from "./scenarios";
+import { deriveZoneCameras, zoneForEquipment, zoneSnapshots, type ZoneCamera } from "./zones";
 import { roomAt } from "../floorplan/derive";
 import type { Equipment, FloorPlan, Sensor, Vec2, Workstation, WorkstationType } from "../floorplan/types";
 import { DEFAULT_SAFETY_PROFILE, INGREDIENTS, INGREDIENT_BY_SKU, type SafetyProfile, type StorageClass } from "./catalog";
@@ -14,7 +18,12 @@ import {
   type Channel,
   type CleaningRecord,
   type DataSource,
+  type DoorState,
   type EquipmentState,
+  type HistoryFrame,
+  type HistoryPerson,
+  type Spill,
+  type TillState,
   type Fulfilment,
   type InventoryItem,
   type LedgerEntry,
@@ -133,6 +142,30 @@ export class BranchSimulation {
   /** Hot-holding target pieces by cut (fryers batch to keep stock at or above this). */
   chickenTarget = { wing: 24, drum: 16 };
   queue: string[] = [];
+  /** Camera zones derived from the floor plan (fixed vantage points, see zones.ts). */
+  readonly zoneCameras: ZoneCamera[];
+  /** Door contacts (every door in the plan), till drawer and floor spills — what the zone cameras watch. */
+  doors = new Map<string, DoorState>();
+  till: TillState = { drawerOpen: false, since: 0, openNoSale: false };
+  private tillHoldUntil = 0;
+  spills: Spill[] = [];
+  /** Seconds the last serve / rider hand-over took (rolling). */
+  serveTimes: number[] = [];
+  handoverTimes: number[] = [];
+  /** Sim times of walk-in arrivals and of customers who walked away. */
+  arrivalLog: number[] = [];
+  walkoutLog: number[] = [];
+  /** One frame per simulated second for the last hour (timeline replay). */
+  history: HistoryFrame[] = [];
+  private lastHistoryT = -1;
+  private nextRules = 0;
+  /** Rule condition timers (rules.ts). */
+  ruleState = new Map<string, { since: number; clearSince?: number }>();
+  private rushActive = false;
+  private rushQuietSince: number | undefined;
+  private lastHour = -1;
+  private nextFetch = 0;
+  private scenarioRuns = new Set<string>();
   private seatsTaken = new Set<number>();
   seats: Vec2[] = [];
   private slots = new Map<string, Array<string | null>>();
@@ -174,6 +207,10 @@ export class BranchSimulation {
     this.initInventory();
     this.initSeats();
     this.initStaff();
+    this.zoneCameras = deriveZoneCameras(opts.plan);
+    for (const d of opts.plan.doors) this.doors.set(d.id, { doorId: d.id, open: false, since: 0, opens: 0, afterHoursOpens: 0 });
+    this.nextFetch = this.rng.range(4, 9) * 60;
+    this.lastHour = Math.floor(this.hour());
     this.nextArrival = this.rng.exp(this.arrivalRatePerSec()) * 0.5;
     this.log("system", "info", `Twin started for ${this.branchName} (${opts.plan.name})`);
   }
@@ -212,6 +249,14 @@ export class BranchSimulation {
     this.separate(dt);
     this.updateMachines();
     this.accumulateUtilization(dt);
+    this.updateDoors();
+    this.updateTill();
+    if (this.t >= this.nextRules) {
+      this.nextRules = this.t + 5;
+      this.updateBreaks();
+      this.updateSpills();
+      evaluateRules(this);
+    }
     if (this.t >= this.nextSensor) {
       this.nextSensor = this.t + 30;
       this.updateSensors(30);
@@ -219,7 +264,12 @@ export class BranchSimulation {
       this.updateCleaning();
       this.updateDeliveries();
       this.maybeRandomFault();
+      this.maintainFetches();
+      this.updateRush();
+      this.updateShift();
+      this.runScheduledScenarios();
     }
+    if (Math.floor(this.t) > this.lastHistoryT) this.recordHistory();
     this.maintainRice();
     if (Math.floor(this.t / STEP) % 8 === 0) this.maintainChicken();
     if (this.agents.length > 120) this.agents = this.agents.filter((a) => !a.gone);
@@ -359,14 +409,20 @@ export class BranchSimulation {
 
   // ───────────────────────────── demand ─────────────────────────────
   arrivalRatePerSec() {
-    return (this.config.arrivalRate / 3600) * demandFactor(this.hour());
+    return (this.config.arrivalRate / 3600) * demandFactor(this.hour()) * dayMultiplier(this.now(), this.config.seed);
+  }
+
+  /** Weather right now (seeded per day); rain moves walk-ins to delivery. */
+  weather(): Weather {
+    return weatherAt(this.now(), this.config.seed);
   }
 
   private arrivals() {
     if (this.t < this.nextArrival) return;
     this.nextArrival = this.t + this.rng.exp(Math.max(this.arrivalRatePerSec(), 0.2 / 3600));
     if (!this.isOpen()) return;
-    if (this.rng.chance(this.config.deliveryShare)) {
+    const shift = rainShift(this.weather());
+    if (this.rng.chance(Math.min(0.85, this.config.deliveryShare + shift.deliveryBoost))) {
       const channel = this.rng.weighted<Channel>([["chris-b-app", 45], ["online", 20], ["phone", 15], ["delivery-partner", 20]]);
       this.createOrder(this.randomLines(), channel, "delivery");
     } else {
@@ -601,7 +657,7 @@ export class BranchSimulation {
   }
 
   private schedule() {
-    const idle = this.agents.filter((a) => a.kind === "staff" && !a.taskId && !a.gone);
+    const idle = this.agents.filter((a) => a.kind === "staff" && !a.taskId && !a.gone && !a.breakUntil);
     if (!idle.length) return;
     const pending = [...this.tasks.values()].filter((t) => t.state === "pending").sort((a, b) => a.priority - b.priority);
     for (const task of pending) {
@@ -616,7 +672,7 @@ export class BranchSimulation {
       }
       const candidates = idle.filter((a) => {
         const m = this.staff.get(a.id)!;
-        if (task.kind === "clean") return m.role !== "cashier" || task.ws === "order-counter";
+        if (task.kind === "clean" || task.kind === "fetch") return m.role !== "cashier" || task.ws === "order-counter";
         return m.skills.includes(task.ws);
       });
       if (!candidates.length) continue;
@@ -629,7 +685,7 @@ export class BranchSimulation {
       });
       const agent = candidates[0];
       let dest: Vec2;
-      if (task.kind === "clean") {
+      if (task.kind === "clean" || task.kind === "fetch") {
         dest = task.target!;
       } else {
         const ws = this.stationFor(task, agent.pos);
@@ -806,6 +862,11 @@ export class BranchSimulation {
       }
       case "serve":
         // The waiting customer notices the task is gone and places the order.
+        this.serveTimes.push(task.duration);
+        if (this.serveTimes.length > 50) this.serveTimes.shift();
+        break;
+      case "fetch":
+        this.log("inventory", "info", `Stock fetched from the ${this.plan.rooms.find((r) => r.id === task.roomId)?.name ?? "store"}${agent ? ` by ${agent.name}` : ""}`);
         break;
       case "handoff": {
         if (!order) break;
@@ -845,6 +906,15 @@ export class BranchSimulation {
         break;
       }
       case "clean": {
+        if (task.spillId) {
+          const sp = this.spills.find((x) => x.id === task.spillId);
+          if (sp && !sp.cleanedAt) {
+            sp.cleanedAt = this.t;
+            sp.by = agent?.name;
+            this.log("safety", "success", `Spill cleaned in ${this.roomName(sp.roomId)}${agent ? ` by ${agent.name}` : ""}`, { zoneId: "dining" });
+          }
+          break;
+        }
         const rec = this.cleaning.find((c) => c.roomId === task.roomId);
         if (rec) {
           rec.lastDone = this.t;
@@ -1058,24 +1128,42 @@ export class BranchSimulation {
         m.busySeconds += dt;
         if (task && this.t >= task.endsAt!) this.finishWork(a, task);
         break;
+      case "break": {
+        // Away from the post until the break ends, then walk back.
+        if (this.move(a, dt)) a.anim = "idle";
+        if (a.breakUntil !== undefined && this.t >= a.breakUntil) {
+          a.breakUntil = undefined;
+          a.phase = "idle";
+          this.log("staff", "info", `${a.name} back from break`, { agentId: a.id });
+        }
+        m.offPostSince ??= this.t;
+        break;
+      }
       default: {
         // Idle: drift back to home station and face it.
+        const home = this.homePoint(m.role, Number(a.id.split("-")[1]) - 1);
         if (!a.path.length) {
-          const home = this.homePoint(m.role, Number(a.id.split("-")[1]) - 1);
           if (dist(a.pos, home) > 0.4) this.goTo(a, home);
           else a.anim = "idle";
         }
         this.move(a, dt);
+        if (dist(a.pos, home) > 2.5) m.offPostSince ??= this.t;
+        else m.offPostSince = undefined;
       }
     }
+    if (a.phase === "to-task" || a.phase === "working") m.offPostSince = undefined;
   }
 
   private spawnCustomer() {
     if (this.queue.length >= 9) {
       this.lostCustomers++;
-      this.log("customer", "warning", "Walk-in customer left — queue too long");
+      this.walkoutLog.push(this.t);
+      if (this.walkoutLog.length > 200) this.walkoutLog.shift();
+      this.log("customer", "warning", "Walk-in customer left — queue too long", { zoneId: "entrance" });
       return;
     }
+    this.arrivalLog.push(this.t);
+    if (this.arrivalLog.length > 600) this.arrivalLog.shift();
     const out = this.plan.anchors.outside;
     const id = `${this.branchId}-cust-${++this.seq}`;
     const a: Agent = { id, kind: "customer", name: `Customer ${this.seq}`, pos: [out[0] + this.rng.range(-2, 2), out[1] + this.rng.range(-1, 0.5)], heading: 0, path: [], speed: this.rng.range(0.95, 1.2), anim: "walk", carrying: null, phase: "to-queue", timer: 0, seed: this.rng.int(0, 1e6), arrivedAt: this.t };
@@ -1135,6 +1223,7 @@ export class BranchSimulation {
           // Cashier finished: the order is created now.
           const fulfil: Fulfilment = this.seats.length && this.rng.chance(this.config.dineInShare) ? "dine-in" : "pickup";
           const o = this.createOrder(this.randomLines(), "walk-in", fulfil, a.id);
+          this.ringSale();
           a.orderId = o.id;
           a.taskId = undefined;
           this.queue = this.queue.filter((q) => q !== a.id);
@@ -1249,6 +1338,10 @@ export class BranchSimulation {
           this.setStatus(order, "OUT_FOR_DELIVERY");
           // COLLECTED until the rider leaves the premises, then IN_TRANSIT (see updateRider "leave").
           order.delivery = { ...order.delivery!, status: "COLLECTED", collectedAt: this.t, eta: this.t + this.rng.range(12, 32) * 60 };
+          if (order.readyAt !== undefined) {
+            this.handoverTimes.push(this.t - order.readyAt);
+            if (this.handoverTimes.length > 50) this.handoverTimes.shift();
+          }
           this.log("delivery", "info", `Order #${order.number} collected by ${order.delivery.rider}`, { orderId: order.id });
           a.phase = "leave";
           this.goTo(a, this.riderSpawnPoint());
@@ -1407,9 +1500,12 @@ export class BranchSimulation {
       status: "open",
       correctiveActions: [],
       source: st.source,
+      escalation: 0,
+      zoneId: e ? zoneForEquipment(this.plan, e) : undefined,
     };
+    enrichSensorAlert(this, alert);
     this.alerts.unshift(alert);
-    this.log("safety", "warning", `WARNING — ${alert.title}`, { alertId: alert.id, equipmentId: s.equipmentId });
+    this.log("safety", "warning", `WARNING — ${alert.title}`, { alertId: alert.id, equipmentId: s.equipmentId, zoneId: alert.zoneId, marker: "alert" });
   }
 
   /**
@@ -1503,9 +1599,12 @@ export class BranchSimulation {
       peakValue: st.value ?? undefined,
       limit: lim.value,
       source: st.source,
+      escalation: 0,
+      zoneId: e ? zoneForEquipment(this.plan, e) : undefined,
     };
+    enrichSensorAlert(this, alert);
     this.alerts.unshift(alert);
-    this.log("safety", lim.severity === "critical" ? "critical" : "warning", `${lim.severity === "critical" ? "CRITICAL" : "WARNING"} — ${alert.title}`, { alertId: alert.id, equipmentId: s.equipmentId });
+    this.log("safety", lim.severity === "critical" ? "critical" : "warning", `${lim.severity === "critical" ? "CRITICAL" : "WARNING"} — ${alert.title}`, { alertId: alert.id, equipmentId: s.equipmentId, zoneId: alert.zoneId, marker: "alert" });
   }
 
   acknowledgeAlert(id: string, by: string) {
@@ -1533,9 +1632,16 @@ export class BranchSimulation {
     const a = this.alerts.find((x) => x.id === id);
     if (!a) return { ok: false, reason: "Alert not found" };
     if (a.status === "resolved") return { ok: false, reason: "Already resolved" };
-    if (!a.correctiveActions.length) return { ok: false, reason: "Record at least one corrective action first" };
-    const st = a.sensorId ? this.sensors.get(a.sensorId) : undefined;
-    if (st && st.status !== "normal") return { ok: false, reason: "Reading is still outside the configured limit" };
+    if (a.kind) {
+      // Operational alerts close when the condition has gone, or when someone records what they did about it.
+      const key = [...this.ruleState.keys()].find((k) => k === a.kind || k.startsWith(`${a.kind}:`));
+      if (key && !a.correctiveActions.length) return { ok: false, reason: "Condition still present — act first, or record what was done" };
+      if (key) this.ruleState.delete(key);
+    } else {
+      if (!a.correctiveActions.length) return { ok: false, reason: "Record at least one corrective action first" };
+      const st = a.sensorId ? this.sensors.get(a.sensorId) : undefined;
+      if (st && st.status !== "normal") return { ok: false, reason: "Reading is still outside the configured limit" };
+    }
     a.status = "resolved";
     a.resolvedAt = this.now();
     a.resolvedBy = by;
@@ -1682,7 +1788,7 @@ export class BranchSimulation {
       const def = INGREDIENT_BY_SKU.get(r.sku);
       if (def) item.expiresAt = nowMs + def.shelfLifeDays * DAY * 1000;
       this.ledger.push({ id: `${this.branchId}-led-${++this.seq}`, key: `receipt:${r.id}`, t: nowMs, sku: r.sku, delta: r.qty, reason: "receipt", ref: r.id });
-      this.log("inventory", "success", `Replenishment received: ${r.qty} ${item.unit} ${item.name} from ${r.source}`, { sku: r.sku });
+      this.log("inventory", "success", `Delivery received: ${r.qty} ${item.unit} ${item.name} from ${r.source}`, { sku: r.sku, marker: "delivery", zoneId: "cold-room" });
     }
   }
 
@@ -1708,6 +1814,319 @@ export class BranchSimulation {
     item.onOrder = q;
     this.log("inventory", "info", `Replenishment requested: ${q} ${item.unit} ${item.name} (ETA ${Math.round((r.etaAt - this.t) / 60)} min)`, { sku: item.sku });
     return r;
+  }
+
+
+  // ───────────────────────────── camera zones: doors, till, breaks, spills ─────────────────────────────
+  private doorPoint(id: string) {
+    const d = this.plan.doors.find((x) => x.id === id);
+    return d ? ([d.x, d.z] as Vec2) : null;
+  }
+
+  /** Doors open when someone passes through (proximity), or while held; they close when traffic clears. */
+  private updateDoors() {
+    const people = this.agents.filter((a) => !a.gone);
+    for (const d of this.plan.doors) {
+      const st = this.doors.get(d.id)!;
+      const near = people.some((a) => Math.abs(a.pos[0] - d.x) < 0.85 && Math.abs(a.pos[1] - d.z) < 0.85);
+      const held = st.heldUntil !== undefined && this.t < st.heldUntil;
+      if (st.heldUntil !== undefined && this.t >= st.heldUntil) st.heldUntil = undefined;
+      const want = near || held;
+      if (want && !st.open) {
+        st.open = true;
+        st.since = this.t;
+        st.opens++;
+        st.lastOpenedAt = this.t;
+        if (!this.isOpen() && d.kind !== "internal") st.afterHoursOpens++;
+      } else if (!want && st.open && this.t - st.since > 2.5) {
+        st.open = false;
+        st.since = this.t;
+      }
+    }
+  }
+
+  /** Hold a door open (propped, or a scenario); after-hours openings are counted. */
+  holdDoor(doorId: string, seconds: number, opts: { forceAfterHours?: boolean } = {}) {
+    const st = this.doors.get(doorId);
+    if (!st) return false;
+    st.heldUntil = this.t + seconds;
+    if (!st.open) {
+      st.open = true;
+      st.since = this.t;
+      st.opens++;
+      st.lastOpenedAt = this.t;
+      if (opts.forceAfterHours || !this.isOpen()) st.afterHoursOpens++;
+    }
+    const d = this.plan.doors.find((x) => x.id === doorId);
+    this.log("system", "warning", `${d?.name ?? "Door"} opened${opts.forceAfterHours ? " after hours" : ""}`, { zoneId: d?.kind === "entrance" ? "entrance" : this.zoneCameras.find((c) => c.doorId === doorId)?.zoneId, marker: "anomaly" });
+    this.version++;
+    return true;
+  }
+
+  /** Warm a cold unit faster than its model (door open, compressor struggling). */
+  warmEquipment(equipmentId: string, degPerSec: number) {
+    const st = this.equipment.get(equipmentId);
+    if (!st || st.tempC === undefined) return;
+    const e = this.eqById.get(equipmentId)!;
+    const sp = e.operational.setpointC ?? st.tempC;
+    st.tempC = Math.min(sp + 9, st.tempC + degPerSec * 300);
+  }
+
+  private ringSale() {
+    this.till = { drawerOpen: true, since: this.t, lastSaleAt: this.t, openNoSale: false };
+    this.tillHoldUntil = this.t + 8;
+  }
+
+  private updateTill() {
+    if (this.till.drawerOpen && this.t >= this.tillHoldUntil) {
+      this.till = { ...this.till, drawerOpen: false, since: this.t, openNoSale: false };
+    }
+  }
+
+  /** Scenario: the drawer opens without a sale and stays open. */
+  openDrawerNoSale(seconds: number) {
+    this.till = { drawerOpen: true, since: this.t, lastSaleAt: this.till.lastSaleAt, openNoSale: true };
+    this.tillHoldUntil = this.t + seconds;
+    this.log("system", "warning", "Till drawer opened with no sale", { zoneId: "front-counter", marker: "anomaly" });
+    this.version++;
+  }
+
+  /** Natural breaks: every staff member steps away for a few minutes every couple of hours. */
+  private updateBreaks() {
+    for (const a of this.agents) {
+      if (a.kind !== "staff" || a.gone) continue;
+      const m = this.staff.get(a.id)!;
+      m.nextBreakAt ??= this.t + this.rng.range(50, 140) * 60;
+      if (a.breakUntil !== undefined || a.taskId || this.t < m.nextBreakAt) continue;
+      // Never leave the counter empty: one cashier at a time.
+      if (a.role === "cashier" && this.agents.some((x) => x.kind === "staff" && x.role === "cashier" && x.breakUntil !== undefined)) {
+        m.nextBreakAt = this.t + 300;
+        continue;
+      }
+      this.sendOnBreak(a.id, this.rng.range(4, 7), this.rng.chance(0.35) ? "outside" : "inside", true);
+    }
+  }
+
+  /** Send a staff member on a break (natural or scenario). "outside" goes out through the back door. */
+  sendOnBreak(staffId: string, minutes: number, where: "inside" | "outside" = "inside", natural = false) {
+    const a = this.agents.find((x) => x.id === staffId && x.kind === "staff" && !x.gone);
+    if (!a) return false;
+    const m = this.staff.get(a.id)!;
+    if (a.taskId) {
+      const t = this.tasks.get(a.taskId);
+      if (t) this.releaseTask(t);
+      a.taskId = undefined;
+    }
+    a.breakUntil = this.t + minutes * 60;
+    m.nextBreakAt = this.t + this.rng.range(90, 180) * 60;
+    a.phase = "break";
+    a.carrying = null;
+    const back = this.zoneCameras.find((c) => c.zoneId === "back-door");
+    const bd = where === "outside" && back?.doorId ? this.plan.doors.find((d) => d.id === back.doorId) : undefined;
+    let dest: Vec2 = [this.plan.anchors.staffRest[0] + this.rng.range(-0.5, 0.5), this.plan.anchors.staffRest[1] + this.rng.range(-0.4, 0.4)];
+    if (bd) {
+      const { width: W, length: L } = this.plan.dimensions;
+      const ox = bd.axis === "z" ? (bd.x < W / 2 ? -1.6 : 1.6) : 0;
+      const oz = bd.axis === "x" ? (bd.z < L / 2 ? -1.6 : 1.6) : 0;
+      dest = [bd.x + ox + this.rng.range(-0.4, 0.4), bd.z + oz + this.rng.range(-0.4, 0.4)];
+    }
+    this.goTo(a, dest);
+    this.log("staff", natural ? "info" : "warning", `${a.name} ${natural ? "on a break" : "left the post"} (${Math.round(minutes)} min${where === "outside" ? ", outside" : ""})`, { agentId: a.id, zoneId: a.role === "cashier" ? "front-counter" : "kitchen", marker: natural ? undefined : "anomaly" });
+    this.version++;
+    return true;
+  }
+
+  /** Staff fetch stock from the cold room now and then, so the door sees real traffic. */
+  private maintainFetches() {
+    if (this.t < this.nextFetch) return;
+    const cold = this.plan.rooms.find((r) => r.type === "cold");
+    if (!cold) return;
+    this.nextFetch = this.t + this.rng.range(7, 14) * 60;
+    if ([...this.tasks.values()].some((t) => t.kind === "fetch")) return;
+    const target = this.grid.nearestFree(cold.x + cold.w / 2, cold.z + cold.d / 2);
+    if (!target) return;
+    const cam = this.zoneCameras.find((c) => c.zoneId === "cold-room");
+    this.addTask({ kind: "fetch", ws: "storage", label: `Fetch stock — ${cold.name}`, duration: this.rng.range(25, 45), machine: false, priority: this.t + 900, target: this.grid.toWorld(target[0], target[1]), roomId: cold.id, doorId: cam?.doorId });
+  }
+
+  /** Spills: a cleaner is sent once someone notices; the rule alerts if that takes too long. */
+  addSpill(roomId?: string, noticeAfterSec = this.rng.range(60, 240)) {
+    const rooms = this.plan.rooms.filter((r) => r.type === "dining" || r.type === "customer");
+    const room = (roomId ? this.plan.rooms.find((r) => r.id === roomId) : undefined) ?? rooms[this.rng.int(0, Math.max(0, rooms.length - 1))];
+    if (!room) return null;
+    const cell = this.grid.nearestFree(room.x + this.rng.range(0.3, room.w - 0.3), room.z + this.rng.range(0.3, room.d - 0.3));
+    if (!cell) return null;
+    const sp: Spill = { id: `${this.branchId}-spill-${++this.seq}`, roomId: room.id, pos: this.grid.toWorld(cell[0], cell[1]), since: this.t };
+    (sp as Spill & { noticeAt: number }).noticeAt = this.t + noticeAfterSec;
+    this.spills.push(sp);
+    if (this.spills.length > 20) this.spills.splice(0, this.spills.length - 20);
+    this.log("safety", "warning", `Spill in ${room.name}`, { zoneId: "dining", marker: "anomaly" });
+    this.version++;
+    return sp;
+  }
+
+  private updateSpills() {
+    for (const sp of this.spills) {
+      if (sp.cleanedAt) continue;
+      const noticeAt = (sp as Spill & { noticeAt?: number }).noticeAt ?? sp.since + 120;
+      if (this.t < noticeAt) continue;
+      if ([...this.tasks.values()].some((t) => t.spillId === sp.id)) continue;
+      this.addTask({ kind: "clean", ws: "dish", label: `Clean spill — ${this.roomName(sp.roomId)}`, duration: 60, machine: false, priority: this.t - 200, target: sp.pos, roomId: sp.roomId, spillId: sp.id });
+    }
+    // Rare natural spills during service.
+    if (this.isOpen() && this.rng.chance(5 / 7200)) this.addSpill();
+  }
+
+  /** Scenario: set a fryer's oil quality directly (the sensor model raises the alert). */
+  setOilQuality(equipmentId: string, pct: number) {
+    const st = this.equipment.get(equipmentId);
+    if (!st || st.oilQualityPct === undefined) return false;
+    st.oilQualityPct = pct;
+    this.updateSensors(1);
+    const sensor = this.plan.sensors.find((s) => s.equipmentId === equipmentId && s.kind === "oil-quality");
+    const ss = sensor ? this.sensors.get(sensor.id) : undefined;
+    if (ss?.outOfRangeSince !== undefined) ss.outOfRangeSince = Math.min(ss.outOfRangeSince, this.t - this.safety.alertDelayMin * 60 + 30);
+    this.version++;
+    return true;
+  }
+
+  /** Scenario: several app orders at once. */
+  orderBurst(n: number, menuIds?: string[]) {
+    for (let i = 0; i < n; i++) {
+      const lines = menuIds ? [{ menuId: menuIds[i % menuIds.length], qty: 1 }] : this.randomLines();
+      this.createOrder(lines, this.rng.weighted<Channel>([["chris-b-app", 60], ["online", 25], ["delivery-partner", 15]]), "delivery");
+    }
+    this.version++;
+  }
+
+  /** Scenario: a group of walk-ins arrives together. */
+  queueSurge(n: number) {
+    for (let i = 0; i < n; i++) this.spawnCustomer();
+    this.version++;
+  }
+
+  /** Scenario: riders turn up before their orders are ready. */
+  spawnWaitingRiders(n: number) {
+    for (let i = 0; i < n; i++) {
+      const o = this.createOrder(this.randomLines(), "chris-b-app", "delivery");
+      this.spawnRider(o);
+    }
+    this.version++;
+  }
+
+  private updateRush() {
+    const busy = this.queue.length >= 5 || this.activeOrders().length >= (this.plan.format === "C" ? 14 : this.plan.format === "A" ? 6 : 9);
+    if (busy) this.rushQuietSince = undefined;
+    else this.rushQuietSince ??= this.t;
+    if (busy && !this.rushActive) {
+      this.rushActive = true;
+      this.log("system", "info", "Rush started — queue and kitchen filling up", { marker: "rush" });
+    } else if (this.rushActive && this.rushQuietSince !== undefined && this.t - this.rushQuietSince >= 5 * 60) {
+      this.rushActive = false;
+      this.log("system", "info", "Rush eased", { marker: "rush" });
+    }
+  }
+
+  private updateShift() {
+    const h = Math.floor(this.hour());
+    if (h === this.lastHour) return;
+    this.lastHour = h;
+    if (SHIFT_CHANGES.includes(h)) this.log("staff", "info", `Shift change — ${h === 8 ? "morning" : h === 15 ? "evening" : "closing"} team on`, { marker: "shift" });
+  }
+
+  private runScheduledScenarios() {
+    if (!this.isOpen()) return;
+    const h = this.hour();
+    for (const s of scheduledScenarios(this.config.seed, this.now(), this.branchId)) {
+      const key = `${new Date(this.now()).toISOString().slice(0, 10)}:${s.id}`;
+      if (this.scenarioRuns.has(key) || h < s.hour || h > s.hour + 0.5) continue;
+      this.scenarioRuns.add(key);
+      runScenario(this, s.id, true);
+    }
+  }
+
+  // ───────────────────────────── rule alerts ─────────────────────────────
+  openRuleAlert(rule: Rule, key: string, hit: RuleHit) {
+    if (this.alerts.some((a) => a.kind === key && a.status !== "resolved")) return null;
+    const severity = hit.severity ?? rule.severity;
+    const alert: Alert = {
+      id: `${this.branchId}-alert-${++this.seq}`,
+      severity,
+      title: rule.title,
+      issue: hit.cause,
+      cause: hit.cause,
+      action: hit.action,
+      kind: key,
+      zoneId: rule.zoneId,
+      openedAt: this.now(),
+      status: "open",
+      correctiveActions: [],
+      source: "simulated",
+      escalation: 0,
+    };
+    this.alerts.unshift(alert);
+    this.log("safety", severity === "critical" ? "critical" : "warning", `${severity === "critical" ? "ACT NOW" : "WATCH"} — ${rule.title}: ${hit.cause}`, { alertId: alert.id, zoneId: rule.zoneId, marker: "alert" });
+    this.version++;
+    return alert;
+  }
+
+  /** The condition behind a rule alert has cleared: close it on the owner's behalf. */
+  autoResolveAlert(key: string) {
+    const a = this.alerts.find((x) => x.kind === key && x.status !== "resolved");
+    if (!a) return;
+    a.status = "resolved";
+    a.resolvedAt = this.now();
+    a.resolvedBy = "System";
+    a.autoResolved = true;
+    this.log("safety", "success", `Cleared — ${a.title}`, { alertId: a.id, zoneId: a.zoneId, marker: "alert" });
+    this.version++;
+  }
+
+  assignAlert(id: string, to: string, by: string) {
+    const a = this.alerts.find((x) => x.id === id);
+    if (!a || a.status === "resolved") return false;
+    a.assignedTo = to;
+    if (a.status === "open") {
+      a.status = "acknowledged";
+      a.acknowledgedAt = this.now();
+      a.acknowledgedBy = by;
+    }
+    this.log("safety", "info", `${a.title} assigned to ${to} by ${by}`, { alertId: a.id, zoneId: a.zoneId });
+    this.version++;
+    return true;
+  }
+
+  // ───────────────────────────── history (timeline replay) ─────────────────────────────
+  private recordHistory() {
+    this.lastHistoryT = Math.floor(this.t);
+    const people: HistoryPerson[] = [];
+    for (const a of this.agents) {
+      if (a.gone) continue;
+      people.push([a.id, a.kind, a.role, Math.round(a.pos[0] * 100) / 100, Math.round(a.pos[1] * 100) / 100, Math.round(a.heading * 100) / 100, a.anim, a.carrying, a.look, a.name, a.seed]);
+    }
+    const doors: Record<string, boolean> = {};
+    for (const [id, d] of this.doors) if (d.open) doors[id] = true;
+    this.history.push({ t: this.lastHistoryT, people, zones: zoneSnapshots(this), doors, drawerOpen: this.till.drawerOpen, queue: this.queue.length });
+    if (this.history.length > 3600) this.history.splice(0, this.history.length - 3600);
+  }
+
+  /** Nearest recorded frame at or before `simT` (null before the first frame). */
+  frameAt(simT: number): HistoryFrame | null {
+    const h = this.history;
+    if (!h.length || simT < h[0].t) return h[0] ?? null;
+    let lo = 0;
+    let hi = h.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if (h[mid].t <= simT) lo = mid;
+      else hi = mid - 1;
+    }
+    return h[lo];
+  }
+
+  /** Timeline markers from the event log (alerts, rush, shift, deliveries, anomalies). */
+  markers() {
+    return this.events.filter((e) => e.refs?.marker);
   }
 
   // ───────────────────────────── queries ─────────────────────────────
@@ -1818,6 +2237,27 @@ export class BranchSimulation {
 
   restoreRoles() {
     for (const m of this.staff.values()) m.skills = ROLE_SKILLS[m.role];
+  }
+
+  /**
+   * Owner action from a camera alert: put a spare person on a station now (e.g. open a second
+   * till). The person keeps their role and gains the station until roles are restored.
+   * Returns the person's name, or null if nobody is free.
+   */
+  coverStation(ws: WorkstationType, preferName?: string): string | null {
+    const candidates = this.agents.filter((a) => a.kind === "staff" && !a.gone && !a.breakUntil && a.role !== "cashier" && !this.staff.get(a.id)!.skills.includes(ws));
+    const pick = (preferName && candidates.find((a) => a.name.split(" ")[0] === preferName.split(" ")[0])) ?? candidates.find((a) => !a.taskId) ?? candidates[0];
+    if (!pick) return null;
+    const m = this.staff.get(pick.id)!;
+    m.skills = [ws, ...m.skills];
+    if (pick.taskId) {
+      const t = this.tasks.get(pick.taskId);
+      if (t && t.kind !== "stage") this.releaseTask(t);
+    }
+    const label = ({ "order-counter": "the till", pickup: "the collection counter", fryer: "the fryers", packaging: "packing", dispatch: "dispatch" } as Partial<Record<WorkstationType, string>>)[ws] ?? ws;
+    this.log("staff", "success", `${pick.name} moved to ${label}`, { agentId: pick.id, zoneId: ws === "order-counter" || ws === "pickup" ? "front-counter" : "kitchen", marker: "anomaly" });
+    this.version++;
+    return pick.name;
   }
 }
 

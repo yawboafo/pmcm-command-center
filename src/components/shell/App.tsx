@@ -21,7 +21,9 @@ export default function App() {
   const right = useApp((s) => s.panels.right);
   const toggle = useApp((s) => s.togglePanel);
   const section = useApp((s) => s.section);
-  const fullBleed = section === "editor" || section === "analytics" || section === "settings";
+  const cctvOpen = useApp((s) => s.cctvOpen);
+  // The camera centre is a full-bleed control-room surface: no inspector or activity feed beside it.
+  const fullBleed = section === "editor" || section === "analytics" || section === "settings" || (section === "cameras" && cctvOpen);
   usePhoneLayout();
   useShortcuts();
   useCriticalAlertWatch();

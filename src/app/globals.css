@@ -13,11 +13,35 @@
 
 :root {
   color-scheme: dark;
-  --bg: #07090d;
+  --bg: #070a10;
   /* Operational surfaces: near-opaque so text over the map/3D stays readable, hairline edges. */
-  --panel: rgba(11, 14, 19, 0.86);
+  --panel: rgba(12, 16, 22, 0.88);
   --panel-border: rgba(255, 255, 255, 0.075);
-  --panel-highlight: rgba(255, 255, 255, 0.035);
+  --panel-highlight: rgba(255, 255, 255, 0.04);
+  /* One status language for the whole platform (dark surfaces): green = healthy, amber = watch, red = act. */
+  --ok: #3ccf8e;
+  --watch: #f5b02e;
+  --act: #f0483e;
+  --accent: #ee1d25;
+  /* The single information hue for charts, map ramps and progress (never a status). */
+  --viz: #7f9cc0;
+  --color-emerald-200: #a7ecc9;
+  --color-emerald-300: #6fdcae;
+  --color-emerald-400: #3ccf8e;
+  --color-emerald-500: #22b577;
+  --color-emerald-600: #179a63;
+  --color-amber-200: #fbd98a;
+  --color-amber-300: #f8c65a;
+  --color-amber-400: #f5b02e;
+  --color-amber-500: #e39a12;
+  --color-red-200: #f9b9b5;
+  --color-red-300: #f58f88;
+  --color-red-400: #f0483e;
+  --color-red-500: #e02f27;
+  --color-red-600: #c6251e;
+  --color-sky-300: #a9bfdc;
+  --color-sky-400: #7f9cc0;
+  --color-sky-500: #5f7ea6;
 }
 
 html,
@@ -122,19 +146,72 @@ body {
 }
 
 .glass {
-  background: var(--panel);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0) 30%), var(--panel);
   border: 1px solid var(--panel-border);
-  backdrop-filter: blur(12px) saturate(130%);
-  -webkit-backdrop-filter: blur(12px) saturate(130%);
+  backdrop-filter: blur(14px) saturate(135%);
+  -webkit-backdrop-filter: blur(14px) saturate(135%);
   box-shadow:
     inset 0 1px 0 var(--panel-highlight),
-    0 12px 32px -14px rgba(0, 0, 0, 0.7);
+    0 12px 32px -16px rgba(0, 0, 0, 0.75);
 }
 
 /* Numbers in an operations UI must not jitter as they tick. */
 .font-mono,
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+/* Display numerals everywhere a value is the message: brand display face, tabular, tight. */
+.num {
+  font-family: var(--font-brand), var(--font-ui), system-ui, sans-serif;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  letter-spacing: -0.02em;
+}
+/* Inter: open digits and alternates read better at small sizes. */
+body {
+  font-feature-settings: "cv11" 1, "ss01" 1, "tnum" 1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+.font-display {
+  letter-spacing: -0.015em;
+}
+/* Interaction states are designed, never default. */
+:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--accent) 80%, white);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+::selection {
+  background: color-mix(in oklab, var(--accent) 35%, transparent);
+}
+button,
+[role="button"] {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+button,
+a,
+input,
+select {
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
+}
+.btn-primary {
+  background: linear-gradient(180deg, #f3333b, var(--accent));
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 6px 16px -8px rgba(238, 29, 37, 0.7);
+}
+.btn-primary:hover {
+  filter: brightness(1.06);
 }
 
 .scroll-thin {
@@ -184,4 +261,164 @@ body {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ───────────── Camera centre (dark control-room surface in either theme) ───────────── */
+.cam-root {
+  --cam-bg: #07090d;
+  --cam-panel: #0c1016;
+  --cam-panel-2: #121822;
+  --cam-line: rgba(255, 255, 255, 0.075);
+  --cam-fg: #eceef1;
+  --cam-muted: rgba(236, 238, 241, 0.58);
+  --cam-faint: rgba(236, 238, 241, 0.36);
+  /* Status colours: slightly desaturated so large numerals stay calm on the dark surface. */
+  --ok: #3ccf8e;
+  --watch: #f5b02e;
+  --act: #f0483e;
+  --accent: #ee1d25;
+  color: var(--cam-fg);
+  /* Transparent: the WebGL canvas underneath paints the feeds and the background colour. */
+  background: transparent;
+  font-variant-numeric: tabular-nums;
+}
+.cam-header {
+  background: color-mix(in oklab, var(--cam-bg) 92%, transparent);
+  backdrop-filter: blur(10px);
+}
+.cam-panel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0) 38%), var(--cam-panel);
+  border: 1px solid var(--cam-line);
+  border-radius: 12px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 10px 28px -18px rgba(0, 0, 0, 0.9);
+}
+/* Display numerals: the brand display face with tabular figures, tight tracking. */
+.cam-num {
+  font-family: var(--font-brand), var(--font-ui), system-ui, sans-serif;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  letter-spacing: -0.02em;
+}
+/* Hero panel carries a faint wash of its status colour on the left edge. */
+.cam-hero[data-level="ok"] {
+  background: linear-gradient(90deg, color-mix(in oklab, var(--ok) 10%, transparent), transparent 55%), var(--cam-panel);
+}
+.cam-hero[data-level="watch"] {
+  background: linear-gradient(90deg, color-mix(in oklab, var(--watch) 12%, transparent), transparent 55%), var(--cam-panel);
+}
+.cam-hero[data-level="act"] {
+  background: linear-gradient(90deg, color-mix(in oklab, var(--act) 14%, transparent), transparent 55%), var(--cam-panel);
+}
+.cam-alert[data-tone="act"] {
+  background: linear-gradient(90deg, color-mix(in oklab, var(--act) 9%, transparent), transparent 60%), var(--cam-panel);
+}
+.cam-alert[data-tone="watch"] {
+  background: linear-gradient(90deg, color-mix(in oklab, var(--watch) 9%, transparent), transparent 60%), var(--cam-panel);
+}
+.cam-btn-primary {
+  background: linear-gradient(180deg, #f3333b, var(--accent));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 6px 16px -8px rgba(238, 29, 37, 0.7);
+}
+.cam-btn-primary:hover {
+  filter: brightness(1.06);
+}
+.cam-ticks {
+  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.22) 0 1px, transparent 1px calc(100% / 6));
+}
+.cam-scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.18) 0 1px, transparent 1px 3px);
+  opacity: 0.5;
+}
+.cam-vignette::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.45) 100%);
+}
+@keyframes cam-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.cam-crossfade {
+  animation: cam-fade 0.45s ease-out forwards;
+}
+@keyframes cam-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgba(239, 68, 68, 0);
+  }
+}
+.cam-pulse {
+  animation: cam-pulse 1.4s ease-out 2;
+}
+@keyframes cam-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.cam-slide-in {
+  animation: cam-slide-in 0.3s ease-out;
+}
+.cam-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 44px;
+  background: transparent;
+  cursor: pointer;
+}
+.cam-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.cam-range::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.cam-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -9px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.cam-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--accent);
+}
+.cam-sheet {
+  scroll-snap-type: x mandatory;
+}
+.cam-sheet > * {
+  scroll-snap-align: start;
 }

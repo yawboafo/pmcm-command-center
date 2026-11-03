@@ -164,6 +164,14 @@ export function textures() {
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, 4, 256);
     }),
+    nightSky: canvasTexture("nightSky", 4, 256, (ctx) => {
+      const g = ctx.createLinearGradient(0, 0, 0, 256);
+      g.addColorStop(0, "#05070e");
+      g.addColorStop(0.55, "#101828");
+      g.addColorStop(1, "#2a2a36");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 4, 256);
+    }),
     duskSky: canvasTexture("duskSky", 4, 256, (ctx) => {
       const g = ctx.createLinearGradient(0, 0, 0, 256);
       g.addColorStop(0, "#28305a");
