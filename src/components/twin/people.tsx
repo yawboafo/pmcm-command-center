@@ -627,7 +627,7 @@ export function InstancedPeople({
       states.current.clear();
     }
     // Dev probe for QA scripts (camera framing); not set in production builds.
-    if (process.env.NODE_ENV !== "production") (window as unknown as { __pmcmTwin?: unknown }).__pmcmTwin = { state, people: rt };
+    if (process.env.NODE_ENV !== "production") (window as unknown as { __opsTwin?: unknown }).__opsTwin = { state, people: rt };
     const need = rt.frame(sim, states.current, state.clock.elapsedTime, dt, selectedId);
     if (need) setCap(need);
   });
