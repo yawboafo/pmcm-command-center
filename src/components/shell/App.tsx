@@ -17,6 +17,7 @@ export default function App() {
   const toggle = useApp((s) => s.togglePanel);
   const section = useApp((s) => s.section);
   const fullBleed = section === "editor" || section === "analytics" || section === "settings";
+  usePhoneLayout();
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-ink text-white">
@@ -29,7 +30,7 @@ export default function App() {
             <MainView />
           </main>
           {!fullBleed && (
-            <aside className={cx("glass relative z-20 h-full shrink-0 rounded-none border-y-0 border-r-0 transition-all", right ? "w-[340px]" : "w-0 border-l-0")} aria-label="Inspector">
+            <aside className={cx("glass relative z-20 h-full shrink-0 rounded-none border-y-0 border-r-0 transition-all max-md:absolute max-md:right-0 max-md:top-0", right ? "w-[340px] max-md:w-[min(340px,calc(100vw-4.5rem))]" : "w-0 border-l-0")} aria-label="Inspector">
               <button type="button" onClick={() => toggle("right")} className="glass absolute -left-8 top-3 z-10 rounded-l-lg rounded-r-none border-r-0 p-1.5 text-white/60 hover:text-white" aria-label={right ? "Collapse inspector" : "Expand inspector"}>
                 {right ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />}
               </button>
@@ -46,6 +47,17 @@ export default function App() {
       <Assistant />
       <Toast />
     </div>
+  );
+}
+
+/** Phones (below md): the folded inspector slides in whenever something is selected. */
+function usePhoneLayout() {
+  useEffect(
+    () =>
+      useApp.subscribe((s, prev) => {
+        if (window.innerWidth < 768 && s.selection && s.selection !== prev.selection && !s.panels.right) useApp.setState({ panels: { ...s.panels, right: true } });
+      }),
+    [],
   );
 }
 

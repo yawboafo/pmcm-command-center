@@ -67,14 +67,19 @@ const LOAD = [
   { sku: "COL-001", name: "Coleslaw", unit: "kg", base: 5 },
 ];
 
-/** Deterministic demo distribution schedule (two runs per branch per day). */
+/**
+ * Deterministic demo distribution schedule: three runs per branch spread over the
+ * 24-hour cycle (one every 8 h from a per-branch offset), so some trucks are on the
+ * road at any time of day.
+ */
 export function transfersForDay(dayStartMs: number, seed: number): Transfer[] {
   const out: Transfer[] = [];
   for (const b of BRANCHES) {
     const { hub, distanceKm } = hubFor(b);
     const r = new Rng(hashString(`${b.id}:supply`) ^ seed);
     const travelMin = 20 + distanceKm * 1.6;
-    for (const [i, hour] of [r.range(4, 7), r.range(13, 16)].entries()) {
+    const offset = r.range(0, 8);
+    for (const [i, hour] of [offset, offset + 8, offset + 16].entries()) {
       const departAt = dayStartMs + hour * 3600e3;
       const k = b.floorPlanType === "C" ? 1.6 : b.floorPlanType === "A" ? 0.6 : 1;
       out.push({
@@ -83,7 +88,7 @@ export function transfersForDay(dayStartMs: number, seed: number): Transfer[] {
         branchId: b.id,
         departAt,
         arriveAt: departAt + travelMin * 60e3,
-        items: LOAD.map((l) => ({ sku: l.sku, name: l.name, unit: l.unit, qty: Math.round(l.base * k * r.range(0.7, 1.3)) })),
+        items: LOAD.map((l) => ({ sku: l.sku, name: l.name, unit: l.unit, qty: Math.max(1, Math.round(((l.base * 2) / 3) * k * r.range(0.7, 1.3))) })),
         status: "scheduled",
       });
     }

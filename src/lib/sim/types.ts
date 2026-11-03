@@ -51,6 +51,12 @@ export interface Order {
   inventoryConsumed: boolean;
   delivery?: { status: "AWAITING_DISPATCH" | "RIDER_ASSIGNED" | "COLLECTED" | "IN_TRANSIT" | "DELIVERED" | "DELAYED"; eta?: number; collectedAt?: number; deliveredAt?: number; rider?: string };
   note?: string;
+  /** "live" when the order arrived from a connected POS / ordering system; kitchen progress is still simulated. */
+  source: "simulated" | "live";
+  /** Order reference in the source system (live orders). */
+  externalRef?: string;
+  /** Latest status reported by the source system (live orders). */
+  externalStatus?: string;
 }
 
 export interface Unit {

@@ -82,6 +82,7 @@ export type DeviceBinding = z.infer<typeof DeviceBinding>;
 
 /** Normalised reading after binding + calibration — what the platform consumes. */
 export interface NormalisedReading {
+  type: "reading";
   /** Monotonic sequence (SSE event id) for resumable streams. */
   seq: number;
   branchId: string;
@@ -157,3 +158,18 @@ export const PosOrderEvent = z.object({
   ts: z.iso.datetime({ offset: true }),
 });
 export type PosOrderEvent = z.infer<typeof PosOrderEvent>;
+
+/** A validated, de-duplicated order event as streamed to the command center. */
+export interface NormalisedOrderEvent {
+  type: "order";
+  seq: number;
+  branchId: string;
+  receivedAt: number;
+  /** Webhook source id (x-pmcm-source), e.g. "chris-b". */
+  sourceId: string;
+  event: PosOrderEvent;
+  source: "live";
+}
+
+/** Everything the hub streams, in one sequence so a single Last-Event-ID resumes both. */
+export type HubEvent = NormalisedReading | NormalisedOrderEvent;

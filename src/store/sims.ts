@@ -15,6 +15,9 @@ export const TEMPLATES: Record<"A" | "B" | "C", FloorPlan> = {
 
 const PLAN_KEY = "pmcm.floorplans.v1";
 
+/** Simulated minutes a branch runs before it is shown (≈50 ms of compute). */
+const WARMUP_SEC = 20 * 60;
+
 export interface PlanVersion {
   savedAt: number;
   by: string;
@@ -109,12 +112,14 @@ class SimRegistry {
         branchId,
         branchName: b.name,
         plan: plans().get(branchId),
-        clockStart: this.clock,
+        clockStart: this.clock - WARMUP_SEC * 1000,
         config: { seed: this.seed, arrivalRate: (this.arrivalRate * { A: 0.7, B: 1, C: 1.5 }[b.floorPlanType]), dineInShare: 0.3, deliveryShare: 0.45, autoFaults: true },
         baseline: { ordersToday: lite.ordersToday, completed: Math.max(0, lite.ordersToday - lite.activeOrders), sales: lite.salesToday },
         isOpen: (ms) => isBranchOpen(b, ms),
         safety: this.safety,
       });
+      // Run the warm-up instantly so the restaurant opens mid-service, not empty.
+      sim.advance(WARMUP_SEC, Number.MAX_SAFE_INTEGER);
       this.sims.set(branchId, sim);
     }
     return sim;

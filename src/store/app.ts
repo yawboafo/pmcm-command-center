@@ -25,6 +25,9 @@ export type Section =
 /** Sections rendered on top of the 3D twin (they need an entered branch). */
 export const TWIN_SECTIONS: Section[] = ["twin", "cameras", "kitchen", "orders", "safety", "inventory", "customers", "staff", "delivery"];
 
+/** Sections drawn over the Ghana map (entering one leaves the restaurant twin). */
+const MAP_SECTIONS: Section[] = ["network", "branches", "central"];
+
 export type CameraMode = "orbit" | "fps" | "top" | "dollhouse" | "cctv" | "focus" | "tour" | "follow";
 
 export type Selection =
@@ -120,7 +123,8 @@ export const useApp = create<AppState>((set, get) => ({
   paused: false,
   arrivalPreset: "medium",
   tick: 0,
-  panels: { left: true, right: true, bottom: true },
+  // Phones start with every side panel folded so the map or twin gets the screen (the app is client-only).
+  panels: typeof window !== "undefined" && window.innerWidth < 768 ? { left: false, right: false, bottom: false } : { left: true, right: true, bottom: true },
   graphics: "balanced",
   user: DEMO_USERS[1],
   regionFilter: null,
@@ -132,6 +136,12 @@ export const useApp = create<AppState>((set, get) => ({
     const s = get();
     if (TWIN_SECTIONS.includes(section) && !s.enteredBranchId) {
       // Twin modules need a restaurant — open the selected (or first demo) branch.
+      set({ section });
+      return;
+    }
+    if (MAP_SECTIONS.includes(section) && s.enteredBranchId) {
+      // Network-level views live on the map: leave the restaurant first.
+      s.exitToMap();
       set({ section });
       return;
     }

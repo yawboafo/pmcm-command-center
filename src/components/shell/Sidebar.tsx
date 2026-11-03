@@ -52,53 +52,60 @@ export default function Sidebar() {
   const snaps = useSnapshots();
   const crit = snaps.filter((s) => s.status === "critical").length;
   const warn = snaps.filter((s) => s.status === "warning").length;
-  let lastGroup = "";
+  const go = (id: Section) => {
+    setSection(id);
+    // On phones the open sidebar covers the view; close it once a section is chosen.
+    if (open && window.innerWidth < 768) toggle("left");
+  };
 
   return (
-    <nav aria-label="Main" className={cx("glass z-30 flex h-full shrink-0 flex-col rounded-none border-y-0 border-l-0 transition-all", open ? "w-60" : "w-14")}>
-      <div className="flex items-center gap-2 border-b border-white/5 px-3 py-3">
-        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand-red font-display text-[11px] font-extrabold text-white shadow-lg shadow-red-900/40">PC</div>
-        {open && (
-          <div className="min-w-0 leading-tight">
-            <div className="truncate font-display text-[12px] font-extrabold tracking-wide text-white">PIZZAMAN <span className="text-brand-yellow">CHICKENMAN</span></div>
-            <div className="truncate text-[9.5px] font-semibold tracking-[0.18em] text-white/45">OPERATIONS COMMAND CENTER</div>
-          </div>
-        )}
-      </div>
-      <div className="scroll-thin flex-1 overflow-y-auto px-2 py-2">
-        {NAV.map((n) => {
-          const header = open && n.group !== lastGroup ? n.group : null;
-          lastGroup = n.group;
-          const Icon = n.icon;
-          const active = section === n.id;
-          return (
-            <div key={n.id}>
-              {header && <div className="px-2 pb-1 pt-3 text-[9.5px] font-semibold uppercase tracking-[0.18em] text-white/30">{header}</div>}
-              <button
-                type="button"
-                onClick={() => setSection(n.id)}
-                title={n.label}
-                aria-current={active ? "page" : undefined}
-                className={cx("group relative flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-[12.5px] transition", active ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white")}
-              >
-                {active && <span className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-brand-red" />}
-                <Icon size={16} className={active ? "text-brand-red" : ""} />
-                {open && <span className="truncate">{n.label}</span>}
-                {open && n.id === "network" && (crit > 0 || warn > 0) && (
-                  <span className="ml-auto flex gap-1">
-                    {crit > 0 && <span className="rounded bg-red-500/20 px-1.5 text-[10px] font-semibold text-red-300">{crit}</span>}
-                    {warn > 0 && <span className="rounded bg-amber-500/20 px-1.5 text-[10px] font-semibold text-amber-200">{warn}</span>}
-                  </span>
-                )}
-              </button>
+    // Below md the collapsed rail keeps its 3.5 rem in the layout and the open menu overlays the view.
+    <div className="relative h-full shrink-0 max-md:w-14">
+      {open && <div className="fixed inset-0 z-30 bg-black/50 md:hidden" onClick={() => toggle("left")} aria-hidden />}
+      <nav aria-label="Main" className={cx("glass z-30 flex h-full flex-col rounded-none border-y-0 border-l-0 transition-all max-md:absolute max-md:left-0 max-md:top-0 max-md:z-40", open ? "w-60" : "w-14")}>
+        <div className="flex items-center gap-2 border-b border-white/5 px-3 py-3">
+          <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand-red font-display text-[11px] font-extrabold text-white shadow-lg shadow-red-900/40">PC</div>
+          {open && (
+            <div className="min-w-0 leading-tight">
+              <div className="truncate font-display text-[12px] font-extrabold tracking-wide text-white">PIZZAMAN <span className="text-brand-yellow">CHICKENMAN</span></div>
+              <div className="truncate text-[9.5px] font-semibold tracking-[0.18em] text-white/45">OPERATIONS COMMAND CENTER</div>
             </div>
-          );
-        })}
-      </div>
-      <button type="button" onClick={() => toggle("left")} className="flex items-center gap-2 border-t border-white/5 px-4 py-3 text-xs text-white/50 hover:text-white" aria-label={open ? "Collapse sidebar" : "Expand sidebar"}>
-        {open ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
-        {open && "Collapse"}
-      </button>
-    </nav>
+          )}
+        </div>
+        <div className="scroll-thin flex-1 overflow-y-auto px-2 py-2">
+          {NAV.map((n, i) => {
+            const header = open && (i === 0 || NAV[i - 1].group !== n.group) ? n.group : null;
+            const Icon = n.icon;
+            const active = section === n.id;
+            return (
+              <div key={n.id}>
+                {header && <div className="px-2 pb-1 pt-3 text-[9.5px] font-semibold uppercase tracking-[0.18em] text-white/30">{header}</div>}
+                <button
+                  type="button"
+                  onClick={() => go(n.id)}
+                  title={n.label}
+                  aria-current={active ? "page" : undefined}
+                  className={cx("group relative flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-[12.5px] transition", active ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white")}
+                >
+                  {active && <span className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-brand-red" />}
+                  <Icon size={16} className={active ? "text-brand-red" : ""} />
+                  {open && <span className="truncate">{n.label}</span>}
+                  {open && n.id === "network" && (crit > 0 || warn > 0) && (
+                    <span className="ml-auto flex gap-1">
+                      {crit > 0 && <span className="rounded bg-red-500/20 px-1.5 text-[10px] font-semibold text-red-300">{crit}</span>}
+                      {warn > 0 && <span className="rounded bg-amber-500/20 px-1.5 text-[10px] font-semibold text-amber-200">{warn}</span>}
+                    </span>
+                  )}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+        <button type="button" onClick={() => toggle("left")} className="flex items-center gap-2 border-t border-white/5 px-4 py-3 text-xs text-white/50 hover:text-white" aria-label={open ? "Collapse sidebar" : "Expand sidebar"}>
+          {open ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
+          {open && "Collapse"}
+        </button>
+      </nav>
+    </div>
   );
 }

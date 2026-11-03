@@ -1,19 +1,20 @@
 import registry from "@/data/devices.json";
-import { DeviceBinding, PhysicalCamera, type NormalisedReading, type TelemetryMessage } from "./contracts";
+import { DeviceBinding, PhysicalCamera, type HubEvent, type NormalisedReading, type PosOrderEvent, type TelemetryMessage } from "./contracts";
 
 /**
  * In-process telemetry hub (server-side). Prototype stand-in for the production
  * pipeline (MQTT broker → Redis Streams/Kafka → TimescaleDB): it de-duplicates
  * messages, applies bindings + calibration, keeps a short replay buffer for
- * resumable SSE streams, and tracks device last-seen times.
+ * resumable SSE streams (device readings and POS order events share one
+ * sequence), and tracks device last-seen times.
  * Stored on globalThis so dev-server hot reloads don't drop state.
  */
 interface HubState {
   seq: number;
-  buffer: NormalisedReading[];
+  buffer: HubEvent[];
   seen: Map<string, number>;
   lastSeen: Map<string, { at: number; battery?: number; rssi?: number; firmware?: string }>;
-  listeners: Set<(r: NormalisedReading) => void>;
+  listeners: Set<(e: HubEvent) => void>;
 }
 
 const g = globalThis as unknown as { __pmcmHub?: HubState };
@@ -60,6 +61,7 @@ export function ingest(msg: TelemetryMessage, now = Date.now()): IngestResult {
       continue;
     }
     const reading: NormalisedReading = {
+      type: "reading",
       seq: ++hub.seq,
       branchId: b.branchId,
       equipmentId: b.equipmentId,
@@ -80,12 +82,33 @@ export function ingest(msg: TelemetryMessage, now = Date.now()): IngestResult {
   return accepted ? { status: "accepted", readings: accepted } : { status: "unbound", metrics: unbound };
 }
 
-/** Readings after `afterSeq` (for SSE resume via Last-Event-ID). */
-export function backlog(branchId: string | null, afterSeq: number) {
-  return hub.buffer.filter((r) => r.seq > afterSeq && (!branchId || r.branchId === branchId));
+export type OrderIngestResult = { status: "accepted"; seq: number } | { status: "duplicate" };
+
+/** Buffer and broadcast a validated POS / ordering-system event (idempotent on its key). */
+export function ingestOrder(sourceId: string, event: PosOrderEvent, now = Date.now()): OrderIngestResult {
+  const key = `order:${sourceId}:${event.idempotencyKey}`;
+  if (hub.seen.has(key)) return { status: "duplicate" };
+  hub.seen.set(key, now);
+  const e: HubEvent = { type: "order", seq: ++hub.seq, branchId: event.branchId, receivedAt: now, sourceId, event, source: "live" };
+  hub.buffer.push(e);
+  if (hub.buffer.length > BUFFER) hub.buffer.splice(0, hub.buffer.length - BUFFER);
+  for (const l of hub.listeners) l(e);
+  return { status: "accepted", seq: e.seq };
 }
 
-export function subscribe(fn: (r: NormalisedReading) => void) {
+/** A brand-new subscriber only gets readings this recent, so stale data never looks live. */
+export const FRESH_REPLAY_MS = 5 * 60 * 1000;
+
+/**
+ * Readings to replay to a subscriber. Resuming (`afterSeq` > 0, from Last-Event-ID) replays
+ * everything still buffered after that id; a fresh connection gets only recent readings.
+ */
+export function backlog(branchId: string | null, afterSeq: number, now = Date.now()) {
+  const minReceived = afterSeq > 0 ? 0 : now - FRESH_REPLAY_MS;
+  return hub.buffer.filter((r) => r.seq > afterSeq && r.receivedAt >= minReceived && (!branchId || r.branchId === branchId));
+}
+
+export function subscribe(fn: (e: HubEvent) => void) {
   hub.listeners.add(fn);
   return () => hub.listeners.delete(fn);
 }

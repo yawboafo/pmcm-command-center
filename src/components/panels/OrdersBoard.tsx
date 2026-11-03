@@ -84,7 +84,10 @@ export default function OrdersBoard({ sim }: { sim: BranchSimulation }) {
               const active = !["COMPLETED", "CANCELLED", "FAILED", "REFUNDED"].includes(o.status);
               return (
                 <tr key={o.id} onClick={() => select({ kind: "order", id: o.id })} className={cx("cursor-pointer border-t border-white/[0.05] hover:bg-white/[0.04]", selected?.kind === "order" && selected.id === o.id && "bg-white/[0.07]")}>
-                  <td className="py-1 pr-1 font-mono text-white">{o.number}</td>
+                  <td className="py-1 pr-1 font-mono text-white">
+                    {o.number}
+                    {o.source === "live" && <span title="Live order from a connected ordering system" className="ml-1 text-[9px] font-semibold text-emerald-300">LIVE</span>}
+                  </td>
                   <td className="pr-1 font-mono text-white/45">
                     {clock(simMs(sim, o.createdAt))}
                     <div className="text-[9.5px] text-white/30">{active ? mins(sim.t - o.createdAt) : channelLabel(o.channel)}</div>

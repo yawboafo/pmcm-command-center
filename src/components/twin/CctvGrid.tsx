@@ -2,10 +2,12 @@
 
 import { Line } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { memo, useLayoutEffect, useMemo, useRef } from "react";
+import { memo, useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import LiveCameraPlayer from "@/components/integration/LiveCameraPlayer";
 import type { FloorPlan, VirtualCamera } from "@/lib/floorplan/types";
 import { clockSec } from "@/lib/format";
+import { useIntegrationStatus } from "@/lib/integration/useStatus";
 import { useApp } from "@/store/app";
 import { sims } from "@/store/sims";
 import { virtualPose } from "./CameraRig";
@@ -86,7 +88,11 @@ export function CctvOverlay({ plan }: { plan: FloorPlan }) {
   useApp((s) => s.tick);
   const page = useTwin((s) => s.cctvPage);
   const setPage = useTwin((s) => s.setPage);
+  const { status } = useIntegrationStatus(60_000);
+  const [watching, setWatching] = useState<{ cameraId: string; name: string } | null>(null);
   if (!open) return null;
+  // Authorised physical cameras installed at the pose of a virtual camera in this branch.
+  const physical = new Map((status?.cameras ?? []).filter((c) => c.enabled && c.branchId === plan.restaurantId && c.virtualCameraId && c.protocol === "webrtc-whep").map((c) => [c.virtualCameraId!, c]));
   const { cols } = gridDims(layout);
   const pages = Math.max(1, Math.ceil(plan.cameras.length / layout));
   const p = Math.min(page, pages - 1);
@@ -102,7 +108,14 @@ export function CctvOverlay({ plan }: { plan: FloorPlan }) {
               {c.code}
               <span className="text-white/60">{c.name}</span>
             </div>
-            <div className="absolute right-2 top-2 rounded border border-amber-400/40 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-amber-300">SIMULATED VIEW</div>
+            <div className="absolute right-2 top-2 flex items-center gap-1">
+              {physical.has(c.id) && (
+                <button type="button" title="Open the real camera at this position in a separate live player" className="rounded border border-emerald-400/50 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-emerald-300 hover:bg-emerald-400/15" onClick={(e) => (e.stopPropagation(), setWatching({ cameraId: physical.get(c.id)!.cameraId, name: physical.get(c.id)!.name }))}>
+                  ● LIVE FEED
+                </button>
+              )}
+              <span className="rounded border border-amber-400/40 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-amber-300">SIMULATED VIEW</span>
+            </div>
             <div className="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 font-mono text-[10px] text-white/70">
               {rooms.get(c.roomId)} · {clockSec(sims().clock)}
             </div>
@@ -114,6 +127,18 @@ export function CctvOverlay({ plan }: { plan: FloorPlan }) {
           </div>
         ))}
       </div>
+      {watching && (
+        <div className="pointer-events-auto absolute inset-0 z-20 flex items-center justify-center bg-black/70 p-6" onClick={() => setWatching(null)}>
+          <div className="w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
+            <LiveCameraPlayer cameraId={watching.cameraId} name={watching.name} className="aspect-video" />
+            <div className="mt-2 flex justify-end">
+              <button type="button" onClick={() => setWatching(null)} className="rounded-md border border-white/15 px-3 py-1 text-[11px] text-white/80 hover:bg-white/10">
+                Close live feed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="glass pointer-events-auto absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-lg p-1 text-[11px] text-white">
         <span className="px-2 font-semibold tracking-wide text-white/70">VIRTUAL CAMERA GRID</span>
         {([1, 4, 9] as const).map((l) => (

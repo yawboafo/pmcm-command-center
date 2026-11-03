@@ -32,7 +32,7 @@ export default function MapToolbar({ visibleCount }: { visibleCount: number }) {
             </button>
           )}
         </label>
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <div className="mt-2 flex flex-wrap items-center gap-1.5 max-md:hidden">
           <select className={selectCls} value={regionFilter ?? ""} onChange={(e) => setFilters({ regionFilter: e.target.value || null })} aria-label="Region filter">
             <option value="">All 16 regions</option>
             {GHANA_REGIONS.map((r) => (
@@ -77,7 +77,7 @@ export default function MapToolbar({ visibleCount }: { visibleCount: number }) {
         </div>
       </div>
 
-      <div className="glass absolute bottom-3 left-3 z-10 rounded-lg px-3 py-2 text-[10.5px] text-white/70" aria-label="Map legend">
+      <div className="glass absolute bottom-3 left-3 z-10 rounded-lg px-3 py-2 text-[10.5px] text-white/70 max-md:hidden" aria-label="Map legend">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           {(
             [

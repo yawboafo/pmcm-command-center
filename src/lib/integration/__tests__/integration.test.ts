@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { modelC } from "../../floorplan/templates";
 import { BranchSimulation } from "../../sim/engine";
-import { TelemetryMessage } from "../contracts";
-import { __resetHub, backlog, deviceSecret, ingest } from "../hub";
+import { PosOrderEvent, TelemetryMessage, type HubEvent } from "../contracts";
+import { __resetHub, backlog, deviceSecret, FRESH_REPLAY_MS, ingest, ingestOrder } from "../hub";
 import { MAX_SKEW_MS, sign, verify } from "../signing";
 
 const SECRET = "0123456789abcdef0123456789abcdef";
@@ -27,6 +27,8 @@ describe("contracts", () => {
   });
 });
 
+const values = (es: HubEvent[]) => es.map((e) => (e.type === "reading" ? e.value : null));
+
 describe("hub", () => {
   beforeEach(() => __resetHub());
   const msg = (id: string, value: number) => TelemetryMessage.parse({ v: 1, messageId: id, deviceId: "bench-coldroom-01", ts: new Date().toISOString(), readings: [{ metric: "temperature_c", value }] });
@@ -36,10 +38,21 @@ describe("hub", () => {
     expect(ingest(msg("msg-00000001", 3.1))).toEqual({ status: "duplicate" });
     ingest(msg("msg-00000002", 3.3));
     const all = backlog("branch-015", 0);
-    expect(all.map((r) => r.value)).toEqual([3.1, 3.3]);
-    expect(all[0].equipmentId).toBe("walk-in-cold-1");
+    expect(values(all)).toEqual([3.1, 3.3]);
+    expect(all[0].type === "reading" && all[0].equipmentId).toBe("walk-in-cold-1");
     expect(backlog("branch-015", all[0].seq).length).toBe(1);
     expect(backlog("branch-001", 0).length).toBe(0);
+  });
+
+  it("replays only recent readings to a fresh subscriber, but everything buffered on resume", () => {
+    const t0 = Date.now();
+    ingest(msg("msg-00000003", 3.0), t0);
+    ingest(msg("msg-00000004", 3.1), t0);
+    ingest(msg("msg-00000005", 3.2), t0 + FRESH_REPLAY_MS + 60_000);
+    const later = t0 + FRESH_REPLAY_MS + 61_000;
+    const [first] = backlog("branch-015", 0, t0);
+    expect(values(backlog("branch-015", 0, later))).toEqual([3.2]);
+    expect(values(backlog("branch-015", first.seq, later))).toEqual([3.1, 3.2]);
   });
 
   it("refuses unbound metrics and requires a configured key", () => {
@@ -88,5 +101,32 @@ describe("engine live sensors", () => {
 
   it("ignores bindings that do not exist in the floor plan", () => {
     expect(make().ingestReading({ equipmentId: "no-such-fridge", metric: "temperature_c", value: 3, ts: start, deviceId: "x", expectedIntervalSec: 30 })).toBeNull();
+  });
+});
+
+describe("live POS orders", () => {
+  beforeEach(() => __resetHub());
+  const start = Date.UTC(2026, 10, 3, 12, 0);
+  const pos = (status: string, key: string) =>
+    PosOrderEvent.parse({ v: 1, idempotencyKey: key, branchId: "branch-015", externalRef: "CB-778812", channel: "chris-b-app", fulfilment: "delivery", status, lines: [{ menuId: "pz-chicken-l", qty: 1, unitPriceGhs: 155 }, { menuId: "not-on-menu", qty: 1, unitPriceGhs: 10 }], ts: new Date(start).toISOString() });
+
+  it("de-duplicates on the idempotency key per source", () => {
+    expect(ingestOrder("chris-b", pos("RECEIVED", "key-00000001")).status).toBe("accepted");
+    expect(ingestOrder("chris-b", pos("RECEIVED", "key-00000001")).status).toBe("duplicate");
+    expect(ingestOrder("other-pos", pos("RECEIVED", "key-00000001")).status).toBe("accepted");
+    expect(backlog("branch-015", 0).every((e) => e.type === "order")).toBe(true);
+  });
+
+  it("creates a LIVE order with source prices, then applies later status events", () => {
+    const sim = new BranchSimulation({ branchId: "branch-015", branchName: "East Legon", plan: modelC(), clockStart: start, config: { seed: 1, arrivalRate: 0, dineInShare: 0.3, deliveryShare: 0.4, autoFaults: false } });
+    const o = sim.ingestOrderEvent(pos("RECEIVED", "key-k0001"))!;
+    expect(o.source).toBe("live");
+    expect(o.lines).toHaveLength(1);
+    expect(o.total).toBe(155);
+    expect(sim.ingestOrderEvent(pos("ACCEPTED", "key-k0002"))).toBe(o);
+    expect(o.status).not.toBe("RECEIVED");
+    sim.ingestOrderEvent(pos("CANCELLED", "key-k0003"));
+    expect(o.status).toBe("CANCELLED");
+    expect(sim.ingestOrderEvent({ ...pos("READY", "key-k0004"), externalRef: "unknown" })).toBeNull();
   });
 });

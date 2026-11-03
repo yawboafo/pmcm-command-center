@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 import { Btn, cx } from "@/components/ui/primitives";
 import { BRANCH_BY_ID, demoBranchIds } from "@/lib/network/branches";
 import { TWIN_SECTIONS, useApp } from "@/store/app";
@@ -11,9 +12,13 @@ const GhanaMap = dynamic(() => import("@/components/map/GhanaMap"), { ssr: false
 const BranchDirectory = dynamic(() => import("@/components/map/BranchDirectory"), { ssr: false });
 const CentralKitchens = dynamic(() => import("@/components/analytics/CentralKitchens"), { ssr: false });
 const AnalyticsView = dynamic(() => import("@/components/analytics/AnalyticsView"), { ssr: false });
-const TwinView = dynamic(() => import("@/components/twin/TwinView"), { ssr: false, loading: () => <Loading text="Generating restaurant from floor plan…" /> });
+const loadTwin = () => import("@/components/twin/TwinView");
+const TwinView = dynamic(loadTwin, { ssr: false, loading: () => <Loading text="Generating restaurant from floor plan…" /> });
 const ModuleOverlay = dynamic(() => import("@/components/panels/ModuleOverlay"), { ssr: false });
 const FloorPlanEditor = dynamic(() => import("@/components/editor/FloorPlanEditor"), { ssr: false, loading: () => <Loading text="Loading floor plan editor…" /> });
+
+/** Mount the (heavy) twin this long into the ~2.8 s map flight, so the flight itself stays smooth. */
+const TWIN_MOUNT_DELAY_MS = 2000;
 
 function Loading({ text }: { text: string }) {
   return <div className="flex h-full items-center justify-center text-xs text-white/50">{text}</div>;
@@ -24,12 +29,28 @@ export default function MainView() {
   const entered = useApp((s) => s.enteredBranchId);
   const phase = useApp((s) => s.phase);
   const enterBranch = useApp((s) => s.enterBranch);
+  const [readyFor, setReadyFor] = useState<string | null>(null);
+
+  // Fetch the twin code during the flight but build the scene only near its end.
+  useEffect(() => {
+    if (phase !== "flying" || !entered) return;
+    loadTwin();
+    const t = setTimeout(() => setReadyFor(entered), TWIN_MOUNT_DELAY_MS);
+    return () => clearTimeout(t);
+  }, [phase, entered]);
+  // Forget it on leaving, so re-entering the same branch delays the mount again.
+  useEffect(() => {
+    if (entered) return;
+    const t = setTimeout(() => setReadyFor(null), 0);
+    return () => clearTimeout(t);
+  }, [entered]);
 
   if (section === "editor") return <FloorPlanEditor />;
   if (section === "analytics") return <AnalyticsView />;
   if (section === "settings") return <Settings />;
 
   const twinVisible = !!entered && (phase === "exterior" || phase === "entering" || phase === "inside");
+  const mountTwin = !!entered && (phase !== "flying" || readyFor === entered);
   const needsBranch = TWIN_SECTIONS.includes(section) && !entered;
 
   return (
@@ -37,7 +58,7 @@ export default function MainView() {
       <div className={cx("absolute inset-0 transition-opacity duration-700", twinVisible ? "pointer-events-none opacity-0" : "opacity-100")}>
         <GhanaMap visible={!twinVisible} />
       </div>
-      {entered && (
+      {entered && mountTwin && (
         <div className={cx("absolute inset-0 transition-opacity duration-700", twinVisible ? "opacity-100" : "pointer-events-none opacity-0")}>
           <TwinView key={entered} branchId={entered} />
           {twinVisible && phase === "inside" && TWIN_SECTIONS.includes(section) && section !== "twin" && section !== "cameras" && <ModuleOverlay section={section} />}

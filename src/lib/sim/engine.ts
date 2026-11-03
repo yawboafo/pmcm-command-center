@@ -201,6 +201,7 @@ export class BranchSimulation {
     this.updateOrders();
     this.schedule();
     for (const a of this.agents) if (!a.gone) this.updateAgent(a, dt);
+    this.separate(dt);
     this.updateMachines();
     this.accumulateUtilization(dt);
     if (this.t >= this.nextSensor) {
@@ -397,6 +398,7 @@ export class BranchSimulation {
       unitIds: [],
       history: [{ t: this.t, status: "RECEIVED" }],
       inventoryConsumed: false,
+      source: "simulated",
     };
     if (fulfilment === "delivery") order.delivery = { status: "AWAITING_DISPATCH" };
     this.orders.set(id, order);
@@ -408,6 +410,34 @@ export class BranchSimulation {
   /** Manually inject an order (used by the demo "new order" control and the AI assistant). */
   placeOrder(lines: Array<{ menuId: string; qty: number }>, channel: Channel = "demo", fulfilment: Fulfilment = "delivery") {
     const o = this.createOrder(lines, channel, fulfilment);
+    this.version++;
+    return o;
+  }
+
+  /**
+   * Apply an order event from a connected POS / ordering system (already validated and
+   * de-duplicated upstream). New orders enter the simulated kitchen marked LIVE with the
+   * source system's prices; later events update status. Returns the order, or null if
+   * no line maps to a known menu item.
+   */
+  ingestOrderEvent(e: { externalRef: string; channel: Exclude<Channel, "demo">; fulfilment: Fulfilment; status: string; lines: Array<{ menuId: string; qty: number; unitPriceGhs: number }> }): Order | null {
+    let o = [...this.orders.values()].find((x) => x.source === "live" && x.externalRef === e.externalRef);
+    if (!o) {
+      if (!["RECEIVED", "ACCEPTED"].includes(e.status)) return null;
+      const lines = e.lines.filter((l) => MENU_BY_ID.has(l.menuId));
+      if (!lines.length) return null;
+      o = this.createOrder(lines, e.channel, e.fulfilment);
+      o.source = "live";
+      o.externalRef = e.externalRef;
+      // The source system's prices are authoritative.
+      o.lines.forEach((l, i) => (l.price = lines[i].unitPriceGhs));
+      o.total = o.lines.reduce((s, l) => s + l.qty * l.price, 0);
+    }
+    o.externalStatus = e.status;
+    if (e.status === "ACCEPTED" && o.status === "RECEIVED") this.accept(o);
+    else if (e.status === "CANCELLED") this.cancelOrder(o.id, "Cancelled in source system");
+    else if (e.status === "REFUNDED") this.refundOrder(o.id);
+    else if (e.status === "READY" || e.status === "COMPLETED") this.log("order", "info", `Source system reports order #${o.number} ${e.status}`, { orderId: o.id });
     this.version++;
     return o;
   }
@@ -488,8 +518,9 @@ export class BranchSimulation {
   refundOrder(orderId: string) {
     const o = this.orders.get(orderId);
     if (!o || !["COMPLETED", "CANCELLED", "FAILED"].includes(o.status)) return false;
-    this.setStatus(o, "REFUNDED", "Refund issued (simulated)");
-    this.log("order", "info", `Order #${o.number} refunded (simulated)`, { orderId });
+    const how = o.source === "live" ? "recorded in source system" : "simulated";
+    this.setStatus(o, "REFUNDED", `Refund ${how}`);
+    this.log("order", "info", `Order #${o.number} refunded (${how})`, { orderId });
     this.version++;
     return true;
   }
@@ -710,6 +741,8 @@ export class BranchSimulation {
         order.readyAt = this.t;
         this.setStatus(order, "READY");
         this.log("kitchen", "success", `Order #${order.number} ready for ${order.fulfilment === "delivery" ? "dispatch" : "collection"}`, { orderId: order.id });
+        // Remote / injected pickup orders have nobody waiting in store: someone arrives to collect.
+        if (order.fulfilment !== "delivery" && !order.customerId) this.spawnCollector(order);
         break;
       }
       case "rice-batch": {
@@ -824,6 +857,46 @@ export class BranchSimulation {
     return a.path.length === 0;
   }
 
+  /**
+   * Local avoidance: a walking agent is pushed away from anyone within reach and sidesteps to
+   * its right when someone is ahead, so people pass instead of walking through each other.
+   * Standing, working and seated agents hold their position; walls are never crossed.
+   */
+  private separate(dt: number) {
+    const R = 0.5;
+    const live = this.agents.filter((a) => !a.gone);
+    for (const a of live) {
+      if (!a.path.length) continue;
+      const fx = Math.sin(a.heading);
+      const fz = Math.cos(a.heading);
+      let px = 0;
+      let pz = 0;
+      for (const b of live) {
+        if (b === a) continue;
+        const dx = a.pos[0] - b.pos[0];
+        const dz = a.pos[1] - b.pos[1];
+        const d = Math.hypot(dx, dz);
+        if (d >= R) continue;
+        const w = (R - d) / R;
+        if (d > 1e-3) {
+          px += (dx / d) * w;
+          pz += (dz / d) * w;
+        }
+        // Someone ahead: step to the right of the walking direction.
+        if (-(dx * fx + dz * fz) > 0) {
+          px += fz * w;
+          pz -= fx * w;
+        }
+      }
+      const len = Math.hypot(px, pz);
+      if (len < 1e-6) continue;
+      const step = Math.min(0.6 * dt, 0.06);
+      const nx = a.pos[0] + (px / len) * step;
+      const nz = a.pos[1] + (pz / len) * step;
+      if (this.grid.isWalkable(nx, nz)) a.pos = [nx, nz];
+    }
+  }
+
   private updateAgent(a: Agent, dt: number) {
     if (a.kind === "staff") return this.updateStaff(a, dt);
     if (a.kind === "customer") return this.updateCustomer(a, dt);
@@ -874,6 +947,17 @@ export class BranchSimulation {
   private queueSlot(i: number): Vec2 {
     const { queueHead: h, queueDir: d } = this.plan.anchors;
     return [h[0] + d[0] * i * 0.75 + (i % 2 ? 0.12 : -0.12), h[1] + d[1] * i * 0.75];
+  }
+
+  /** A customer who ordered remotely arrives once the order is ready and goes straight to the collection counter. */
+  private spawnCollector(order: Order) {
+    const out = this.plan.anchors.outside;
+    const id = `${this.branchId}-cust-${++this.seq}`;
+    const a: Agent = { id, kind: "customer", name: `Customer ${this.seq}`, pos: [out[0] + this.rng.range(-2, 2), out[1] + this.rng.range(-1, 0.5)], heading: 0, path: [], speed: this.rng.range(0.95, 1.2), anim: "walk", carrying: null, orderId: order.id, phase: "to-pickup", timer: 0, seed: this.rng.int(0, 1e6), arrivedAt: this.t };
+    order.customerId = id;
+    this.agents.push(a);
+    const p = this.plan.anchors.pickup;
+    this.goTo(a, [p[0] + this.rng.range(-0.5, 0.5), p[1]]);
   }
 
   private sendHome(a: Agent) {
@@ -941,7 +1025,8 @@ export class BranchSimulation {
         a.timer -= dt;
         if (a.timer <= 0 && order) {
           a.carrying = "bag";
-          this.waitTimes.push((this.t - a.arrivedAt) / 60);
+          // Wait time is a walk-in measure (queue → collection); remote orders are excluded.
+          if (order.channel === "walk-in") this.waitTimes.push((this.t - a.arrivedAt) / 60);
           this.completeOrder(order);
           const free = order.fulfilment === "dine-in" ? this.seats.findIndex((_, i) => !this.seatsTaken.has(i)) : -1;
           if (free >= 0) {

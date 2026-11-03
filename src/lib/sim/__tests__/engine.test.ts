@@ -74,4 +74,12 @@ describe("simulation", () => {
     sim.advance(3600, 1e9);
     expect(["OUT_FOR_DELIVERY", "COMPLETED"]).toContain(sim.orders.get(o.id)!.status);
   });
+
+  it.each([["pickup"], ["dine-in"]] as const)("injected %s order is collected by an arriving customer", (fulfilment) => {
+    const sim = make(modelB(), 7);
+    const o = sim.placeOrder([{ menuId: "pz-chicken-l", qty: 1 }], "online", fulfilment);
+    sim.advance(3600, 1e9);
+    expect(o.customerId).toBeDefined();
+    expect(o.status).toBe("COMPLETED");
+  });
 });

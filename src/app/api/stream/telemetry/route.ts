@@ -1,8 +1,10 @@
 import { consoleAccessAllowed } from "@/lib/integration/access";
+import type { HubEvent } from "@/lib/integration/contracts";
 import { backlog, subscribe } from "@/lib/integration/hub";
 
 /**
- * Live telemetry stream for the command center (Server-Sent Events).
+ * Live stream for the command center (Server-Sent Events): `reading` events from
+ * devices and `order` events from POS / ordering webhooks.
  * `?branchId=` limits the stream; `Last-Event-ID` (or `?after=`) resumes after
  * a dropped connection without losing readings still in the replay buffer.
  */
@@ -16,9 +18,9 @@ export async function GET(req: Request) {
 
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
-      const send = (r: { seq: number; branchId: string }) => {
-        if (branchId && r.branchId !== branchId) return;
-        controller.enqueue(enc.encode(`id: ${r.seq}\nevent: reading\ndata: ${JSON.stringify(r)}\n\n`));
+      const send = (e: HubEvent) => {
+        if (branchId && e.branchId !== branchId) return;
+        controller.enqueue(enc.encode(`id: ${e.seq}\nevent: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`));
       };
       controller.enqueue(enc.encode(`retry: 3000\n: connected\n\n`));
       for (const r of backlog(branchId, after)) send(r);

@@ -55,9 +55,12 @@ export default function Assistant() {
   const transcript = useRef<ApiMessage[]>([]);
   const endRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // Open when the sidebar's AI Assistant item is chosen (state adjusted during render, not in an effect).
+  const [prevSection, setPrevSection] = useState(section);
+  if (section !== prevSection) {
+    setPrevSection(section);
     if (section === "assistant") setOpen(true);
-  }, [section]);
+  }
   useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [lines]);
 
   const push = (l: Line) => setLines((x) => [...x, l]);

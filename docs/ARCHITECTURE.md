@@ -21,7 +21,21 @@
           │ tool-use loop (client executes tools against the simulation)
           ▼
  /api/assistant (Route Handler) ──► Claude API (claude-opus-5-5, server-side fallbacks)
+
+ Devices ──signed HTTPS──► /api/ingest/telemetry ─┐
+ POS / Chris B ──signed──► /api/ingest/pos ───────┤► integration hub (dedupe, bindings,
+                                                  │   calibration, replay buffer)
+ Browser liveClient ◄── SSE /api/stream/telemetry ┘   ──► BranchSimulation.ingestReading /
+                                                          ingestOrderEvent (marked LIVE)
+ Live camera player ── SDP ──► /api/cameras/{id}/whep ──► media gateway (MediaMTX)
 ```
+
+### Integration layer (`src/lib/integration`)
+
+Real devices, cameras and order systems enter through the canonical contracts in `contracts.ts`
+and never touch UI code directly. The prototype hub is in-process; production replaces it with
+the pipeline below without changing the contracts. Details, wire formats and hardware guidance:
+`docs/INTEGRATION.md`.
 
 ### One floor plan, many consumers
 
@@ -45,8 +59,11 @@ Deterministic (seeded PRNG, fixed 0.25 s steps), event-driven, one instance per 
   (pizza: make-line → conveyor oven → cut/QC; chicken: picked from hot-holding, which fryers
   replenish in batches with a core-temperature check; rice: portioned from a batch-cooked warmer).
   A scheduler assigns tasks to staff by skill, distance and station capacity.
-- **Agents** — staff, customers (queue → order → wait → collect → sit/leave), riders; A* on the
-  occupancy grid so nobody walks through walls or equipment.
+- **Agents** — staff, customers (queue → order → wait → collect → sit/leave; remote pickup orders
+  get a customer who arrives when the order is ready), riders; A* on the occupancy grid so nobody
+  walks through walls or equipment, plus local separation so walkers step around each other.
+- **Warm-up** — the registry runs each new branch simulation for 20 simulated minutes (≈50 ms)
+  before showing it, so a restaurant opens mid-service rather than empty.
 - **Equipment & safety** — temperature models with injectable faults, configurable thresholds,
   alert lifecycle (open → acknowledged → resolved; resolution requires a corrective action **and**
   an in-range reading), cleaning checklists, cook-temperature verification log, oil quality.
@@ -65,7 +82,8 @@ alert rules, demo order routing, reachability of every workstation).
 | Brand colours & typeface | **Verified** — site CSS and logo files (logo artwork itself is not used) |
 | Floor plans, equipment, workflows, durations | **Conceptual** — design assumptions |
 | Central kitchen locations (except Nyankyerenase town) | **Conceptual** — not published by the company |
-| Orders, sales, staff, sensors, alerts, inventory, deliveries | **Simulated** |
+| Orders, sales, staff, sensors, alerts, inventory, deliveries | **Simulated**, unless marked **LIVE** |
+| Sensor readings from bound devices; orders from a connected POS / ordering system | **Live** (kitchen progress of live orders is still simulated) |
 
 ## Target production architecture (next phases)
 
@@ -116,4 +134,6 @@ alert rules, demo order routing, reachability of every workstation).
 | 4 Simulation engine | Done (browser) |
 | 5 Operational dashboards | Done |
 | 6 Editor, virtual cameras, AI assistant, central kitchens | Done (central kitchens conceptual) |
-| Backend services (NestJS, Postgres, Redis, WebSockets), real integrations | Designed, not built |
+| Integration layer: signed device + POS ingestion, SSE live stream, device/camera registry, WHEP camera proxy, Settings → Integrations | Done (in-process hub; verified with bench scripts; camera path unit-tested, not yet run against a real gateway) |
+| Mobile layout (overlay sidebar and inspector below `md`) | Done |
+| Backend services (NestJS, Postgres, Redis, WebSockets), production pipeline, server-side alerting | Designed, not built |

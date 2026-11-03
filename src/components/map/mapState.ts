@@ -21,7 +21,8 @@ export const useMapFilters = create<MapFilterState>((set, get) => ({
   format: null,
   pinkberry: "any",
   regionalPerformance: false,
-  dashboardOpen: true,
+  // Phones start with the national card folded so the map stays visible.
+  dashboardOpen: typeof window === "undefined" || window.innerWidth >= 768,
   setFormat: (format) => set({ format }),
   setPinkberry: (pinkberry) => set({ pinkberry }),
   toggleRegional: () => set({ regionalPerformance: !get().regionalPerformance }),

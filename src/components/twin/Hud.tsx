@@ -116,7 +116,9 @@ export function DemoMenu({ sim }: { sim: BranchSimulation }) {
     toggleDemo(false);
   };
   const fridgeFault = () => {
-    const eq = sim.plan.equipment;
+    // Never fake a fault on equipment a real device is reporting for.
+    const live = new Set(sim.plan.sensors.filter((s) => s.equipmentId && sim.sensors.get(s.id)?.source === "live").map((s) => s.equipmentId));
+    const eq = sim.plan.equipment.filter((e) => !live.has(e.id));
     const coldRooms = new Set(sim.plan.rooms.filter((r) => r.type === "cold").map((r) => r.id));
     const target = eq.find((e) => e.type === "walk-in-cold") ?? eq.find((e) => e.type === "fridge" && coldRooms.has(e.roomId)) ?? eq.find((e) => e.type === "fridge");
     if (!target) return;

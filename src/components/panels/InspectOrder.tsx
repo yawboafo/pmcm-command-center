@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Navigation } from "lucide-react";
-import { Btn, SectionTitle, SimBadge, cx } from "@/components/ui/primitives";
+import { Btn, SectionTitle, SourceBadge, cx } from "@/components/ui/primitives";
 import { can } from "@/lib/auth/rbac";
 import { clockSec, ghs, mins } from "@/lib/format";
 import { channelLabel, fulfilmentLabel, type BranchSimulation } from "@/lib/sim/engine";
@@ -43,7 +43,7 @@ export default function InspectOrder({ sim, id }: { sim: BranchSimulation; id: s
       <div>
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">Order</span>
-          <SimBadge />
+          <SourceBadge source={o.source} />
         </div>
         <div className="flex items-center gap-2">
           <h2 className="font-display text-xl font-bold text-white">#{o.number}</h2>
@@ -54,6 +54,8 @@ export default function InspectOrder({ sim, id }: { sim: BranchSimulation; id: s
       <Card>
         <KV k="Branch" v={sim.branchName} />
         <KV k="Channel" v={channelLabel(o.channel)} />
+        {o.source === "live" && <KV k="Source reference" v={`${o.externalRef}${o.externalStatus ? ` · ${o.externalStatus}` : ""}`} mono />}
+        {o.source === "live" && <KV k="Kitchen progress" v="Simulated (no KDS connected)" tone="yellow" />}
         <KV k="Fulfilment" v={fulfilmentLabel(o.fulfilment)} />
         <KV k="Elapsed" v={mins(elapsed)} mono tone={o.delayed ? "red" : undefined} />
         <KV k="Target (demo SLA)" v={`${o.slaMin} min to ready`} mono />
@@ -72,7 +74,7 @@ export default function InspectOrder({ sim, id }: { sim: BranchSimulation; id: s
             </li>
           ))}
           <li className="flex justify-between border-t border-white/10 pt-1 font-semibold">
-            <span className="text-white/60">Total (menu prices, GH₵)</span>
+            <span className="text-white/60">{o.source === "live" ? "Total (source system prices, GH₵)" : "Total (menu prices, GH₵)"}</span>
             <span className="font-mono text-white">{ghs(o.total)}</span>
           </li>
         </ul>
