@@ -429,15 +429,57 @@ select {
   --watch: #f5b02e;
   --act: #f0483e;
   --accent: #ee1d25;
+  /* The launch's own neutral scale; the light theme swaps it below. */
+  --launch-bg: #03050a;
+  --launch-fg: #f2f4f8;
+  --launch-fg-2: rgba(242, 244, 248, 0.62);
+  --launch-fg-3: rgba(242, 244, 248, 0.38);
+  --launch-line: rgba(242, 244, 248, 0.22);
+  --launch-line-2: rgba(242, 244, 248, 0.5);
+  --launch-fill: rgba(3, 5, 10, 0.55);
+  --launch-sweep-hi: #ffd6d8;
+  background: var(--launch-bg);
+  color: var(--launch-fg);
+}
+:root[data-theme="light"] .launch-root {
+  --launch-bg: #eef1f5;
+  --launch-fg: #0b1220;
+  --launch-fg-2: rgba(11, 18, 32, 0.64);
+  --launch-fg-3: rgba(11, 18, 32, 0.42);
+  --launch-line: rgba(11, 18, 32, 0.18);
+  --launch-line-2: rgba(11, 18, 32, 0.42);
+  --launch-fill: rgba(238, 241, 245, 0.7);
+  --launch-sweep-hi: #ee1d25;
+}
+.launch-veil,
+.launch-bar {
+  background: var(--launch-bg);
+}
+
+/* Title lockup */
+.launch-eyebrow {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--launch-fg-3);
+}
+.launch-wordmark {
+  margin-top: 10px;
+  font-family: var(--font-brand), var(--font-ui), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: clamp(22px, 4.4vw, 56px);
+  line-height: 1.05;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 .launch-sweep {
-  background: linear-gradient(100deg, #ffffff 0%, #ffffff 38%, #ffd6d8 50%, #ffffff 62%, #ffffff 100%);
+  background: linear-gradient(100deg, var(--launch-fg) 0%, var(--launch-fg) 38%, var(--launch-sweep-hi) 50%, var(--launch-fg) 62%, var(--launch-fg) 100%);
   background-size: 260% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   animation: launch-sweep 2.6s ease-out 0.2s 1 both;
-  text-shadow: none;
 }
 @keyframes launch-sweep {
   from {
@@ -447,20 +489,187 @@ select {
     background-position: -40% 0;
   }
 }
+.launch-rule {
+  margin-top: 16px;
+  height: 1px;
+  width: 160px;
+  max-width: 60%;
+  background: linear-gradient(90deg, transparent, var(--launch-line-2), transparent);
+  transform-origin: center;
+}
+.launch-tagline {
+  margin-top: 12px;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: clamp(10px, 1.2vw, 12px);
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: var(--launch-fg-2);
+}
+.launch-corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--launch-line-2);
+}
+.launch-corner-tl {
+  left: 0;
+  top: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+.launch-corner-tr {
+  right: 0;
+  top: 0;
+  border-left: 0;
+  border-bottom: 0;
+}
+.launch-corner-bl {
+  left: 0;
+  bottom: 0;
+  border-right: 0;
+  border-top: 0;
+}
+.launch-corner-br {
+  right: 0;
+  bottom: 0;
+  border-left: 0;
+  border-top: 0;
+}
+
+/* Chapter captions */
+.launch-caption {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--launch-fg-2);
+}
+.launch-caption-index {
+  color: var(--accent);
+}
+.launch-caption-rule {
+  width: 18px;
+  height: 1px;
+  background: var(--launch-line-2);
+}
+
+/* Instrument-style controls */
+.launch-ctl {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--launch-line);
+  border-radius: 4px;
+  background: var(--launch-fill);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--launch-fg-2);
+  overflow: hidden;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
+}
+.launch-ctl:hover,
+.launch-ctl:focus-visible {
+  color: var(--launch-fg);
+  border-color: var(--launch-line-2);
+  outline: none;
+}
+.launch-ctl-quiet {
+  background: transparent;
+  border-color: transparent;
+}
+.launch-ctl-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--accent);
+  transform-origin: left;
+}
+.launch-check {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--launch-line-2);
+  border-radius: 2px;
+  display: grid;
+  place-items: center;
+}
+.launch-check[data-on]::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+}
+.launch-meter {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+.launch-meter i {
+  display: block;
+  width: 2px;
+  height: 4px;
+  background: currentColor;
+  transform-origin: bottom;
+}
+.launch-meter i:nth-child(2) {
+  height: 8px;
+}
+.launch-meter i:nth-child(3) {
+  height: 12px;
+}
+.launch-meter i:nth-child(4) {
+  height: 6px;
+}
+.launch-meter.is-live i {
+  animation: launch-meter 0.9s ease-in-out infinite alternate;
+}
+.launch-meter.is-live i:nth-child(2) {
+  animation-delay: -0.3s;
+}
+.launch-meter.is-live i:nth-child(3) {
+  animation-delay: -0.6s;
+}
+.launch-meter.is-live i:nth-child(4) {
+  animation-delay: -0.15s;
+}
+@keyframes launch-meter {
+  from {
+    transform: scaleY(0.35);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* Instrument chips rising out of the drawing */
 .launch-instrument {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   white-space: nowrap;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid var(--launch-line-2);
   border-left-width: 2px;
-  border-radius: 6px;
-  background: rgba(3, 5, 10, 0.72);
+  border-radius: 4px;
+  background: var(--launch-fill);
   padding: 4px 8px;
   font-family: var(--font-geist-mono), ui-monospace, monospace;
   font-size: 11px;
   letter-spacing: 0.02em;
-  color: #eceef1;
+  color: var(--launch-fg);
   backdrop-filter: blur(4px);
 }
 .launch-instrument-dot {
@@ -468,12 +677,14 @@ select {
   height: 6px;
   border-radius: 999px;
 }
+
+/* Gate */
 .launch-gate {
-  background: radial-gradient(90% 70% at 50% 45%, rgba(3, 5, 10, 0.1), rgba(3, 5, 10, 0.55) 70%, rgba(3, 5, 10, 0.75));
+  background: radial-gradient(90% 70% at 50% 45%, transparent, var(--launch-fill) 70%, var(--launch-fill));
 }
 .launch-card {
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--launch-line);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02) 40%), rgba(10, 13, 19, 0.62);
   backdrop-filter: blur(22px) saturate(140%);
   -webkit-backdrop-filter: blur(22px) saturate(140%);
@@ -481,6 +692,46 @@ select {
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 30px 80px -30px rgba(0, 0, 0, 0.9);
   animation: launch-card-in 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+:root[data-theme="light"] .launch-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7) 40%), rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 30px 80px -30px rgba(11, 18, 32, 0.35);
+}
+.launch-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--launch-line-2);
+  border-radius: 4px;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--launch-fg);
+}
+.launch-mark-tick {
+  position: absolute;
+  right: -1px;
+  top: -1px;
+  width: 7px;
+  height: 7px;
+  background: var(--accent);
+}
+.launch-field {
+  border: 1px solid var(--launch-line);
+  border-radius: 6px;
+  background: var(--launch-fill);
+  transition: border-color 0.2s;
+}
+.launch-field:focus {
+  border-color: var(--launch-line-2);
+}
+.launch-field-toggle {
+  border-radius: 4px;
 }
 .launch-card[data-shake] {
   animation: launch-shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;

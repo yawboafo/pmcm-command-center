@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { LAUNCH } from "@/config/launch";
 import { gate as makeGate, introForced, introPrefs } from "@/lib/auth/gate";
 import { demoBranchIds } from "@/lib/network/branches";
+import { useApp } from "@/store/app";
 import { sims } from "@/store/sims";
 import { launchAudio } from "./audio";
 import Gate from "./Gate";
@@ -48,6 +49,11 @@ export default function Launch({ children }: { children: ReactNode }) {
   const audio = launchAudio();
   const sim = useMemo(() => (typeof window === "undefined" ? null : sims().get(demoBranchIds()[0])), []);
   const startedScene = useRef(false);
+  const theme = useApp((s) => s.resolvedTheme);
+  // The launch runs before the app shell, so it applies the stored theme to the document itself.
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
 
   useEffect(() => setTier(detectTier()), [setTier]);
   // Keep the store phase in step; the scene reads it every frame.
@@ -118,7 +124,7 @@ export default function Launch({ children }: { children: ReactNode }) {
   if (step === "app") return <>{children}</>;
   const unlocking = useLaunch.getState().phase === "unlock";
   return (
-    <div className="launch-root fixed inset-0 overflow-hidden bg-black text-white" data-theme="dark">
+    <div className="launch-root fixed inset-0 overflow-hidden bg-black text-white">
       {sim && tier !== "none" && <LaunchScene sim={sim} onIntroEnd={endIntro} />}
       {step === "intro" && <IntroOverlay onSkip={endIntro} onGesture={gesture} />}
       {step === "gate" && <Gate onUnlocked={unlocked} onDeny={() => audio.deny()} unlocking={unlocking} />}

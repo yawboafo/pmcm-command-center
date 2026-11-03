@@ -11,6 +11,7 @@ import type { BranchSimulation } from "@/lib/sim/engine";
 import { zoneStatus, type Level } from "@/lib/sim/zones";
 import { LAUNCH } from "@/config/launch";
 import { PLATFORM } from "@/config/platform";
+import { useApp } from "@/store/app";
 import { useLaunch, type QualityTier } from "./launchStore";
 
 /**
@@ -23,8 +24,14 @@ import { useLaunch, type QualityTier } from "./launchStore";
  */
 const DUR = LAUNCH.intro.durationSec;
 const LEVEL_HEX: Record<Level, string> = { ok: "#3ccf8e", watch: "#f5b02e", act: "#f0483e" };
-const STEEL = "#a9bfdc";
 const ACCENT = "#ee1d25";
+type Theme = "dark" | "light";
+/** One neutral for all line work per theme; the accent only on flows and line tips (light); status only on rings. */
+const PALETTE = {
+  dark: { bg: "#03050a", line: "#a9bfdc", tip: "#ffffff", wall: 0.78, box: 0.5, grid: 0.085, spark: [1.8, 1.8, 1.8] as const, blending: THREE.AdditiveBlending, bloom: true, vignette: 0.7, grain: 0.16 },
+  light: { bg: "#eef1f5", line: "#2a3b57", tip: ACCENT, wall: 0.85, box: 0.62, grid: 0.14, spark: [0.16, 0.22, 0.34] as const, blending: THREE.NormalBlending, bloom: false, vignette: 0.32, grain: 0.1 },
+} as const;
+const useTheme = () => useApp((s) => s.resolvedTheme) as Theme;
 /** When each beat lands (seconds into the intro). */
 const BEAT = { walls: [0.8, 4.8] as const, grid: [1.4, 4] as const, kitchen: 4.8, counter: 6.8, dining: 8.6, bay: 10.2, flows: 6.6, chips: 10.6, hero: DUR - 1.4 };
 const ZONE_BEAT: Record<string, number> = { kitchen: BEAT.kitchen, "front-counter": BEAT.counter, dining: BEAT.dining, "pickup-bay": BEAT.bay };
@@ -56,6 +63,7 @@ uniform vec3 uColor;
 uniform float uOpacity;
 uniform float uBoost;
 uniform float uDim;
+uniform vec3 uTip;
 varying float vOrder;
 varying float vDepth;
 void main() {
@@ -64,7 +72,7 @@ void main() {
   float fog = exp(-vDepth * 0.014);
   float a = (drawn * uOpacity + head * 0.9) * fog * uDim;
   if (a < 0.004) discard;
-  vec3 c = mix(uColor, vec3(1.0), head * 0.85) * (1.0 + head * 1.6 + uBoost);
+  vec3 c = mix(uColor, uTip, head * 0.85) * (1.0 + head * 1.6 + uBoost);
   gl_FragColor = vec4(c, a);
 }`;
 
@@ -76,7 +84,8 @@ interface Wire {
   from: number;
   to: number;
 }
-function wire(segs: Seg[], color: string, opacity: number, from: number, to: number): Wire {
+function wire(segs: Seg[], theme: Theme, opacity: number, from: number, to: number): Wire {
+  const pal = PALETTE[theme];
   const pos = new Float32Array(segs.length * 6);
   const ord = new Float32Array(segs.length * 2);
   segs.forEach(([a, b, oa, ob], i) => {
@@ -91,10 +100,10 @@ function wire(segs: Seg[], color: string, opacity: number, from: number, to: num
   const mat = new THREE.ShaderMaterial({
     vertexShader: lineVert,
     fragmentShader: lineFrag,
-    uniforms: { uProgress: { value: 0 }, uColor: { value: new THREE.Color(color) }, uOpacity: { value: opacity }, uBoost: { value: 0 }, uDim: { value: 1 } },
+    uniforms: { uProgress: { value: 0 }, uColor: { value: new THREE.Color(pal.line) }, uOpacity: { value: opacity }, uBoost: { value: 0 }, uDim: { value: 1 }, uTip: { value: new THREE.Color(pal.tip) } },
     transparent: true,
     depthWrite: false,
-    blending: THREE.AdditiveBlending,
+    blending: pal.blending,
     toneMapped: false,
   });
   return { geom, mat, from, to };
@@ -122,10 +131,11 @@ interface Drawing {
   wires: Wire[];
   grid: { geom: THREE.BufferGeometry; mat: THREE.LineBasicMaterial };
 }
-const drawingCache = new WeakMap<FloorPlan, Drawing>();
-function drawingFor(plan: FloorPlan, sim: BranchSimulation): Drawing {
-  let d = drawingCache.get(plan);
+const drawingCache = new WeakMap<FloorPlan, Partial<Record<Theme, Drawing>>>();
+function drawingFor(plan: FloorPlan, sim: BranchSimulation, theme: Theme): Drawing {
+  let d = drawingCache.get(plan)?.[theme];
   if (d) return d;
+  const pal = PALETTE[theme];
   const { width: W, length: L } = plan.dimensions;
   const cx = W / 2;
   const cz = L / 2;
@@ -157,12 +167,12 @@ function drawingFor(plan: FloorPlan, sim: BranchSimulation): Drawing {
     const when = ZONE_BEAT[zoneOfRoom.get(it.roomId) ?? ""] ?? BEAT.kitchen + 1.1;
     byBeat.set(when, [...(byBeat.get(when) ?? []), it]);
   }
-  const wires: Wire[] = [wire(walls, STEEL, 0.78, BEAT.walls[0], BEAT.walls[1])];
+  const wires: Wire[] = [wire(walls, theme, pal.wall, BEAT.walls[0], BEAT.walls[1])];
   for (const [when, list] of byBeat) {
     list.sort((a, b) => a.position[0] + a.position[2] - (b.position[0] + b.position[2]));
     const segs: Seg[] = [];
     list.forEach((it, i) => segs.push(...box(it.position, it.size, it.rotation, (i / list.length) * 0.82, 0.18)));
-    wires.push(wire(segs, STEEL, 0.5, when - 0.2, when + 1.8));
+    wires.push(wire(segs, theme, pal.box, when - 0.2, when + 1.8));
   }
 
   // A faint 1 m grid under everything: the scientific ground plane.
@@ -172,16 +182,17 @@ function drawingFor(plan: FloorPlan, sim: BranchSimulation): Drawing {
   for (let z = -pad; z <= L + pad; z++) g.push(-pad, 0, z, W + pad, 0, z);
   const gridGeom = new THREE.BufferGeometry();
   gridGeom.setAttribute("position", new THREE.Float32BufferAttribute(g, 3));
-  const gridMat = new THREE.LineBasicMaterial({ color: STEEL, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
+  const gridMat = new THREE.LineBasicMaterial({ color: pal.line, transparent: true, opacity: 0, depthWrite: false, blending: pal.blending, toneMapped: false });
 
   d = { wires, grid: { geom: gridGeom, mat: gridMat } };
-  drawingCache.set(plan, d);
+  drawingCache.set(plan, { ...drawingCache.get(plan), [theme]: d });
   return d;
 }
 
 function Drawing({ plan, sim }: { plan: FloorPlan; sim: BranchSimulation }) {
+  const theme = useTheme();
   useFrame((state) => {
-    const d = drawingFor(plan, sim);
+    const d = drawingFor(plan, sim, theme);
     const st = useLaunch.getState();
     const t = introT();
     const boost = st.phase === "unlock" ? 0.5 : st.phase === "gate" ? 0.08 + Math.sin(state.clock.elapsedTime * 0.8) * 0.06 : 0;
@@ -192,15 +203,15 @@ function Drawing({ plan, sim }: { plan: FloorPlan; sim: BranchSimulation }) {
       w.mat.uniforms.uBoost.value = boost;
       w.mat.uniforms.uDim.value = dim;
     }
-    d.grid.mat.opacity = 0.085 * smooth(BEAT.grid[0], BEAT.grid[1], t) * dim;
+    d.grid.mat.opacity = PALETTE[theme].grid * smooth(BEAT.grid[0], BEAT.grid[1], t) * dim;
   });
-  const d = drawingFor(plan, sim);
+  const d = drawingFor(plan, sim, theme);
   return (
     <group>
       {d.wires.map((w, i) => (
-        <lineSegments key={i} geometry={w.geom} material={w.mat} frustumCulled={false} />
+        <lineSegments key={`${theme}-${i}`} geometry={w.geom} material={w.mat} frustumCulled={false} />
       ))}
-      <lineSegments geometry={d.grid.geom} material={d.grid.mat} frustumCulled={false} />
+      <lineSegments key={`${theme}-grid`} geometry={d.grid.geom} material={d.grid.mat} frustumCulled={false} />
     </group>
   );
 }
@@ -208,22 +219,24 @@ function Drawing({ plan, sim }: { plan: FloorPlan; sim: BranchSimulation }) {
 /* ───────────── the point of light ───────────── */
 
 const sparkGeom = new THREE.PlaneGeometry(1, 1);
-let sparkMat: THREE.MeshBasicMaterial | null = null;
-const sparkMaterial = () => (sparkMat ??= new THREE.MeshBasicMaterial({ color: new THREE.Color(1.8, 1.8, 1.8), transparent: true, opacity: 0, map: discSprite(), depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+const sparkMats: Partial<Record<Theme, THREE.MeshBasicMaterial>> = {};
+const sparkMaterial = (theme: Theme) =>
+  (sparkMats[theme] ??= new THREE.MeshBasicMaterial({ color: new THREE.Color(...PALETTE[theme].spark), transparent: true, opacity: 0, map: discSprite(), depthWrite: false, blending: PALETTE[theme].blending, toneMapped: false }));
 function Spark({ plan }: { plan: FloorPlan }) {
   const ref = useRef<THREE.Mesh>(null);
+  const theme = useTheme();
   useFrame((state) => {
     const t = introT();
     const m = ref.current;
     if (!m) return;
     // Appears out of black, swells as the lines start, then dims to a pilot light once the plan is drawn.
     const k = smooth(0.15, 0.9, t) * (1 - smooth(3, 4.6, t));
-    sparkMaterial().opacity = k;
+    sparkMaterial(theme).opacity = k;
     const s = 0.25 + k * 0.75 + Math.sin(state.clock.elapsedTime * 3) * 0.04;
     m.scale.setScalar(s);
     m.quaternion.copy(state.camera.quaternion);
   });
-  return <mesh ref={ref} geometry={sparkGeom} material={sparkMaterial()} position={[plan.dimensions.width / 2, 0.4, plan.dimensions.length / 2]} renderOrder={6} />;
+  return <mesh key={theme} ref={ref} geometry={sparkGeom} material={sparkMaterial(theme)} position={[plan.dimensions.width / 2, 0.4, plan.dimensions.length / 2]} renderOrder={6} />;
 }
 
 /* ───────────── camera path ───────────── */
@@ -338,9 +351,11 @@ interface Holo {
   targets: Float32Array;
   starts: Float32Array;
   delays: Float32Array;
-  mat: THREE.PointsMaterial;
+  mats: Partial<Record<Theme, THREE.PointsMaterial>>;
 }
 const holoCache = new WeakMap<FloorPlan, Holo>();
+const holoMat = (h: Holo, theme: Theme) =>
+  (h.mats[theme] ??= new THREE.PointsMaterial({ color: PALETTE[theme].line, size: 0.09, sizeAttenuation: true, map: discSprite(), alphaTest: 0.02, transparent: true, opacity: 0, depthWrite: false, blending: PALETTE[theme].blending, toneMapped: false }));
 let disc: THREE.Texture | null = null;
 /** A soft radial disc for sprites (a bare PointsMaterial draws hard squares). */
 function discSprite(): THREE.Texture | null {
@@ -397,7 +412,7 @@ function holoFor(plan: FloorPlan): Holo {
     targets,
     starts,
     delays,
-    mat: new THREE.PointsMaterial({ color: STEEL, size: 0.09, sizeAttenuation: true, map: discSprite(), alphaTest: 0.02, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }),
+    mats: {},
   };
   holoCache.set(plan, h);
   return h;
@@ -405,6 +420,7 @@ function holoFor(plan: FloorPlan): Holo {
 
 function Hologram({ plan }: { plan: FloorPlan }) {
   const ref = useRef<THREE.Points>(null);
+  const theme = useTheme();
   useFrame(() => {
     const h = holoFor(plan);
     const t = introT();
@@ -419,11 +435,12 @@ function Hologram({ plan }: { plan: FloorPlan }) {
       arr[i * 3 + 2] = h.starts[i * 3 + 2] + (h.targets[i * 3 + 2] - h.starts[i * 3 + 2]) * e;
     }
     h.geom.attributes.position.needsUpdate = true;
-    h.mat.opacity = 0.7 * smooth(0.3, 1.6, t) * (1 - smooth(5, 7.4, t));
-    p.visible = h.mat.opacity > 0.01;
+    const m = holoMat(h, theme);
+    m.opacity = 0.7 * smooth(0.3, 1.6, t) * (1 - smooth(5, 7.4, t));
+    p.visible = m.opacity > 0.01;
   });
   const h = holoFor(plan);
-  return <points ref={ref} geometry={h.geom} material={h.mat} frustumCulled={false} />;
+  return <points key={theme} ref={ref} geometry={h.geom} material={holoMat(h, theme)} frustumCulled={false} />;
 }
 
 /* ───────────── zone status rings ───────────── */
@@ -497,9 +514,11 @@ const DOTS_PER_PATH = 7;
 interface Flows {
   curves: Array<{ curve: THREE.CatmullRomCurve3; speed: number }>;
   geom: THREE.BufferGeometry;
-  mat: THREE.PointsMaterial;
+  mats: Partial<Record<Theme, THREE.PointsMaterial>>;
 }
 const flowCache = new WeakMap<FloorPlan, Flows>();
+const flowMat = (f: Flows, theme: Theme) =>
+  (f.mats[theme] ??= new THREE.PointsMaterial({ color: ACCENT, size: 0.26, sizeAttenuation: true, map: discSprite(), alphaTest: 0.02, transparent: true, opacity: 0, depthWrite: false, blending: PALETTE[theme].blending, toneMapped: false }));
 function flowsFor(plan: FloorPlan): Flows {
   let f = flowCache.get(plan);
   if (f) return f;
@@ -515,12 +534,13 @@ function flowsFor(plan: FloorPlan): Flows {
     }));
   const geom = new THREE.BufferGeometry();
   geom.setAttribute("position", new THREE.BufferAttribute(new Float32Array(curves.length * DOTS_PER_PATH * 3), 3));
-  f = { curves, geom, mat: new THREE.PointsMaterial({ color: ACCENT, size: 0.26, sizeAttenuation: true, map: discSprite(), alphaTest: 0.02, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }) };
+  f = { curves, geom, mats: {} };
   flowCache.set(plan, f);
   return f;
 }
 function FlowDots({ plan }: { plan: FloorPlan }) {
   const ref = useRef<THREE.Points>(null);
+  const theme = useTheme();
   const tmp = useMemo(() => new THREE.Vector3(), []);
   useFrame((state) => {
     const f = flowsFor(plan);
@@ -540,11 +560,12 @@ function FlowDots({ plan }: { plan: FloorPlan }) {
       }
     });
     f.geom.attributes.position.needsUpdate = true;
-    f.mat.opacity = 0.9 * smooth(BEAT.flows, BEAT.flows + 1.2, t);
-    p.visible = f.mat.opacity > 0.01;
+    const m = flowMat(f, theme);
+    m.opacity = 0.9 * smooth(BEAT.flows, BEAT.flows + 1.2, t);
+    p.visible = m.opacity > 0.01;
   });
   const f = flowsFor(plan);
-  return <points ref={ref} geometry={f.geom} material={f.mat} frustumCulled={false} />;
+  return <points key={theme} ref={ref} geometry={f.geom} material={flowMat(f, theme)} frustumCulled={false} />;
 }
 
 /* ───────────── instrumentation rising out of the drawing ───────────── */
@@ -589,13 +610,14 @@ function Instrumentation({ sim }: { sim: BranchSimulation }) {
 
 function Post({ tier }: { tier: QualityTier }) {
   const phase = useLaunch((s) => s.phase);
+  const pal = PALETTE[useTheme()];
   if (tier === "lite" || tier === "none") return null;
   return (
     <EffectComposer multisampling={0}>
-      <Bloom mipmapBlur luminanceThreshold={0.55} luminanceSmoothing={0.35} intensity={phase === "unlock" ? 1.3 : 0.8} radius={0.8} />
+      {pal.bloom ? <Bloom mipmapBlur luminanceThreshold={0.55} luminanceSmoothing={0.35} intensity={phase === "unlock" ? 1.3 : 0.8} radius={0.8} /> : <></>}
       {tier === "cinema" ? <ChromaticAberration offset={new THREE.Vector2(0.00022, 0.00016)} radialModulation modulationOffset={0.4} /> : <></>}
-      <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.16} />
-      <Vignette eskil={false} offset={0.2} darkness={0.7} />
+      <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={pal.grain} />
+      <Vignette eskil={false} offset={0.2} darkness={pal.vignette} />
       <SMAA />
     </EffectComposer>
   );
@@ -619,14 +641,15 @@ function IntroClock({ onEnd }: { onEnd: () => void }) {
 
 function Background() {
   const get = useThree((s) => s.get);
+  const bg = PALETTE[useTheme()].bg;
   useEffect(() => {
     const scene = get().scene;
-    scene.background = new THREE.Color("#03050a");
-    scene.fog = new THREE.FogExp2("#03050a", 0.012);
+    scene.background = new THREE.Color(bg);
+    scene.fog = new THREE.FogExp2(bg, 0.012);
     return () => {
       scene.fog = null;
     };
-  }, [get]);
+  }, [get, bg]);
   return null;
 }
 

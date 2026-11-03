@@ -1,6 +1,5 @@
 "use client";
 
-import { Volume2, VolumeX } from "lucide-react";
 import { useEffect, useState } from "react";
 import { LAUNCH } from "@/config/launch";
 import { PLATFORM, TENANT } from "@/config/platform";
@@ -10,9 +9,11 @@ import { useLaunch } from "./launchStore";
 const DUR = LAUNCH.intro.durationSec;
 
 /**
- * What sits on top of the intro world: the fade from black, the title that resolves with a
- * light sweep, the Skip control with its progress ring (after 3 s), the sound toggle and
- * "Don't show again". Pointer or key input anywhere unlocks audio (platform gesture rule).
+ * What sits on top of the intro drawing: the veil that lifts, the title lockup (index line,
+ * wordmark tracking in with a light sweep, hairline rule, tagline, viewfinder corners), chapter
+ * captions, and three instrument-style controls: sound, "don't show again", skip with its
+ * progress hairline. Pointer or key input anywhere unlocks audio (platform gesture rule).
+ * Everything is HTML so it stays crisp on any screen and follows the app theme.
  */
 export default function IntroOverlay({ onSkip, onGesture }: { onSkip: () => void; onGesture: () => void }) {
   const t = useLaunch((s) => s.t);
@@ -23,6 +24,7 @@ export default function IntroOverlay({ onSkip, onGesture }: { onSkip: () => void
   const canSkip = t >= LAUNCH.intro.skipAfterSec;
   const progress = Math.min(1, t / (DUR + 1));
   const title = Math.max(0, Math.min(1, (t - (DUR - 1.6)) / 1.2));
+  const ease = 1 - Math.pow(1 - title, 3);
   const fadeIn = Math.min(1, t / 1.4);
 
   useEffect(() => {
@@ -34,28 +36,33 @@ export default function IntroOverlay({ onSkip, onGesture }: { onSkip: () => void
     return () => window.removeEventListener("keydown", onKey);
   }, [onSkip, onGesture]);
 
-  const R = 17;
-  const C = 2 * Math.PI * R;
+  const live = audioUnlocked && !muted;
   return (
     <div className="launch-overlay absolute inset-0 z-20 select-none" onPointerDown={onGesture} role="presentation">
-      {/* fade from black */}
-      <div className="pointer-events-none absolute inset-0 bg-black transition-none" style={{ opacity: 1 - fadeIn }} />
-      {/* letterbox */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[7vh] bg-black" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[7vh] bg-black" />
+      <div className="launch-veil pointer-events-none absolute inset-0" style={{ opacity: 1 - fadeIn }} />
+      <div className="launch-bar pointer-events-none absolute inset-x-0 top-0 h-[7vh]" />
+      <div className="launch-bar pointer-events-none absolute inset-x-0 bottom-0 h-[7vh]" />
 
-      {/* title */}
-      <div className="pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-col items-center px-6 text-center" style={{ opacity: title }}>
-        <div className="launch-sweep font-display text-[clamp(30px,6.2vw,76px)] font-extrabold tracking-[-0.03em] text-white" style={{ transform: `translateY(${(1 - title) * 18}px)` }}>
-          {PLATFORM.name}
+      {/* title lockup */}
+      <div className="pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-center px-6" style={{ opacity: title }}>
+        <div className="launch-title relative px-8 py-6 text-center sm:px-12 sm:py-8">
+          <span className="launch-corner launch-corner-tl" style={{ transform: `translate(${(1 - ease) * -18}px, ${(1 - ease) * -14}px)` }} />
+          <span className="launch-corner launch-corner-tr" style={{ transform: `translate(${(1 - ease) * 18}px, ${(1 - ease) * -14}px)` }} />
+          <span className="launch-corner launch-corner-bl" style={{ transform: `translate(${(1 - ease) * -18}px, ${(1 - ease) * 14}px)` }} />
+          <span className="launch-corner launch-corner-br" style={{ transform: `translate(${(1 - ease) * 18}px, ${(1 - ease) * 14}px)` }} />
+          <div className="launch-eyebrow" style={{ opacity: Math.min(1, title * 1.6) }}>
+            {TENANT.name} · East Legon
+          </div>
+          <div className="launch-wordmark launch-sweep" style={{ letterSpacing: `${0.46 - ease * 0.28}em`, transform: `translateY(${(1 - ease) * 10}px)` }}>
+            {PLATFORM.name}
+          </div>
+          <div className="launch-rule mx-auto" style={{ transform: `scaleX(${ease})` }} />
+          <div className="launch-tagline" style={{ opacity: Math.max(0, title - 0.4) / 0.6 }}>
+            {PLATFORM.tagline}
+          </div>
         </div>
-        <div className="mt-3 font-mono text-[clamp(10px,1.3vw,13px)] uppercase tracking-[0.42em] text-white/60" style={{ opacity: Math.max(0, title - 0.35) / 0.65 }}>
-          {PLATFORM.tagline} · {TENANT.name}
-        </div>
-        <div className="mt-6 h-px w-24 bg-gradient-to-r from-transparent via-white/60 to-transparent" style={{ transform: `scaleX(${title})` }} />
       </div>
 
-      {/* chapter captions, lower-third, instrument style */}
       <Caption t={t} />
 
       {/* sound */}
@@ -66,16 +73,22 @@ export default function IntroOverlay({ onSkip, onGesture }: { onSkip: () => void
           onGesture();
           setMuted(!muted);
         }}
-        className="absolute bottom-[9vh] left-5 z-30 flex h-11 items-center gap-2 rounded-full border border-white/15 bg-black/40 px-3 font-mono text-[11px] uppercase tracking-[0.18em] text-white/70 backdrop-blur hover:text-white"
+        className="launch-ctl absolute bottom-[9vh] left-5 z-30"
         aria-label={muted ? "Sound off" : "Sound on"}
+        aria-pressed={!muted}
       >
-        {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+        <span className={`launch-meter ${live ? "is-live" : ""}`} aria-hidden>
+          <i />
+          <i />
+          <i />
+          <i />
+        </span>
         <span className="hidden sm:inline">{muted ? "Sound off" : audioUnlocked ? "Sound on" : "Tap for sound"}</span>
       </button>
 
-      {/* skip + don't show again */}
-      <div className={`absolute bottom-[9vh] right-5 z-30 flex items-center gap-3 transition-opacity duration-500 ${canSkip ? "opacity-100" : "pointer-events-none opacity-0"}`}>
-        <label className="hidden cursor-pointer items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-white/55 hover:text-white sm:flex">
+      {/* don't show again + skip */}
+      <div className={`absolute bottom-[9vh] right-5 z-30 flex items-center gap-2 transition-opacity duration-500 ${canSkip ? "opacity-100" : "pointer-events-none opacity-0"}`}>
+        <label className="launch-ctl launch-ctl-quiet hidden cursor-pointer sm:inline-flex">
           <input
             type="checkbox"
             checked={dontShow}
@@ -83,17 +96,17 @@ export default function IntroOverlay({ onSkip, onGesture }: { onSkip: () => void
               setDontShow(e.target.checked);
               introPrefs.setSkipOnLaunch(e.target.checked);
             }}
-            className="h-4 w-4 accent-[var(--accent)]"
+            className="sr-only"
           />
+          <span className="launch-check" data-on={dontShow ? "1" : undefined} aria-hidden />
           Don&apos;t show again
         </label>
-        <button type="button" onClick={(e) => (e.stopPropagation(), onSkip())} className="flex h-11 items-center gap-2 rounded-full border border-white/20 bg-black/40 pl-3 pr-2 font-mono text-[11px] uppercase tracking-[0.2em] text-white/85 backdrop-blur hover:border-white/40 hover:text-white" aria-label="Skip intro">
+        <button type="button" onClick={(e) => (e.stopPropagation(), onSkip())} className="launch-ctl launch-ctl-skip" aria-label="Skip intro">
           Skip
-          <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden>
-            <circle cx="20" cy="20" r={R} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2" />
-            <circle cx="20" cy="20" r={R} fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - progress)} transform="rotate(-90 20 20)" />
-            <path d="M15 13.5 L24 20 L15 26.5 Z" fill="rgba(255,255,255,0.9)" />
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden>
+            <path d="M2.5 3l4 4-4 4M7.5 3l4 4-4 4" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
+          <span className="launch-ctl-progress" style={{ transform: `scaleX(${progress})` }} aria-hidden />
         </button>
       </div>
     </div>
@@ -109,12 +122,14 @@ const CAPTIONS: Array<[number, number, string]> = [
 ];
 
 function Caption({ t }: { t: number }) {
-  const c = CAPTIONS.find(([a, b]) => t >= a && t < b);
-  if (!c) return null;
+  const i = CAPTIONS.findIndex(([a, b]) => t >= a && t < b);
+  if (i < 0) return null;
+  const c = CAPTIONS[i];
   const k = Math.min(1, (t - c[0]) / 0.5) * Math.min(1, (c[1] - t) / 0.4);
   return (
-    <div className="pointer-events-none absolute left-5 top-[9.5vh] flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.24em] text-white/70 sm:left-8" style={{ opacity: k, transform: `translateY(${(1 - k) * 6}px)` }}>
-      <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+    <div className="launch-caption pointer-events-none absolute left-5 top-[9.5vh] sm:left-8" style={{ opacity: k, transform: `translateY(${(1 - k) * 6}px)` }}>
+      <span className="launch-caption-index">0{i + 1}</span>
+      <span className="launch-caption-rule" />
       {c[2]}
     </div>
   );
