@@ -283,14 +283,12 @@ function DragTint({ plan, drag }: { plan: FloorPlan; drag: { id: string; valid: 
 function InteriorLights({ plan, daylight }: { plan: FloorPlan; daylight: number }) {
   const H = plan.dimensions.height;
   const boost = 1 + (1 - daylight) * 1.1;
-  const lights = useMemo(
-    () =>
-      [...plan.rooms]
-        .sort((a, b) => b.w * b.d - a.w * a.d)
-        .slice(0, 6)
-        .map((r) => ({ id: r.id, pos: [r.x + r.w / 2, H - 0.45, r.z + r.d / 2] as [number, number, number], intensity: Math.min(14, 3 + r.w * r.d * 0.12), dist: Math.max(r.w, r.d) * 1.3 + 2, warm: ["dining", "customer", "counter"].includes(r.type) })),
-    [plan.rooms, H],
-  );
+  // The six largest rooms plus the back-of-house rooms the owner cameras look at (dispatch, cold, staff).
+  const lights = useMemo(() => {
+    const big = [...plan.rooms].sort((a, b) => b.w * b.d - a.w * a.d).slice(0, 6);
+    const watched = plan.rooms.filter((r) => ["dispatch", "cold", "staff", "corridor", "waste"].includes(r.type) && r.w * r.d >= 4);
+    return [...new Set([...big, ...watched])].map((r) => ({ id: r.id, pos: [r.x + r.w / 2, H - 0.45, r.z + r.d / 2] as [number, number, number], intensity: Math.min(14, 3 + r.w * r.d * 0.12), dist: Math.max(r.w, r.d) * 1.3 + 2, warm: ["dining", "customer", "counter"].includes(r.type) }));
+  }, [plan.rooms, H]);
   return (
     <>
       {lights.map((l) => (

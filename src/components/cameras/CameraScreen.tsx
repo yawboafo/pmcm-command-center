@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { BranchSimulation } from "@/lib/sim/engine";
 import { ZONE_BY_ID, type ZoneId, type ZoneStatus } from "@/lib/sim/zones";
 import AlertCards from "./AlertCards";
@@ -26,14 +26,19 @@ export default function CameraScreen({ sim, zoneId, status, onPrev, onNext, wall
   const layers = useFeed((s) => s.layers);
   const toggleLayer = useFeed((s) => s.toggleLayer);
   const [tab, setTab] = useState<Tab>("Status");
+  const column = useRef<HTMLDivElement>(null);
+  // A new camera always starts at the top of its column (focus from the grid card must not scroll it).
+  useEffect(() => {
+    column.current?.scrollTo({ top: 0 });
+  }, [zoneId]);
   const tileId = `zone:${zoneId}`;
   const zone = ZONE_BY_ID.get(zoneId)!;
   const alertsLabel = status.alerts.length ? `Alerts · ${status.alerts.length}` : "Alerts";
   const show = (t: Tab) => (tab === t ? "" : "hidden md:block");
 
   return (
-    <div className={`flex h-full flex-col gap-3 md:grid ${wall ? "md:grid-cols-[minmax(0,1fr)_460px]" : "md:grid-cols-[minmax(0,1fr)_360px]"} md:gap-4`}>
-      <div className="scroll-thin flex min-h-0 flex-col gap-3 md:overflow-y-auto md:pr-1">
+    <div className={`flex flex-col gap-3 md:grid md:h-full ${wall ? "md:grid-cols-[minmax(0,1fr)_460px]" : "md:grid-cols-[minmax(0,1fr)_360px]"} md:gap-4`}>
+      <div ref={column} className="scroll-thin flex min-h-0 flex-col gap-3 md:overflow-y-auto md:pr-1">
         <div className="hidden truncate px-1 text-[13px] text-[var(--cam-muted)] md:block">{zone.question}</div>
         <div className="relative">
           <FeedTile id={tileId} zoneId={zoneId} sim={sim} level={status.level} label={zone.name}>
@@ -47,17 +52,17 @@ export default function CameraScreen({ sim, zoneId, status, onPrev, onNext, wall
           </button>
         </div>
         {/* Phone tabs */}
-        <div className="flex gap-1 overflow-x-auto md:hidden">
+        <div className="flex shrink-0 gap-1 overflow-x-auto md:hidden">
           {TABS.map((t) => (
             <button key={t} type="button" onClick={() => setTab(t)} className={`h-11 shrink-0 rounded-lg px-3 text-[13px] ${tab === t ? "bg-white/12 text-white" : "text-white/55"}`}>
               {t === "Alerts" ? alertsLabel : t}
             </button>
           ))}
         </div>
-        <div className={`scroll-thin flex items-center gap-1.5 overflow-x-auto px-1 py-0.5 ${show("Timeline")}`}>
-          <span className="mr-1 shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--cam-faint)]">Show</span>
+        <div className={`scroll-thin flex shrink-0 items-center gap-1.5 overflow-x-auto px-1 py-0.5 ${show("Timeline")}`}>
+          <span className="mr-1 shrink-0 font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--cam-faint)]">Show</span>
           {LAYERS.map((l) => (
-            <button key={l} type="button" aria-pressed={layers[l]} onClick={() => toggleLayer(l)} className={`h-9 shrink-0 rounded-full border px-3 text-[12px] ${layers[l] ? "border-white/40 bg-white/10 text-white" : "border-white/10 text-white/50 hover:text-white"}`}>
+            <button key={l} type="button" aria-pressed={layers[l]} onClick={() => toggleLayer(l)} className={`h-9 shrink-0 rounded-full border px-3 text-[13px] ${layers[l] ? "border-white/40 bg-white/10 text-white" : "border-white/10 text-white/50 hover:text-white"}`}>
               {LAYER_LABEL[l]}
             </button>
           ))}
@@ -79,7 +84,7 @@ export default function CameraScreen({ sim, zoneId, status, onPrev, onNext, wall
       <div className="scroll-thin hidden min-h-0 flex-col gap-4 overflow-y-auto pr-1 md:flex">
         <ZoneMetrics sim={sim} zoneId={zoneId} status={status} wall={wall} />
         <div>
-          <div className="mb-2 px-1 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--cam-faint)]">{alertsLabel}</div>
+          <div className="mb-2 px-1 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--cam-faint)]">{alertsLabel}</div>
           <AlertCards sim={sim} zoneId={zoneId} tileId={tileId} />
         </div>
       </div>

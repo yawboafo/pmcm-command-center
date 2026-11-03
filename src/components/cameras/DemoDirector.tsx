@@ -113,7 +113,7 @@ export default function DemoDirector({ sim, onClose }: { sim: BranchSimulation; 
     <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-30 p-3 md:left-1/2 md:w-[min(720px,calc(100%-2rem))] md:-translate-x-1/2">
       <div className="cam-panel cam-slide-in flex items-start gap-4 p-4">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--cam-muted)]">
+          <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--cam-muted)]">
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" /> Demo story · lunch rush
             <span className="ml-auto flex gap-1">
               {STEPS.map((_, k) => (
@@ -121,7 +121,7 @@ export default function DemoDirector({ sim, onClose }: { sim: BranchSimulation; 
               ))}
             </span>
           </div>
-          <div className="mt-1 text-[15px] font-semibold">{done ? "Story complete" : step.title}</div>
+          <div className="mt-1 text-[16px] font-semibold">{done ? "Story complete" : step.title}</div>
           <p className="mt-1 text-[13px] leading-relaxed text-white/80">{done ? "Grid → camera → alert → replay → action: three taps end to end. Everything you saw came from one simulation state." : step.body}</p>
           {!done && <div className="mt-2 h-0.5 w-full rounded bg-white/10"><div className="h-0.5 rounded bg-white/50 transition-[width] duration-500" style={{ width: `${Math.min(100, (elapsed / step.maxSec) * 100)}%` }} /></div>}
         </div>

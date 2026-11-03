@@ -46,6 +46,7 @@ function uiContext() {
 }
 
 export default function Assistant() {
+  const cctvOpen = useApp((st) => st.cctvOpen);
   const section = useApp((s) => s.section);
   const [open, setOpen] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
@@ -124,6 +125,8 @@ export default function Assistant() {
   }
 
   if (!open) {
+    // The camera centre has its own action buttons in the same corner; the assistant stays one ⌘K away.
+    if (cctvOpen) return null;
     return (
       <button type="button" onClick={() => setOpen(true)} className="fixed bottom-14 right-4 z-40 flex items-center gap-2 rounded-full bg-brand-red px-4 py-2.5 text-sm font-semibold text-white shadow-xl shadow-red-950/50 hover:bg-red-600" aria-label="Open AI assistant">
         <Sparkles size={16} /> Ask Ops AI

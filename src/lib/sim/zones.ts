@@ -78,14 +78,23 @@ export function roomDoor(plan: FloorPlan, room: Room): Door | undefined {
 
 const clampIn = (r: Room, x: number, z: number, m = 0.3): [number, number] => [Math.min(r.x + r.w - m, Math.max(r.x + m, x)), Math.min(r.z + r.d - m, Math.max(r.z + m, z))];
 
-function cornerFurthest(r: Room, from: [number, number]): [number, number] {
+/**
+ * Mounting corner: the one furthest from the subject that is not blocked by tall equipment
+ * within arm's reach (a camera jammed against a pass unit sees a steel wall).
+ */
+function cornerFurthest(r: Room, from: [number, number], plan?: FloorPlan): [number, number] {
+  // Half a metre off each wall, so the lens never grazes the wall it is mounted on.
+  const m = Math.min(0.55, r.w / 4, r.d / 4);
   const corners: Array<[number, number]> = [
-    [r.x + 0.3, r.z + 0.3],
-    [r.x + r.w - 0.3, r.z + 0.3],
-    [r.x + 0.3, r.z + r.d - 0.3],
-    [r.x + r.w - 0.3, r.z + r.d - 0.3],
+    [r.x + m, r.z + m],
+    [r.x + r.w - m, r.z + m],
+    [r.x + m, r.z + r.d - m],
+    [r.x + r.w - m, r.z + r.d - m],
   ];
-  return corners.reduce((best, c) => (Math.hypot(c[0] - from[0], c[1] - from[1]) > Math.hypot(best[0] - from[0], best[1] - from[1]) ? c : best));
+  const tall = plan ? plan.equipment.filter((e) => e.roomId === r.id && e.position[1] + e.size[1] > 1.6 && e.type !== "hood") : [];
+  const clear = (c: [number, number]) => tall.every((e) => Math.hypot(e.position[0] - c[0], e.position[2] - c[1]) > Math.max(e.size[0], e.size[2]) / 2 + 1.2);
+  const ranked = [...corners].sort((a, b) => Math.hypot(b[0] - from[0], b[1] - from[1]) - Math.hypot(a[0] - from[0], a[1] - from[1]));
+  return ranked.find(clear) ?? ranked[0];
 }
 
 export function zoneRooms(plan: FloorPlan, zoneId: ZoneId): Room[] {
@@ -137,7 +146,7 @@ export function deriveZoneCameras(plan: FloorPlan): ZoneCamera[] {
   if (fryers.length) {
     const [cx, cz] = centre(fryers);
     const room = plan.rooms.find((r) => r.id === fryers[0].roomId)!;
-    const [px, pz] = cornerFurthest(room, [cx, cz]);
+    const [px, pz] = cornerFurthest(room, [cx, cz], plan);
     push("kitchen", [px, camH, pz], [cx, 0.9, cz], 68, zoneRooms(plan, "kitchen").map((r) => r.id));
   }
 
@@ -159,7 +168,7 @@ export function deriveZoneCameras(plan: FloorPlan): ZoneCamera[] {
   if (dining.length) {
     const r = dining.reduce((a, b) => (a.w * a.d > b.w * b.d ? a : b));
     const ent = plan.doors.find((d) => d.kind === "entrance") ?? plan.doors[0];
-    const [px, pz] = cornerFurthest(r, [ent.x, ent.z]);
+    const [px, pz] = cornerFurthest(r, [ent.x, ent.z], plan);
     push("dining", [px, camH, pz], [r.x + r.w / 2, 0.7, r.z + r.d / 2], 82, dining.map((x) => x.id));
   }
 
@@ -170,7 +179,7 @@ export function deriveZoneCameras(plan: FloorPlan): ZoneCamera[] {
     const rack = eq("dispatch-rack")[0];
     const wait = plan.anchors.riderWait;
     const rider = plan.doors.find((d) => d.kind === "delivery");
-    const [px, pz] = cornerFurthest(r, rider ? [rider.x, rider.z] : wait);
+    const [px, pz] = cornerFurthest(r, rider ? [rider.x, rider.z] : wait, plan);
     const tx = rack ? (rack.position[0] + wait[0]) / 2 : wait[0];
     const tz = rack ? (rack.position[2] + wait[1]) / 2 : wait[1];
     push("pickup-bay", [px, camH, pz], [tx, 0.9, tz], 76, dispatch.map((x) => x.id), { doorId: rider?.id });
@@ -190,7 +199,8 @@ export function deriveZoneCameras(plan: FloorPlan): ZoneCamera[] {
   const entrance = plan.doors.find((d) => d.kind === "entrance" && d.z < EPS) ?? plan.doors.find((d) => d.kind === "entrance");
   if (entrance) {
     const out0 = plan.anchors.outside;
-    push("entrance", [entrance.x + 1.1, Math.min(H + 0.3, 3.4), -0.35], [out0[0] - 0.5, 0.4, out0[1] - 2.5], 74, [], { doorId: entrance.id });
+    // Below the fascia and clear of the canopy, so the sign never blocks the picture.
+    push("entrance", [entrance.x + 1.3, Math.min(H - 0.6, 2.9), -1.1], [out0[0] - 0.5, 0.3, out0[1] - 3], 74, [], { doorId: entrance.id });
   }
 
   // Back door: inside, a few metres from the staff / delivery / emergency exit, facing it.

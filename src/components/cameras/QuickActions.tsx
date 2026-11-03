@@ -45,7 +45,7 @@ export default function QuickActions({ sim, zoneId, tileId }: { sim: BranchSimul
         {actions.map((a) => (
           <button key={a.label} type="button" onClick={a.run} className="flex h-14 flex-col items-center justify-center gap-1 rounded-lg text-white/80 hover:bg-white/10 hover:text-white">
             <a.icon size={18} />
-            <span className="text-[10.5px]">{a.label}</span>
+            <span className="text-[11px]">{a.label}</span>
           </button>
         ))}
       </div>
@@ -66,7 +66,7 @@ export default function QuickActions({ sim, zoneId, tileId }: { sim: BranchSimul
             placeholder="What did you see?"
             className="h-11 min-w-0 flex-1 rounded-lg border border-white/15 bg-black/40 px-3 text-[13px] text-white placeholder:text-white/30"
           />
-          <button type="button" disabled={!note.trim()} onClick={() => (add({ ...base(), kind: "note", note: note.trim() }), setNote(null), notify("Note saved", "success"))} className="h-11 rounded-lg bg-[var(--accent)] px-3 text-[12px] font-semibold text-white disabled:opacity-40">
+          <button type="button" disabled={!note.trim()} onClick={() => (add({ ...base(), kind: "note", note: note.trim() }), setNote(null), notify("Note saved", "success"))} className="h-11 rounded-lg bg-[var(--accent)] px-3 text-[13px] font-semibold text-white disabled:opacity-40">
             Save
           </button>
         </div>

@@ -78,9 +78,9 @@ export default function Timeline({ sim, zoneId }: { sim: BranchSimulation; zoneI
   return (
     <div className="cam-panel select-none p-3">
       {replay.clip && (
-        <div className="cam-slide-in mb-2 flex items-center justify-between gap-2 rounded-md border border-white/15 bg-white/[0.04] px-2 py-1 text-[12px]">
+        <div className="cam-slide-in mb-2 flex items-center justify-between gap-2 rounded-md border border-white/15 bg-white/[0.04] px-2 py-1 text-[13px]">
           <span className="truncate">
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--cam-muted)]">Replaying</span> {replay.clip.label}
+            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--cam-muted)]">Replaying</span> {replay.clip.label}
           </span>
           <button type="button" onClick={goLive} className="shrink-0 font-mono text-[11px] text-white/70 hover:text-white">
             Stop
@@ -91,7 +91,7 @@ export default function Timeline({ sim, zoneId }: { sim: BranchSimulation; zoneI
         <button type="button" onClick={() => (replay.t === null ? setReplay({ t: Math.max(start, now - 20), playing: true, speed: 1 }) : setReplay({ playing: !replay.playing }))} aria-label={replay.playing ? "Pause" : "Play"} className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/15 bg-white/[0.04] text-white hover:bg-white/10">
           {replay.playing ? <Pause size={18} /> : <Play size={18} />}
         </button>
-        <div className="flex h-11 items-center rounded-lg border border-white/15 bg-white/[0.04] p-1 font-mono text-[12px]">
+        <div className="flex h-11 items-center rounded-lg border border-white/15 bg-white/[0.04] p-1 font-mono text-[13px]">
           {([1, 4, 16] as const).map((s) => (
             <button key={s} type="button" onClick={() => setReplay({ speed: s, ...(replay.t === null ? { t: Math.max(start, now - 60), playing: true } : {}) })} className={`h-9 rounded-md px-2.5 ${replay.speed === s && replay.t !== null ? "bg-white/15 text-white" : "text-white/55 hover:text-white"}`}>
               {s}×
@@ -99,7 +99,7 @@ export default function Timeline({ sim, zoneId }: { sim: BranchSimulation; zoneI
           ))}
         </div>
         <div className="ml-auto flex items-center gap-2">
-          {replay.t !== null && <span className="font-mono text-[12px] tabular-nums text-white/85">−{mmss(Math.max(0, now - replay.t))}</span>}
+          {replay.t !== null && <span className="font-mono text-[13px] tabular-nums text-white/85">−{mmss(Math.max(0, now - replay.t))}</span>}
           <button type="button" onClick={goLive} disabled={replay.t === null} className={`flex h-11 items-center gap-1.5 rounded-lg border px-3 font-mono text-[11px] tracking-[0.14em] ${replay.t === null ? "border-[var(--accent)]/60 text-white" : "border-white/15 text-white/70 hover:bg-white/10 hover:text-white"}`}>
             <Radio size={13} className={replay.t === null ? "text-[var(--accent)]" : ""} /> LIVE
           </button>
@@ -134,7 +134,7 @@ export default function Timeline({ sim, zoneId }: { sim: BranchSimulation; zoneI
         <div className="pointer-events-none absolute top-[12px] h-6 w-[2px] bg-white" style={{ left: pos(cur) }} />
         <input type="range" min={start} max={now} step={1} value={cur} onChange={(e) => setReplay({ t: Math.min(Number(e.target.value), now - 1), playing: false, clip: null })} aria-label="Timeline scrubber" className="cam-range absolute inset-x-0 top-0 opacity-0" />
         {/* axis */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-between font-mono text-[10px] text-[var(--cam-faint)]">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-between font-mono text-[11px] text-[var(--cam-faint)]">
           <span>{hhmm(sim.clockStart + start * 1000)}</span>
           <span>−30 min</span>
           <span>{hhmm(sim.clockStart + now * 1000)}</span>
@@ -144,7 +144,7 @@ export default function Timeline({ sim, zoneId }: { sim: BranchSimulation; zoneI
           <div className="pointer-events-none absolute bottom-full z-20 mb-1 w-[200px] -translate-x-1/2 rounded-lg border border-white/15 bg-[#0b0f16] p-2 shadow-xl" style={{ left: pos(hover) }}>
             {/* eslint-disable-next-line @next/next/no-img-element -- data-URL thumbnail captured from the canvas */}
             {hoverIncident?.image && <img src={hoverIncident.image} alt="" className="mb-1.5 aspect-video w-full rounded object-cover" />}
-            <div className="flex items-baseline justify-between font-mono text-[10px] text-white/60">
+            <div className="flex items-baseline justify-between font-mono text-[11px] text-white/60">
               <span>{hhmm(sim.clockStart + hoverFrame.t * 1000)}</span>
               <span>{hoverFrame.people.length} people in store</span>
             </div>
@@ -158,7 +158,7 @@ export default function Timeline({ sim, zoneId }: { sim: BranchSimulation; zoneI
                   </div>
                 ))}
             </div>
-            <div className="mt-1 text-[10px] text-white/40">{zone.name} · press to view</div>
+            <div className="mt-1 text-[11px] text-white/40">{zone.name} · press to view</div>
           </div>
         )}
       </div>

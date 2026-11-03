@@ -68,11 +68,14 @@ export default function FeedOverlay({ tileId, zoneId, sim, compact = false }: { 
         let label = a.kind === "staff" ? (a.role ? ROLE_LABEL[a.role] : "Staff") : a.kind === "rider" ? "Rider" : "Customer";
         let sub: string | undefined;
         let tone: Box["tone"];
+        let quiet = false;
         if (live) {
           if (a.kind === "customer" && sim.queue.includes(a.id)) {
             const w = t - a.arrivedAt;
-            sub = `waited ${mmss(w)}`;
             tone = w > 300 ? "act" : w > 180 ? "watch" : undefined;
+            // In a queue only the front customer (and anyone waiting too long) carries a label: the queue marker has the count.
+            quiet = sim.queue[0] !== a.id && w <= 180;
+            sub = quiet ? undefined : `waited ${mmss(w)}`;
           } else if (a.kind === "rider" && (a.phase === "waiting" || a.phase === "to-wait")) {
             const w = t - a.arrivedAt;
             sub = `waiting ${mmss(w)}`;
@@ -89,7 +92,8 @@ export default function FeedOverlay({ tileId, zoneId, sim, compact = false }: { 
             } else if (a.phase === "working") sub = "at post";
           }
         } else if (a.kind === "staff") label = a.name.split(" ")[0] + " · " + label;
-        boxes.push({ id: a.id, kind: a.kind, label, sub, x: a.pos[0], z: a.pos[1], height: 1.72, tone });
+        else quiet = true; // replay: boxes only for customers and riders, the numbers panel carries the counts
+        boxes.push({ id: a.id, kind: a.kind, label: quiet ? "" : label, sub, x: a.pos[0], z: a.pos[1], height: 1.72, tone });
       }
     }
     const tags: Tag[] = [];
@@ -118,7 +122,7 @@ export default function FeedOverlay({ tileId, zoneId, sim, compact = false }: { 
     }
     if (layers.doors) {
       const doorIds = new Set<string>();
-      if (cam?.doorId) doorIds.add(cam.doorId);
+      if (cam?.doorId && !compact) doorIds.add(cam.doorId);
       for (const id of doorIds) {
         const d = plan.doors.find((x) => x.id === id);
         if (!d) continue;
@@ -136,9 +140,17 @@ export default function FeedOverlay({ tileId, zoneId, sim, compact = false }: { 
         if (s.kind === "fridge-temp" || s.kind === "freezer-temp" || s.kind === "hot-holding-temp") {
           if (st.value === null) tags.push({ id: `tp:${s.id}`, x: e.position[0], y: e.position[1] + e.size[1] + 0.25, z: e.position[2], text: "Sensor offline", tone: "watch", kind: "temp" });
           else tags.push({ id: `tp:${s.id}`, x: e.position[0], y: e.position[1] + e.size[1] + 0.25, z: e.position[2], text: `${st.value.toFixed(1)} °C`, tone: st.status === "critical" ? "act" : st.status === "warning" ? "watch" : "ok", kind: "temp" });
-        } else if (s.kind === "oil-quality" && st.value !== null) {
-          tags.push({ id: `oil:${s.id}`, x: e.position[0], y: e.position[1] + e.size[1] + 0.25, z: e.position[2], text: `Oil ${Math.round(st.value)}%`, tone: st.status === "critical" ? "act" : st.status === "warning" ? "watch" : "ok", kind: "temp" });
         }
+      }
+      // Fryers sit in a row: one badge for the worst oil, anchored to that fryer, instead of four overlapping ones.
+      const oils = plan.sensors
+        .filter((s) => s.kind === "oil-quality" && rooms.some((r) => r.id === s.roomId) && s.equipmentId)
+        .map((s) => ({ s, st: sim.sensors.get(s.id), e: sim.eqById.get(s.equipmentId!) }))
+        .filter((x): x is { s: (typeof plan.sensors)[number]; st: NonNullable<typeof x.st>; e: NonNullable<typeof x.e> } => !!x.st && !!x.e && x.st.value !== null)
+        .sort((a, b) => (a.st.value ?? 0) - (b.st.value ?? 0));
+      if (oils.length) {
+        const { s, st, e } = oils[0];
+        tags.push({ id: `oil:${s.id}`, x: e.position[0], y: e.position[1] + e.size[1] + 0.25, z: e.position[2], text: `Oil ${Math.round(st.value!)}%${oils.length > 1 ? " · lowest" : ""}`, tone: st.status === "critical" ? "act" : st.status === "warning" ? "watch" : "ok", kind: "temp" });
       }
     }
     let blobs: Blob[] = [];
@@ -209,7 +221,7 @@ export default function FeedOverlay({ tileId, zoneId, sim, compact = false }: { 
   }, [tileId, model.queue]);
 
   const toneColor = (tone?: string) => (tone === "act" ? "var(--act)" : tone === "watch" ? "var(--watch)" : tone === "ok" ? "var(--ok)" : "rgba(255,255,255,0.75)");
-  const fs = compact ? "text-[9px]" : "text-[10.5px]";
+  const fs = compact ? "text-[9px]" : "text-[11px]";
   return (
     <div ref={root} className="absolute inset-0 overflow-hidden">
       {model.blobs.map((b) => (
@@ -229,7 +241,7 @@ export default function FeedOverlay({ tileId, zoneId, sim, compact = false }: { 
       )}
       {model.boxes.map((b) => (
         <div key={b.id} data-p={`${b.x},0,${b.z},${b.height}`} data-kind="box" className="absolute left-0 top-0 rounded-[3px] border" style={{ display: "none", borderColor: b.tone ? toneColor(b.tone) : b.kind === "staff" ? "rgba(238,29,37,0.8)" : "rgba(255,255,255,0.55)", borderWidth: 1 }}>
-          {!compact || b.sub ? (
+          {b.label && (!compact || b.sub) ? (
             <div className={`absolute -top-[18px] left-0 whitespace-nowrap rounded-[4px] bg-black/70 px-1 py-px font-mono ${fs} leading-[14px] text-white/90`}>
               {b.label}
               {b.sub && (

@@ -20,7 +20,8 @@ export default function ZoneMetrics({ sim, zoneId, status, wall = false }: { sim
   const primary = status.metrics.find((m) => m.primary)!;
   const rest = status.metrics.filter((m) => !m.primary);
   const valueOf = (m: Metric) => (frame ? formatMetric(m.key, frame.zones[zoneId]?.metrics[m.key] ?? null) : m.display);
-  const toneOf = (m: Metric) => (frame ? "ok" : m.tone);
+  // Replayed values keep the status recorded at that second (for the hero); supporting readouts stay neutral.
+  const toneOf = (m: Metric) => (frame ? (m.primary ? frame.zones[zoneId]?.level ?? "ok" : "ok") : m.tone);
   const bucket = Math.floor(sim.t / 30);
   const trends = useMemo(() => {
     const end = replayT ?? sim.t;
@@ -52,7 +53,7 @@ export default function ZoneMetrics({ sim, zoneId, status, wall = false }: { sim
           </div>
         ))}
       </div>
-      <p className="px-1 text-[10.5px] leading-snug text-[var(--cam-faint)]">Measured by the branch simulation every second · trend = last 60 min · comparisons are modelled from the demand pattern until a history store is connected.</p>
+      <p className="px-1 text-[11px] leading-snug text-[var(--cam-faint)]">Measured by the branch simulation every second · trend = last 60 min · comparisons are modelled from the demand pattern until a history store is connected.</p>
     </div>
   );
 }
@@ -60,7 +61,7 @@ export default function ZoneMetrics({ sim, zoneId, status, wall = false }: { sim
 function Trend({ values, lowerIsBetter }: { values: number[]; lowerIsBetter?: boolean }) {
   const w = 120;
   const h = 22;
-  if (values.length < 3) return <div className="mt-2 h-[22px] text-[10px] text-[var(--cam-faint)]">Trend after a few minutes</div>;
+  if (values.length < 3) return <div className="mt-2 h-[22px] text-[11px] text-[var(--cam-faint)]">Trend after a few minutes</div>;
   const min = Math.min(...values);
   const max = Math.max(...values);
   const span = max - min || 1;
@@ -76,7 +77,7 @@ function Trend({ values, lowerIsBetter }: { values: number[]; lowerIsBetter?: bo
         <path d={d} fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth={1.25} strokeLinejoin="round" />
         <circle cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r={2} fill="#fff" />
       </svg>
-      <span className="font-mono text-[10px] text-[var(--cam-faint)]" title="Change over the last hour">
+      <span className="font-mono text-[11px] text-[var(--cam-faint)]" title="Change over the last hour">
         {delta === 0 ? "steady" : `${delta > 0 ? "↑" : "↓"} ${Math.abs(Math.round(delta * 10) / 10)}${worse ? "" : ""}`}
       </span>
     </div>
@@ -88,7 +89,7 @@ function Baseline({ sim, zoneId, metric, atMs, compact = false }: { sim: BranchS
   if (b.yesterday === null && b.lastWeek === null) return null;
   const weekday = new Date(atMs - 7 * 86_400_000).toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" });
   return (
-    <div className={`mt-2 flex flex-wrap gap-x-3 gap-y-0.5 font-mono ${compact ? "text-[10px]" : "text-[11px]"} text-[var(--cam-muted)]`}>
+    <div className={`mt-2 flex flex-wrap gap-x-3 gap-y-0.5 font-mono ${compact ? "text-[11px]" : "text-[11px]"} text-[var(--cam-muted)]`}>
       <span title="Same time yesterday (modelled)">Yesterday {formatMetric(metric.key, b.yesterday)}</span>
       <span title={`Same time last ${weekday} (modelled)`}>Last {weekday} {formatMetric(metric.key, b.lastWeek)}</span>
     </div>

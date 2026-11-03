@@ -103,7 +103,7 @@ export default function CameraCenter({ sim, ready }: { sim: BranchSimulation; re
           </button>
         )}
         <div className="min-w-0">
-          <div className="truncate text-[14px] font-semibold leading-tight">{view === "zone" && zoneId ? ZONE_BY_ID.get(zoneId)!.name : "Cameras"}</div>
+          <div className="truncate text-[16px] font-semibold leading-tight">{view === "zone" && zoneId ? ZONE_BY_ID.get(zoneId)!.name : "Cameras"}</div>
           <div className="truncate text-[11px] text-[var(--cam-muted)]">
             {branch?.name}
             {view === "grid" && (counts.act ? ` · ${counts.act} need action` : counts.watch ? ` · ${counts.watch} to watch` : " · all zones running right")}
@@ -112,7 +112,7 @@ export default function CameraCenter({ sim, ready }: { sim: BranchSimulation; re
         <div className="ml-auto flex items-center gap-1.5">
           <label className="hidden items-center gap-1.5 text-[11px] text-[var(--cam-muted)] lg:flex">
             Branch
-            <select value={sim.branchId} onChange={(e) => enterBranch(e.target.value)} className="h-9 rounded-lg border border-white/15 bg-black/40 px-2 text-[12px] text-white" aria-label="Branch">
+            <select value={sim.branchId} onChange={(e) => enterBranch(e.target.value)} className="h-9 rounded-lg border border-white/15 bg-black/40 px-2 text-[13px] text-white" aria-label="Branch">
               {options.map((id) => (
                 <option key={id} value={id}>
                   {BRANCH_BY_ID.get(id)?.name ?? id}
@@ -121,15 +121,15 @@ export default function CameraCenter({ sim, ready }: { sim: BranchSimulation; re
             </select>
           </label>
           {view === "grid" && worst && statuses[worst]!.level !== "ok" && (
-            <button type="button" onClick={() => openZone(worst)} className="hidden h-9 items-center gap-2 rounded-lg border px-3 text-[12px] text-white sm:flex" style={{ borderColor: `var(--${statuses[worst]!.level})` }}>
+            <button type="button" onClick={() => openZone(worst)} className="hidden h-9 items-center gap-2 rounded-lg border px-3 text-[13px] text-white sm:flex" style={{ borderColor: `var(--${statuses[worst]!.level})` }}>
               <span className="h-2 w-2 rounded-full" style={{ background: `var(--${statuses[worst]!.level})` }} /> Open {ZONE_BY_ID.get(worst)!.name.toLowerCase()}
             </button>
           )}
-          <button type="button" aria-pressed={autoRotate} onClick={() => setAutoRotate(!autoRotate)} title="Auto-rotate through every camera" className={`flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] ${autoRotate ? "border-white/40 bg-white/10 text-white" : "border-white/10 text-white/60 hover:text-white"}`}>
+          <button type="button" aria-pressed={autoRotate} onClick={() => setAutoRotate(!autoRotate)} title="Auto-rotate through every camera" className={`flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-[13px] ${autoRotate ? "border-white/40 bg-white/10 text-white" : "border-white/10 text-white/60 hover:text-white"}`}>
             {autoRotate ? <Pause size={13} /> : <Play size={13} />} <span className="hidden md:inline">Rotate</span>
           </button>
           <div className="relative">
-            <button type="button" onClick={() => setScenarios(!scenarios)} className="flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-2.5 text-[12px] text-white/70 hover:text-white" title="Rehearse an incident">
+            <button type="button" onClick={() => setScenarios(!scenarios)} className="flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-2.5 text-[13px] text-white/70 hover:text-white" title="Rehearse an incident">
               <Sparkles size={13} className="text-[var(--accent)]" /> <span className="hidden md:inline">Rehearse</span>
             </button>
             {scenarios && (
@@ -141,8 +141,8 @@ export default function CameraCenter({ sim, ready }: { sim: BranchSimulation; re
                 <div className="my-1 h-px bg-white/10" />
                 {SCENARIOS.map((s) => (
                   <button key={s.id} type="button" onClick={() => (setScenarios(false), notify(runScenario(sim, s.id) ?? s.name, "warning"), openZone(s.zoneId))} className="w-full rounded-lg px-3 py-1.5 text-left hover:bg-white/10">
-                    <div className="text-[12.5px]">{s.name}</div>
-                    <div className="truncate text-[10.5px] text-[var(--cam-muted)]">{s.description}</div>
+                    <div className="text-[13px]">{s.name}</div>
+                    <div className="truncate text-[11px] text-[var(--cam-muted)]">{s.description}</div>
                   </button>
                 ))}
               </div>
@@ -157,7 +157,7 @@ export default function CameraCenter({ sim, ready }: { sim: BranchSimulation; re
             <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--cam-muted)]">
               <span className="h-2 w-2 animate-pulse rounded-full bg-white/60" /> Connecting to {branch?.name ?? "branch"} feeds
             </div>
-            <div className="text-[12px] text-[var(--cam-faint)]">Floor plan, simulation clock and cameras are loading.</div>
+            <div className="text-[13px] text-[var(--cam-faint)]">Floor plan, simulation clock and cameras are loading.</div>
           </div>
         ) : !zones.length ? (
           <div className="flex h-full items-center justify-center text-[13px] text-[var(--cam-muted)]">This floor plan has no camera zones yet.</div>
