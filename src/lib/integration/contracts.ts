@@ -227,4 +227,59 @@ export const SimulatorReport = z.object({
 export type SimulatorReport = z.infer<typeof SimulatorReport>;
 
 /** Everything the hub streams, in one sequence so a single Last-Event-ID resumes both. */
-export type HubEvent = NormalisedReading | NormalisedOrderEvent;
+export type HubEvent = NormalisedReading | NormalisedOrderEvent | NormalisedLocation;
+
+/**
+ * Staff wearable (UWB or BLE badge) read by an RTLS (real-time location system). The RTLS
+ * reports positions in its own site frame; the binding carries the calibration transform to
+ * the branch floor plan: plan = rotate(rotationDeg) · (site · scale) + offset.
+ * Staff location is personal data: every binding records the notice the wearer acknowledged.
+ */
+export const WearableBinding = z.object({
+  tagId: z.string().regex(/^[a-zA-Z0-9._:-]{3,64}$/),
+  branchId: z.string(),
+  /** Simulation staff id ("staff-3") — production: the HR / rota employee id. */
+  staffId: z.string(),
+  technology: z.enum(["uwb", "ble"]),
+  transform: z.object({ offsetX: z.number().default(0), offsetZ: z.number().default(0), rotationDeg: z.number().default(0), scale: z.number().positive().default(1) }).default({ offsetX: 0, offsetZ: 0, rotationDeg: 0, scale: 1 }),
+  expectedIntervalSec: z.number().min(0.2).max(60).default(1),
+  model: z.string().optional(),
+  consent: z.object({ noticeVersion: z.string(), acknowledgedAt: z.string() }),
+  virtual: z.boolean().default(false),
+});
+export type WearableBinding = z.infer<typeof WearableBinding>;
+
+/** One position fix from the RTLS for a tag (site frame, metres). */
+export const LocationMessage = z.object({
+  v: z.literal(1),
+  messageId: z.string().min(8).max(64),
+  tagId: z.string().regex(/^[a-zA-Z0-9._:-]{3,64}$/),
+  ts: z.iso.datetime({ offset: true }),
+  x: z.number().finite(),
+  /** Site-frame horizontal axis that maps to the floor plan's z. */
+  y: z.number().finite(),
+  /** Estimated horizontal error (1σ), metres. */
+  accuracy_m: z.number().min(0).max(50),
+  battery_pct: z.number().min(0).max(100).optional(),
+  /** Anchors that contributed to this fix. */
+  anchors: z.number().int().min(0).max(64).optional(),
+});
+export type LocationMessage = z.infer<typeof LocationMessage>;
+
+/** A calibrated staff position, as streamed to the command center. */
+export interface NormalisedLocation {
+  type: "location";
+  seq: number;
+  branchId: string;
+  staffId: string;
+  tagId: string;
+  /** Floor-plan coordinates (metres). */
+  x: number;
+  z: number;
+  accuracy: number;
+  technology: "uwb" | "ble";
+  ts: number;
+  receivedAt: number;
+  origin: Origin;
+  source: "live" | "virtual";
+}

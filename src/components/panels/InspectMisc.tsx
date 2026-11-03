@@ -1,9 +1,11 @@
 "use client";
 
 import { Video } from "lucide-react";
-import { Btn, LiveBadge, SectionTitle, SimBadge, SimDeviceBadge } from "@/components/ui/primitives";
+import { Btn, LiveBadge, SectionTitle, SimBadge, SimDeviceBadge, SourceBadge } from "@/components/ui/primitives";
 import { EQUIPMENT_CATALOG } from "@/lib/floorplan/catalog";
 import { mins, pct } from "@/lib/format";
+import { can } from "@/lib/auth/rbac";
+import { badgeLine, cameraFor, locationProvenance } from "@/lib/ops/staffLocation";
 import { roleLabel, type BranchSimulation } from "@/lib/sim/engine";
 import { useApp } from "@/store/app";
 import { Card, HistoryChart, KV, Pill, ProgressBar, focusEquipment, focusPoint, limitFor, statusTone } from "./common";
@@ -25,12 +27,16 @@ const RIDER_PHASE: Record<string, string> = { "to-wait": "Arriving", waiting: "W
 
 export function InspectAgent({ sim, id }: { sim: BranchSimulation; id: string }) {
   const select = useApp((s) => s.select);
+  const user = useApp((s) => s.user);
+  const followAgent = useApp((s) => s.followAgent);
+  const goToCamera = useApp((s) => s.useVirtualCamera);
   const a = sim.agents.find((x) => x.id === id);
   if (!a) return <p className="p-4 text-xs text-white/50">This person has left the restaurant.</p>;
   const m = sim.staff.get(a.id);
   const task = a.taskId ? sim.tasks.get(a.taskId) : undefined;
   const order = a.orderId ? sim.orders.get(a.orderId) : undefined;
   const room = sim.roomAtPoint(a.pos);
+  const cam = cameraFor(sim.plan, a.pos[0], a.pos[1], room?.id);
   return (
     <div className="space-y-3 p-4">
       <div>
@@ -43,14 +49,33 @@ export function InspectAgent({ sim, id }: { sim: BranchSimulation; id: string })
       </div>
       <Card>
         <KV k="Currently in" v={room?.name ?? "Outside"} />
+        <KV
+          k="Position from"
+          v={
+            <span className="inline-flex items-center gap-1.5">
+              {a.tracked ? `Badge ${a.tracked.tagId}` : "Simulation"} <SourceBadge source={locationProvenance(a)} />
+            </span>
+          }
+        />
+        {a.tracked && <KV k="Badge" v={badgeLine(a, sim.t)} mono tone={a.tracked.lost ? "yellow" : undefined} />}
         {m && <KV k="Shift" v={m.shift} />}
-        {m && <KV k="Status" v={a.phase === "working" ? "Working" : a.phase === "to-task" ? "Moving to task" : "Available"} />}
+        {m && <KV k="Status" v={a.tracked ? `${a.phase === "working" ? "Working" : "Available"} · work simulated, position from badge` : a.phase === "working" ? "Working" : a.phase === "to-task" ? "Moving to task" : "Available"} />}
         {m && <KV k="Tasks completed" v={m.tasksDone} mono />}
         {m && <KV k="Utilisation" v={pct(m.busySeconds / Math.max(1, sim.t))} mono />}
         {a.kind === "customer" && <KV k="Activity" v={CUSTOMER_PHASE[a.phase] ?? a.phase} />}
         {a.kind === "customer" && <KV k="Time in store" v={mins(sim.t - a.arrivedAt)} mono />}
         {a.kind === "rider" && <KV k="Activity" v={RIDER_PHASE[a.phase] ?? a.phase} />}
       </Card>
+      <div className="flex flex-wrap gap-1.5">
+        <Btn size="xs" disabled={a.kind === "staff" && !can(user, "view:staff-location")} title={a.kind === "staff" && !can(user, "view:staff-location") ? "Named staff locations need a manager or supervisor role" : "Fly to this person and follow"} onClick={() => followAgent(a.id)}>
+          Locate &amp; follow
+        </Btn>
+        {cam && (
+          <Btn size="xs" onClick={() => goToCamera(cam.id)} title="Virtual camera with the best view of this person">
+            View on {cam.code}
+          </Btn>
+        )}
+      </div>
       {task && (
         <div>
           <SectionTitle>Current task</SectionTitle>

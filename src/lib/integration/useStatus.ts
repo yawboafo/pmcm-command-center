@@ -24,6 +24,7 @@ export interface IntegrationStatus {
     late: number;
     rejected: number;
   }>;
+  wearables?: Array<{ tagId: string; branchId: string; staffId: string; technology: "uwb" | "ble"; virtual: boolean; lastSeenAt: number | null; online: boolean; battery: number | null; model: string | null }>;
   posTerminals: Array<{ sourceId: string; branchId: string; name: string; model: string | null; virtual: boolean; keyConfigured: boolean; lastSeenAt: number | null; orders: number; duplicates: number }>;
   cameras: Array<{ cameraId: string; branchId: string; name: string; virtualCameraId: string | null; protocol: string; enabled: boolean; virtual: boolean; authorisedBy: string }>;
   /** Latest heartbeat from scripts/hardware-sim.ts, if it has run since the server started. */

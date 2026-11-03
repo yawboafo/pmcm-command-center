@@ -13,6 +13,8 @@ interface TwinState {
   camListOpen: boolean;
   stationsOpen: boolean;
   setStationsOpen: (b: boolean) => void;
+  staffOpen: boolean;
+  setStaffOpen: (b: boolean) => void;
   setPage: (p: number) => void;
   adjust: (id: string, d: Partial<{ fov: number; yaw: number; pitch: number }>) => void;
   resetAdjust: (id: string) => void;
@@ -30,7 +32,9 @@ export const useTwin = create<TwinState>((set, get) => ({
   demoOpen: false,
   camListOpen: typeof window !== "undefined" && window.innerWidth > 1700,
   stationsOpen: false,
-  setStationsOpen: (stationsOpen) => set({ stationsOpen }),
+  setStationsOpen: (stationsOpen) => set({ stationsOpen, staffOpen: false }),
+  staffOpen: false,
+  setStaffOpen: (staffOpen) => set({ staffOpen, stationsOpen: false }),
   setPage: (cctvPage) => set({ cctvPage }),
   adjust: (id, d) => {
     const cur = get().camAdjust[id] ?? { fov: 0, yaw: 0, pitch: 0 };

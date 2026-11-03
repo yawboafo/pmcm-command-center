@@ -1,6 +1,6 @@
 import registry from "@/data/devices.json";
 import virtualRegistry from "@/data/devices.virtual.json";
-import { DeviceBinding, PhysicalCamera, PosTerminal, type HubEvent, type NormalisedReading, type Origin, type PosOrderEvent, type SimulatorReport, type TelemetryMessage } from "./contracts";
+import { DeviceBinding, PhysicalCamera, PosTerminal, WearableBinding, type HubEvent, type LocationMessage, type NormalisedReading, type Origin, type PosOrderEvent, type SimulatorReport, type TelemetryMessage } from "./contracts";
 import { SIMULATOR_ID, virtualKey } from "./fleet";
 
 /**
@@ -49,6 +49,60 @@ const DEDUPE_TTL_MS = 24 * 3600 * 1000;
 export const BINDINGS: DeviceBinding[] = [...registry.devices, ...virtualRegistry.devices].map((d) => DeviceBinding.parse(d));
 export const CAMERAS: PhysicalCamera[] = [...(registry.cameras as unknown[]), ...virtualRegistry.cameras].map((c) => PhysicalCamera.parse(c));
 export const POS_TERMINALS: PosTerminal[] = [...(((registry as { posTerminals?: unknown[] }).posTerminals ?? []) as unknown[]), ...virtualRegistry.posTerminals].map((t) => PosTerminal.parse(t));
+
+export const WEARABLES: WearableBinding[] = [...(((registry as { wearables?: unknown[] }).wearables ?? []) as unknown[]), ...(((virtualRegistry as { wearables?: unknown[] }).wearables ?? []) as unknown[])].map((w) => WearableBinding.parse(w));
+
+export function wearableFor(tagId: string) {
+  return WEARABLES.find((w) => w.tagId === tagId);
+}
+
+/** Tag secret: virtual tags derive theirs from VIRTUAL_FLEET_SECRET; physical tags (or their RTLS gateway) use DEVICE_KEYS. */
+export function tagSecret(tagId: string): string | null {
+  const w = wearableFor(tagId);
+  if (!w) return null;
+  if (w.virtual) return virtualKey(tagId);
+  try {
+    const keys = JSON.parse(process.env.DEVICE_KEYS ?? "{}") as Record<string, string>;
+    return typeof keys[tagId] === "string" && keys[tagId].length >= 16 ? keys[tagId] : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Site frame → floor plan, using the binding's calibration. */
+export function toPlan(w: WearableBinding, x: number, y: number): [number, number] {
+  const { offsetX, offsetZ, rotationDeg, scale } = w.transform;
+  const r = (rotationDeg * Math.PI) / 180;
+  const sx = x * scale;
+  const sy = y * scale;
+  return [Math.round((sx * Math.cos(r) - sy * Math.sin(r) + offsetX) * 1000) / 1000, Math.round((sx * Math.sin(r) + sy * Math.cos(r) + offsetZ) * 1000) / 1000];
+}
+
+export type LocationIngestResult = { status: "accepted"; seq: number } | { status: "duplicate" };
+
+/** Calibrate, de-duplicate, buffer and broadcast one RTLS position fix. */
+export function ingestLocation(msg: LocationMessage, now = Date.now()): LocationIngestResult {
+  const w = wearableFor(msg.tagId)!;
+  const key = `loc:${msg.tagId}:${msg.messageId}`;
+  if (hub.seen.has(key)) return { status: "duplicate" };
+  hub.seen.set(key, now);
+  hub.lastSeen.set(msg.tagId, { at: now, battery: msg.battery_pct });
+  const [x, z] = toPlan(w, msg.x, msg.y);
+  const origin: Origin = w.virtual ? "virtual" : "physical";
+  const e: HubEvent = { type: "location", seq: ++hub.seq, branchId: w.branchId, staffId: w.staffId, tagId: w.tagId, x, z, accuracy: msg.accuracy_m, technology: w.technology, ts: Date.parse(msg.ts), receivedAt: now, origin, source: origin === "virtual" ? "virtual" : "live" };
+  hub.buffer.push(e);
+  if (hub.buffer.length > BUFFER) hub.buffer.splice(0, hub.buffer.length - BUFFER);
+  for (const l of hub.listeners) l(e);
+  return { status: "accepted", seq: e.seq };
+}
+
+/** Badge health for Settings → Integrations (no positions: those only go to authorised consoles). */
+export function wearableStatus(now = Date.now()) {
+  return WEARABLES.map((w) => {
+    const seen = hub.lastSeen.get(w.tagId);
+    return { tagId: w.tagId, branchId: w.branchId, staffId: w.staffId, technology: w.technology, virtual: w.virtual, lastSeenAt: seen?.at ?? null, online: !!seen && now - seen.at < Math.max(10, w.expectedIntervalSec * 5) * 1000, battery: seen?.battery ?? null, model: w.model ?? null };
+  });
+}
 
 export function bindingsFor(deviceId: string) {
   return BINDINGS.filter((b) => b.deviceId === deviceId);

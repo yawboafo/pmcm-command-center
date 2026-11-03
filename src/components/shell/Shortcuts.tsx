@@ -14,6 +14,7 @@ export const SHORTCUTS: Array<[string, string, "anywhere" | "twin"]> = [
   ["1–5", "Dollhouse · Free · Walk · Top · Tour", "twin"],
   ["V", "Live 2D floor plan / back to 3D", "twin"],
   ["S", "Stations & zones", "twin"],
+  ["L", "Staff locator", "twin"],
   ["G", "Virtual camera grid", "twin"],
   ["X", "X-ray walls", "twin"],
   ["P", "Show paths", "twin"],
@@ -51,6 +52,7 @@ export function useShortcuts() {
       if (k === "x") return app.toggle("xray");
       if (k === "p") return app.toggle("showPaths");
       if (k === "s") return useTwin.getState().setStationsOpen(!useTwin.getState().stationsOpen);
+      if (k === "l") return useTwin.getState().setStaffOpen(!useTwin.getState().staffOpen);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

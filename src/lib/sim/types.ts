@@ -122,6 +122,21 @@ export type AgentKind = "staff" | "customer" | "rider";
 export type Anim = "idle" | "walk" | "work" | "carry" | "sit" | "clean" | "wait";
 
 export interface Agent {
+  /** Set while a worn badge (RTLS) supplies this person's position instead of the simulation. */
+  tracked?: {
+    tagId: string;
+    source: "live" | "virtual";
+    technology: "uwb" | "ble";
+    /** Calibrated floor-plan position of the latest fix. */
+    target: [number, number];
+    accuracy: number;
+    /** Sim time (s) of the latest fix. */
+    seenAt: number;
+    battery?: number;
+    lost: boolean;
+    /** Where the simulated work for this person is happening (kitchen progress is still simulated without a KDS). */
+    shadow: [number, number];
+  };
   id: string;
   kind: AgentKind;
   name: string;

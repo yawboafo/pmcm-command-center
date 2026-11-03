@@ -38,7 +38,7 @@ const DAY = 86400;
 const STAFF_NAMES = ["Kwame", "Ama", "Kofi", "Akosua", "Yaw", "Efua", "Kojo", "Abena", "Kwesi", "Esi", "Kwabena", "Adwoa", "Fiifi", "Selorm", "Elikem", "Naa", "Nii", "Afia", "Kobby", "Dzifa"];
 const SURNAMES = ["Mensah", "Owusu", "Boateng", "Asante", "Agyeman", "Addo", "Tetteh", "Quaye", "Darko", "Ofori", "Amoah", "Lartey", "Nkansah", "Appiah", "Sarpong"];
 
-const ROLE_SKILLS: Record<StaffRole, WorkstationType[]> = {
+export const ROLE_SKILLS: Record<StaffRole, WorkstationType[]> = {
   cashier: ["order-counter", "pickup"],
   pizza: ["pizza-prep", "oven", "qc"],
   chicken: ["chicken-prep", "fryer", "qc"],
@@ -47,7 +47,7 @@ const ROLE_SKILLS: Record<StaffRole, WorkstationType[]> = {
   supervisor: ["qc", "packaging", "pizza-prep", "chicken-prep", "rice", "pickup", "dispatch"],
 };
 
-const ROLE_LABEL: Record<StaffRole, string> = {
+export const ROLE_LABEL: Record<StaffRole, string> = {
   cashier: "Cashier",
   pizza: "Pizza Cook",
   chicken: "Chicken Cook",
@@ -60,7 +60,7 @@ export function roleLabel(r: StaffRole) {
   return ROLE_LABEL[r];
 }
 
-const ROSTER: Record<string, StaffRole[]> = {
+export const ROSTER: Record<string, StaffRole[]> = {
   A: ["cashier", "pizza", "chicken", "rice", "packer"],
   B: ["cashier", "cashier", "pizza", "pizza", "chicken", "rice", "packer", "supervisor"],
   C: ["cashier", "cashier", "pizza", "pizza", "pizza", "chicken", "chicken", "rice", "rice", "packer", "packer", "supervisor"],
@@ -930,6 +930,54 @@ export class BranchSimulation {
   }
 
   /**
+   * Apply a staff badge position fix (RTLS, already calibrated to the floor plan). From the
+   * first fix the person is *shown* where the badge says; their simulated work continues on a
+   * shadow position. Returns the staff id, or null if that person is not on shift.
+   */
+  ingestStaffLocation(r: { staffId: string; tagId: string; x: number; z: number; accuracy: number; technology: "uwb" | "ble"; source: "live" | "virtual"; battery?: number }): string | null {
+    const a = this.agents.find((x) => x.id === r.staffId && x.kind === "staff" && !x.gone);
+    if (!a) return null;
+    const shadow: [number, number] = a.tracked ? a.tracked.shadow : [a.pos[0], a.pos[1]];
+    if (!a.tracked) {
+      // Show them where the badge says from the first fix; their simulated work carries on.
+      a.pos = [r.x, r.z];
+      this.log("staff", "info", `${a.name} is now located by badge ${r.tagId} (${r.source === "live" ? "live" : "simulated device"})`, { agentId: a.id });
+    }
+    a.tracked = { tagId: r.tagId, source: r.source, technology: r.technology, target: [r.x, r.z], accuracy: r.accuracy, seenAt: this.t, battery: r.battery, lost: false, shadow };
+    return a.id;
+  }
+
+  /** Badge-driven movement: glide to the latest fix; flag the badge lost after 30 s, hand back to the simulation after 10 min. */
+  private updateTrackedStaff(a: Agent, dt: number) {
+    const tr = a.tracked!;
+    const silent = this.t - tr.seenAt;
+    if (silent > 600) {
+      a.pos = tr.shadow;
+      a.tracked = undefined;
+      this.log("staff", "warning", `${a.name}: badge ${tr.tagId} silent for 10 min — position is simulated again`, { agentId: a.id });
+      return;
+    }
+    if (silent > 30 && !tr.lost) {
+      tr.lost = true;
+      this.log("staff", "warning", `${a.name}: badge ${tr.tagId} signal lost — showing last known position`, { agentId: a.id });
+    }
+    if (tr.lost) {
+      a.anim = "idle";
+      return;
+    }
+    const dx = tr.target[0] - a.pos[0];
+    const dz = tr.target[1] - a.pos[1];
+    const d = Math.hypot(dx, dz);
+    if (d > 6) a.pos = [tr.target[0], tr.target[1]]; // teleport-size jumps: snap rather than glide through walls
+    else if (d > 0.04) {
+      const step = Math.min(d, Math.max(1.4, d * 2) * dt);
+      a.pos = [a.pos[0] + (dx / d) * step, a.pos[1] + (dz / d) * step];
+      a.heading = Math.atan2(dx, dz);
+    }
+    a.anim = d > 0.08 ? "walk" : "idle";
+  }
+
+  /**
    * Local avoidance: a walking agent is pushed away from anyone within reach and sidesteps to
    * its right when someone is ahead, so people pass instead of walking through each other.
    * Standing, working and seated agents hold their position; walls are never crossed.
@@ -976,6 +1024,23 @@ export class BranchSimulation {
   }
 
   private updateStaff(a: Agent, dt: number) {
+    if (a.tracked) {
+      // Position comes from the badge; the person's simulated work runs on a shadow position so
+      // the kitchen keeps producing (there is no KDS feed to say what they are really doing).
+      const shown: Vec2 = a.pos;
+      const heading = a.heading;
+      a.pos = a.tracked.shadow;
+      this.updateStaffWork(a, dt);
+      if (!a.tracked) return; // handed back to the simulation during this step
+      a.tracked.shadow = a.pos;
+      a.pos = shown;
+      a.heading = heading;
+      return this.updateTrackedStaff(a, dt);
+    }
+    this.updateStaffWork(a, dt);
+  }
+
+  private updateStaffWork(a: Agent, dt: number) {
     const task = a.taskId ? this.tasks.get(a.taskId) : undefined;
     if (a.taskId && !task) {
       a.taskId = undefined;

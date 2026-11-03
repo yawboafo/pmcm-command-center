@@ -189,6 +189,13 @@ export default function PlanView2D({ sim }: { sim: BranchSimulation }) {
               onClick={() => select({ kind: "agent", id: a.id })}
               className="cursor-pointer"
             >
+              {a.tracked && (
+                <>
+                  {/* Badge-tracked: accuracy disc and a ring coloured by source (LIVE / SIM DEVICE / lost). */}
+                  <circle r={Math.max(0.15, a.tracked.accuracy)} fill={a.tracked.lost ? "#fbbf24" : a.tracked.source === "live" ? "#34d399" : "#e879f9"} opacity={0.15} />
+                  <circle r={0.34} fill="none" stroke={a.tracked.lost ? "#fbbf24" : a.tracked.source === "live" ? "#34d399" : "#e879f9"} strokeWidth={0.06} />
+                </>
+              )}
               <circle r={selId === a.id ? 0.3 : 0.2} fill={AGENT_COLOR[a.kind]} stroke={selId === a.id ? "#7dd3fc" : "#0a0d12"} strokeWidth={0.06} />
               {a.carrying && <circle r={0.08} cx={0.18} cy={-0.18} fill="#fbbf24" />}
             </g>
@@ -212,6 +219,7 @@ export default function PlanView2D({ sim }: { sim: BranchSimulation }) {
               ["#38bdf8", "Equipment active"],
               ["#f87171", "Fault / critical"],
               ["#34d399", "Sensor OK"],
+              ["#e879f9", "Badge (SIM DEVICE)"],
             ] as const
           ).map(([c, l]) => (
             <span key={l} className="flex items-center gap-1">

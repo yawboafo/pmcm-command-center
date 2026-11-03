@@ -88,4 +88,6 @@ export interface VirtualFleetFile {
   devices: VirtualDeviceEntry[];
   posTerminals: VirtualTerminalEntry[];
   cameras: VirtualCameraEntry[];
+  /** Staff badges (see WearableBinding in src/lib/integration/contracts.ts). */
+  wearables?: import("../../src/lib/integration/contracts").WearableBinding[];
 }

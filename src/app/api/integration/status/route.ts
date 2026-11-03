@@ -1,6 +1,6 @@
 import { consoleAccessAllowed } from "@/lib/integration/access";
 import { FLEET_SECRET_MIN_LENGTH } from "@/lib/integration/fleet";
-import { CAMERAS, deviceStatus, simulatorStatus, terminalStatus } from "@/lib/integration/hub";
+import { CAMERAS, deviceStatus, simulatorStatus, terminalStatus, wearableStatus } from "@/lib/integration/hub";
 
 /** Integration health for the Settings → Integrations view. Never returns secrets or raw stream URLs. */
 export async function GET(req: Request) {
@@ -9,6 +9,8 @@ export async function GET(req: Request) {
     serverTime: Date.now(),
     devices: deviceStatus(),
     posTerminals: terminalStatus(),
+    // Badge health only — positions go to authorised consoles over the live stream.
+    wearables: wearableStatus(),
     cameras: CAMERAS.map((c) => ({ cameraId: c.cameraId, branchId: c.branchId, name: c.name, virtualCameraId: c.virtualCameraId ?? null, protocol: c.protocol, enabled: c.enabled, virtual: c.virtual, authorisedBy: c.authorisation?.approvedBy ?? (c.virtual ? "n/a — simulated camera (synthetic video)" : "—") })),
     simulator: simulatorStatus(),
     cameraGatewayConfigured: !!process.env.CAMERA_GATEWAY_URL,

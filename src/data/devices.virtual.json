@@ -1714,5 +1714,482 @@
    "enabled": true,
    "virtual": true
   }
+ ],
+ "wearables": [
+  {
+   "tagId": "vtag-eastlegon-01",
+   "branchId": "branch-015",
+   "staffId": "staff-1",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-eastlegon-02",
+   "branchId": "branch-015",
+   "staffId": "staff-2",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-eastlegon-03",
+   "branchId": "branch-015",
+   "staffId": "staff-3",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-eastlegon-04",
+   "branchId": "branch-015",
+   "staffId": "staff-4",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-eastlegon-05",
+   "branchId": "branch-015",
+   "staffId": "staff-5",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-eastlegon-06",
+   "branchId": "branch-015",
+   "staffId": "staff-6",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-eastlegon-07",
+   "branchId": "branch-015",
+   "staffId": "staff-7",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-eastlegon-08",
+   "branchId": "branch-015",
+   "staffId": "staff-8",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-eastlegon-09",
+   "branchId": "branch-015",
+   "staffId": "staff-9",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-eastlegon-10",
+   "branchId": "branch-015",
+   "staffId": "staff-10",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-eastlegon-11",
+   "branchId": "branch-015",
+   "staffId": "staff-11",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-eastlegon-12",
+   "branchId": "branch-015",
+   "staffId": "staff-12",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-spintex-01",
+   "branchId": "branch-033",
+   "staffId": "staff-1",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-spintex-02",
+   "branchId": "branch-033",
+   "staffId": "staff-2",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-spintex-03",
+   "branchId": "branch-033",
+   "staffId": "staff-3",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-spintex-04",
+   "branchId": "branch-033",
+   "staffId": "staff-4",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-spintex-05",
+   "branchId": "branch-033",
+   "staffId": "staff-5",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-spintex-06",
+   "branchId": "branch-033",
+   "staffId": "staff-6",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-spintex-07",
+   "branchId": "branch-033",
+   "staffId": "staff-7",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-spintex-08",
+   "branchId": "branch-033",
+   "staffId": "staff-8",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-knust-01",
+   "branchId": "branch-046",
+   "staffId": "staff-1",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-knust-02",
+   "branchId": "branch-046",
+   "staffId": "staff-2",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-knust-03",
+   "branchId": "branch-046",
+   "staffId": "staff-3",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-knust-04",
+   "branchId": "branch-046",
+   "staffId": "staff-4",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  },
+  {
+   "tagId": "vtag-knust-05",
+   "branchId": "branch-046",
+   "staffId": "staff-5",
+   "technology": "uwb",
+   "transform": {
+    "offsetX": 0.42,
+    "offsetZ": -0.31,
+    "rotationDeg": 0,
+    "scale": 1
+   },
+   "expectedIntervalSec": 1,
+   "model": "SIM · UWB staff badge (TDoA), ±0.15–0.3 m",
+   "consent": {
+    "noticeVersion": "staff-location-notice-v1 (template)",
+    "acknowledgedAt": "2026-11-03"
+   },
+   "virtual": true
+  }
  ]
 }

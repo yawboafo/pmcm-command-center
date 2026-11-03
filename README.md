@@ -39,6 +39,12 @@ Rebuild the Blender equipment models (Blender 5.2+, see `blender/README.md` and 
 blender -b --factory-startup --python blender/build_assets.py && python3 blender/postprocess.py
 ```
 
+Simulated staff badges (UWB): staff walk their stations and the console can locate and follow them:
+
+```bash
+npm run wearables:sim
+```
+
 Bench-test the live paths (keys go in `.env.local`, see `.env.example`):
 
 ```bash

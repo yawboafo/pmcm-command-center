@@ -63,6 +63,8 @@ interface AppState {
   activeCameraId: string | null;
   cameraRequest: CameraRequest | null;
   followOrderId: string | null;
+  /** Person the follow camera tracks (staff located by badge, or any simulated person). */
+  followAgentId: string | null;
   cctvLayout: 1 | 4 | 9;
   cctvOpen: boolean;
   xray: boolean;
@@ -96,6 +98,7 @@ interface AppState {
   useVirtualCamera: (id: string | null) => void;
   requestCamera: (r: Omit<CameraRequest, "nonce">) => void;
   followOrder: (id: string | null) => void;
+  followAgent: (id: string | null) => void;
   setCctv: (open: boolean, layout?: 1 | 4 | 9) => void;
   toggle: (k: "xray" | "showPaths") => void;
   setSpeed: (s: number) => void;
@@ -125,6 +128,7 @@ export const useApp = create<AppState>((set, get) => ({
   activeCameraId: null,
   cameraRequest: null,
   followOrderId: null,
+  followAgentId: null,
   cctvLayout: 4,
   cctvOpen: false,
   xray: false,
@@ -168,10 +172,11 @@ export const useApp = create<AppState>((set, get) => ({
   setPhase: (phase) => set({ phase }),
   exitToMap: () => set({ view2d: false, enteredBranchId: null, phase: "map", section: "network", selection: get().selectedBranchId ? { kind: "branch", id: get().selectedBranchId! } : null, cctvOpen: false, followOrderId: null }),
   select: (selection) => set({ selection }),
-  setCameraMode: (cameraMode) => set({ cameraMode, followOrderId: cameraMode === "follow" ? get().followOrderId : null, activeCameraId: cameraMode === "cctv" ? get().activeCameraId : null }),
+  setCameraMode: (cameraMode) => set({ cameraMode, followOrderId: cameraMode === "follow" ? get().followOrderId : null, followAgentId: cameraMode === "follow" ? get().followAgentId : null, activeCameraId: cameraMode === "cctv" ? get().activeCameraId : null }),
   useVirtualCamera: (id) => set({ activeCameraId: id, cameraMode: id ? "cctv" : "orbit", followOrderId: null, selection: id ? { kind: "camera", id } : get().selection }),
   requestCamera: (r) => set({ cameraRequest: { ...r, nonce: (get().cameraRequest?.nonce ?? 0) + 1 }, cameraMode: "focus", activeCameraId: null }),
-  followOrder: (id) => set({ followOrderId: id, cameraMode: id ? "follow" : "orbit", selection: id ? { kind: "order", id } : get().selection }),
+  followOrder: (id) => set({ followOrderId: id, followAgentId: null, cameraMode: id ? "follow" : "orbit", selection: id ? { kind: "order", id } : get().selection }),
+  followAgent: (id) => set({ followAgentId: id, followOrderId: null, cameraMode: id ? "follow" : "orbit", cctvOpen: false, view2d: false, selection: id ? { kind: "agent", id } : get().selection }),
   setCctv: (cctvOpen, layout) => set({ cctvOpen, cctvLayout: layout ?? get().cctvLayout, view2d: cctvOpen ? false : get().view2d }),
   toggle: (k) => set({ [k]: !get()[k] } as Pick<AppState, typeof k>),
   setSpeed: (speed) => set({ speed, paused: false }),

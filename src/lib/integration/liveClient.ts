@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { BRANCH_BY_ID } from "@/lib/network/branches";
 import { useApp } from "@/store/app";
 import { sims } from "@/store/sims";
-import type { NormalisedOrderEvent, NormalisedReading, Origin } from "./contracts";
+import type { NormalisedLocation, NormalisedOrderEvent, NormalisedReading, Origin } from "./contracts";
 
 interface LiveState {
   status: "connecting" | "connected" | "reconnecting";
@@ -16,13 +16,15 @@ interface LiveState {
   liveBranches: string[];
   /** Branches receiving data from simulated hardware through the pipeline (shown as SIM DEVICE, never LIVE). */
   virtualBranches: string[];
+  /** Staff badge position fixes applied. */
+  locations: number;
   /** POS / ordering-system events applied (or ignored as unmappable), physical and virtual. */
   orders: number;
   /** Of `readings` + `orders`, how many came from simulated hardware. */
   virtualEvents: number;
 }
 
-export const useLive = create<LiveState>(() => ({ status: "connecting", readings: 0, lastReadingAt: null, unmatched: 0, liveBranches: [], virtualBranches: [], orders: 0, virtualEvents: 0 }));
+export const useLive = create<LiveState>(() => ({ status: "connecting", readings: 0, lastReadingAt: null, unmatched: 0, liveBranches: [], virtualBranches: [], orders: 0, virtualEvents: 0, locations: 0 }));
 
 let source: EventSource | null = null;
 
@@ -83,6 +85,14 @@ export function startLiveTelemetry() {
     if (order && status === "RECEIVED" && origin === "physical") useApp.getState().notify(`Live order ${externalRef} received from ${o.sourceId} — #${order.number}`, "info");
     const s = useLive.getState();
     useLive.setState({ orders: s.orders + 1, ...branchState(s, o.branchId, origin) });
+  });
+  source.addEventListener("location", (ev) => {
+    const l = parse<NormalisedLocation>(ev);
+    const origin: Origin = l?.origin === "virtual" ? "virtual" : "physical";
+    if (!l || !goLive(l.branchId, origin)) return;
+    sims().get(l.branchId).ingestStaffLocation({ staffId: l.staffId, tagId: l.tagId, x: l.x, z: l.z, accuracy: l.accuracy, technology: l.technology, source: l.source });
+    const s = useLive.getState();
+    useLive.setState({ locations: s.locations + 1, ...branchState(s, l.branchId, origin) });
   });
   return () => {
     source?.close();
