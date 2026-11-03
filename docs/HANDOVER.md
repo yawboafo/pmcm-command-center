@@ -2,6 +2,18 @@
 
 Read `README.md`, `docs/AUDIT.md`, `docs/ARCHITECTURE.md`, `docs/INTEGRATION.md`, `docs/ASSETS.md`, then this file.
 
+## Session 6 — cinematic intro and access gate (branch `claude/friendly-lamport-rhpjp2`, after PR #4)
+`src/components/launch/` + `src/lib/auth/gate.ts` + `src/config/launch.ts`; read `docs/LAUNCH.md`.
+- Launch flow wraps the app in `ClientApp`: intro → gate → app (or gate → intro → app via
+  `LAUNCH.intro.when`). Real-time R3F intro (camera path from the zone cameras, resolving key light,
+  particle cage, zone rings, fryer glow, instrumentation, tiered post-processing), synthesised score
+  (`audio.ts`, starts on first gesture), skip ring after 3 s, per-device "Don't show again",
+  `?intro=play|cinema|standard|lite|video`, fallback video rendered by `scripts/render-intro.cjs`.
+- Gate: hashed key (`apostle` by default), 5 attempts → 30 s cooldown, 7-day session
+  (`localStorage`) or tab session, unlock animation (rings flip green, dolly in, card lifts).
+- QA scripts must seed `ops.session.v1` and `ops.intro.skip.v1` in localStorage to bypass the gate.
+- Dev hooks: `window.__opsLaunch.seek(t)` / `.resume()` / `.phase()`.
+
 ## Session 5 — camera centre (branch `claude/friendly-lamport-rhpjp2`)
 The final upgrade of the camera experience, built on the merged main (PR #3). Read `docs/CAMERAS.md`
 (audit, gap list, zones, data model, adapter layer, demo script) and `docs/STYLE-GUIDE.md`.

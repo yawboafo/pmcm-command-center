@@ -26,6 +26,14 @@ stations, orders, food-safety sensors, inventory and deliveries.
 >   data is not badged in the UI (`UI_POLICY.showSimulatedLabels` in `src/config/platform.ts`);
 >   provenance is still recorded on every value, and real data is always marked **LIVE**.
 
+## Launch flow
+
+Every cold launch plays a 17-second real-time 3D intro (skippable after 3 s, "Don't show again"
+per device) and then asks for the access key. The default key is `apostle` (case-insensitive;
+stored only as a hash in `src/config/launch.ts`). "Keep me signed in" remembers the device for
+7 days; sign out from Settings → Launch & access. Low-end devices get a pre-rendered fallback
+video. Details, how to change the key and how to swap in real sign-in: `docs/LAUNCH.md`.
+
 ## Run it
 
 ```bash

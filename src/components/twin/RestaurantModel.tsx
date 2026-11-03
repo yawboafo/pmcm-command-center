@@ -46,6 +46,8 @@ export interface RestaurantModelProps {
   dusk?: boolean;
   /** Simulated hour of day (0–24) driving sun position, sky and interior lights. */
   hour?: number;
+  /** Multiplier on the interior lights (the launch intro brings them up from darkness). */
+  lightsScale?: number;
   /** Selected agent (yellow ring under the person). */
   selectedAgentId?: string | null;
   onSelectOrder?: (id: string) => void;
@@ -99,7 +101,7 @@ export default function RestaurantModel(props: RestaurantModelProps) {
   return (
     <group>
       {environment && <SceneLights plan={plan} quality={quality} hour={hour} />}
-      <InteriorLights plan={plan} daylight={daylight} />
+      <InteriorLights plan={plan} daylight={daylight} scale={props.lightsScale ?? 1} />
       <Site plan={plan} />
       <Floors plan={plan} onRoom={props.onSelectRoom ? (id, delta) => delta < 4 && props.onSelectRoom!(id) : undefined} />
       <Windows plan={plan} />
@@ -280,9 +282,9 @@ function DragTint({ plan, drag }: { plan: FloorPlan; drag: { id: string; valid: 
 }
 
 /** A handful of warm interior lights placed in the largest rooms (kept low for performance); they carry the scene at night. */
-function InteriorLights({ plan, daylight }: { plan: FloorPlan; daylight: number }) {
+function InteriorLights({ plan, daylight, scale = 1 }: { plan: FloorPlan; daylight: number; scale?: number }) {
   const H = plan.dimensions.height;
-  const boost = 1 + (1 - daylight) * 1.1;
+  const boost = (1 + (1 - daylight) * 1.1) * scale;
   // The six largest rooms plus the back-of-house rooms the owner cameras look at (dispatch, cold, staff).
   const lights = useMemo(() => {
     const big = [...plan.rooms].sort((a, b) => b.w * b.d - a.w * a.d).slice(0, 6);
@@ -296,7 +298,7 @@ function InteriorLights({ plan, daylight }: { plan: FloorPlan; daylight: number 
       ))}
       {/* sign wash and forecourt light: brighter after dark */}
       <pointLight position={[plan.dimensions.width / 2, H + 0.4, -2.2]} intensity={6 * boost} distance={7 + 4 * (1 - daylight)} decay={1.8} color="#ff6a5a" />
-      {daylight < 0.5 && <pointLight position={[plan.dimensions.width / 2, 4.2, -6]} intensity={14 * (1 - daylight)} distance={16} decay={1.7} color="#ffe4b8" />}
+      {daylight < 0.5 && <pointLight position={[plan.dimensions.width / 2, 4.2, -6]} intensity={14 * (1 - daylight) * scale} distance={16} decay={1.7} color="#ffe4b8" />}
     </>
   );
 }

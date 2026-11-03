@@ -9,6 +9,7 @@ import { cx } from "@/components/ui/primitives";
 import { DEMO_USERS, can } from "@/lib/auth/rbac";
 import { ROLE_LABEL } from "@/lib/sim/engine";
 import { BRANCHES } from "@/lib/network/branches";
+import { gate, relaunch } from "@/lib/auth/gate";
 import { useApp, type CameraMode } from "@/store/app";
 import { sims } from "@/store/sims";
 import { NAV } from "./Sidebar";
@@ -90,6 +91,8 @@ export default function CommandPalette() {
     for (const t of ["dark", "light", "auto"] as const)
       out.push({ id: `theme:${t}`, group: "Appearance", label: `Theme: ${t === "auto" ? "Auto (system)" : t[0].toUpperCase() + t.slice(1)}`, hint: app.theme === t ? "current" : undefined, icon: t === "light" ? Sun : Moon, run: () => app.setTheme(t) });
     out.push({ id: "about", group: "Go to", label: "About this prototype & integrations", icon: Info, run: () => app.setNoticeOpen(true) });
+    out.push({ id: "launch:intro", group: "Launch", label: "Play the intro", icon: Camera, run: () => relaunch({ forceIntro: true }) });
+    out.push({ id: "launch:signout", group: "Launch", label: "Sign out", icon: UserRound, run: () => (gate().endSession(), relaunch()) });
     for (const n of NAV) out.push({ id: `nav:${n.id}`, group: "Go to", label: n.label, icon: n.icon, run: () => app.setSection(n.id) });
     for (const b of BRANCHES) {
       out.push({ id: `tw:${b.id}`, group: "Open branch twin", label: b.name, hint: `${b.city} · ${b.region}`, icon: Building2, run: () => app.enterBranch(b.id) });
