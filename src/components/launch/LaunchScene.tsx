@@ -50,7 +50,7 @@ function keyframes(plan: FloorPlan, sim: BranchSimulation): Key[] {
     const tg = new THREE.Vector3(...c.target);
     // A dolly a little lower and closer than the mounted camera, so the shot feels hand-held, not surveillance.
     const dir = tg.clone().sub(p).setY(0).normalize();
-    p.add(dir.multiplyScalar(0.9)).setY(Math.min(2.1, p.y - 0.5));
+    p.add(dir.multiplyScalar(0.3)).setY(Math.min(2.45, p.y - 0.3));
     return { t: fallback.t, pos: [p.x, p.y, p.z], target: [tg.x, 1.0, tg.z], fov };
   };
   const hero: Key = { t: DUR - 1.2, pos: [W * 0.62, H * 2.7, -L * 0.72], target: [W / 2, 0.6, L * 0.42], fov: 42 };
@@ -152,14 +152,14 @@ function IntroLights({ plan, sim }: { plan: FloorPlan; sim: BranchSimulation }) 
     if (key.current) {
       // A single source resolves out of black, then settles as the key light.
       const resolve = smooth(0.6, 3.2, t);
-      key.current.intensity = (st.phase === "unlock" ? 420 : 260) * resolve * (st.phase === "intro" ? 1 : breathe);
+      key.current.intensity = (st.phase === "unlock" ? 300 : 150) * resolve * (st.phase === "intro" ? 1 : breathe);
       key.current.position.set(W / 2 + Math.sin(t * 0.15) * 4, H * 4.5, L * 0.4 - 6);
     }
     if (hemi.current) hemi.current.intensity = 0.05 + 0.5 * smooth(13, DUR, t) * (st.phase === "intro" ? 1 : breathe) + (st.phase === "unlock" ? 0.25 : 0);
     zones.forEach((z, i) => {
       const l = zoneLights.current[i];
       if (!l) return;
-      l.intensity = 26 * smooth(z.when - 0.4, z.when + 1.2, t) * (st.phase === "intro" ? 1 : breathe);
+      l.intensity = 14 * smooth(z.when - 0.4, z.when + 1.2, t) * (st.phase === "intro" ? 1 : breathe);
     });
   });
   return (
@@ -188,6 +188,24 @@ interface Holo {
 }
 // Animation state lives outside React (built once per floor plan, mutated every frame).
 const holoCache = new WeakMap<FloorPlan, Holo>();
+let disc: THREE.Texture | null = null;
+/** A soft radial disc for the particle sprites (a bare PointsMaterial draws hard squares). */
+function discSprite(): THREE.Texture | null {
+  if (disc || typeof document === "undefined") return disc;
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const g = c.getContext("2d");
+  if (!g) return null;
+  const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, "rgba(255,255,255,1)");
+  grad.addColorStop(0.35, "rgba(255,255,255,0.7)");
+  grad.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 64, 64);
+  disc = new THREE.CanvasTexture(c);
+  return disc;
+}
+
 function holoFor(plan: FloorPlan): Holo {
   let h = holoCache.get(plan);
   if (h) return h;
@@ -245,7 +263,7 @@ function holoFor(plan: FloorPlan): Holo {
     targets,
     starts,
     delays,
-    pointsMat: new THREE.PointsMaterial({ color: STEEL, size: 0.07, sizeAttenuation: true, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }),
+    pointsMat: new THREE.PointsMaterial({ color: STEEL, size: 0.045, sizeAttenuation: true, map: discSprite(), alphaTest: 0.02, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }),
     edgeGeom,
     edgeMat: new THREE.LineBasicMaterial({ color: STEEL, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }),
   };
@@ -364,7 +382,7 @@ function FryerGlow({ plan }: { plan: FloorPlan }) {
     const t = st.phase === "intro" ? st.t : DUR + 5;
     const on = smooth(3.9, 4.8, t);
     lights.current.forEach((l, i) => {
-      if (l) l.intensity = on * (4 + Math.sin(state.clock.elapsedTime * 9 + i * 1.7) * 1.2);
+      if (l) l.intensity = on * (1.5 + Math.sin(state.clock.elapsedTime * 9 + i * 1.7) * 0.45);
     });
   });
   return (
@@ -426,10 +444,10 @@ function Post({ tier }: { tier: QualityTier }) {
   if (tier === "lite" || tier === "video") return null;
   return (
     <EffectComposer multisampling={0}>
-      <Bloom mipmapBlur luminanceThreshold={0.62} luminanceSmoothing={0.3} intensity={intro ? 1.05 : phase === "unlock" ? 1.6 : 0.75} radius={0.75} />
+      <Bloom mipmapBlur luminanceThreshold={0.88} luminanceSmoothing={0.25} intensity={intro ? 0.55 : phase === "unlock" ? 1.0 : 0.42} radius={0.7} />
       {tier === "cinema" ? <DepthOfField target={[W / 2, 0.8, L * 0.45]} focalLength={0.025} bokehScale={2.6} height={480} /> : <></>}
-      {tier === "cinema" ? <ChromaticAberration offset={new THREE.Vector2(0.0007, 0.0005)} radialModulation modulationOffset={0.35} /> : <></>}
-      <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.35} />
+      {tier === "cinema" ? <ChromaticAberration offset={new THREE.Vector2(0.00032, 0.00024)} radialModulation modulationOffset={0.45} /> : <></>}
+      <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.18} />
       <Vignette eskil={false} offset={0.22} darkness={0.72} />
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
       <SMAA />
@@ -515,7 +533,7 @@ function LightsScaled({ plan, sim, fixed }: { plan: FloorPlan; sim: BranchSimula
   const t = useLaunch((s) => s.t);
   const phase = useLaunch((s) => s.phase);
   const tick = useLaunch((s) => Math.floor(s.t * 4));
-  const scale = fixed ?? (phase === "intro" ? 0.02 + 0.98 * smooth(4, 15, t) : 1);
+  const scale = fixed ?? (phase === "intro" ? 0.02 + 0.68 * smooth(4, 15, t) : 0.8);
   return <RestaurantModel plan={plan} sim={sim} cutaway={false} environment={false} hour={20} lightsScale={scale} quality="balanced" overlays={false} version={tick} />;
 }
 
