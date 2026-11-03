@@ -2,6 +2,18 @@
 
 Read `README.md`, `docs/AUDIT.md`, `docs/ARCHITECTURE.md`, `docs/INTEGRATION.md`, `docs/ASSETS.md`, then this file.
 
+## Session 4 — platform, hardware simulation, staff badges, UX (branch `feat/ux-sim-hardware-artist`)
+Builds on PR #2. The product is now **Operations Ops** (one line in `src/config/platform.ts`), with Pizzaman Chickenman as the tenant workspace. In this branch:
+- **UX**: ⌘K command palette, keyboard shortcuts (`?`), network telemetry ribbon, readout primitives, critical-alert toasts, compact top bar; Light / Dark / Auto theme (token remap in `globals.css`, Settings → Appearance).
+- **Branch entry** boots like a camera feed; **live 2D operations plan** (`V`).
+- **Simulated hardware fleet** (`npm run hardware:sim`, `npm run camera:sim`): 55 virtual devices, 7 POS terminals, 6 MJPEG cameras through the real signed pipeline.
+- **Staff badges (RTLS)**: `POST /api/ingest/location`, calibration, `npm run wearables:sim`, staff locator (`L`), follow camera, privacy gating (`view:staff-location`).
+- **Prototype notice** on start-up with the integration checklist (`src/config/integrations.ts`); simulated data is not labelled in the UI (`UI_POLICY`), LIVE always is.
+- **3D**: Blender-built people (instanced, ~25 draw calls for the crowd), food props, storefront branding, menu-board artwork.
+- 68 tests; tsc and eslint clean. East Legon dollhouse: 58 FPS, 1,432 draw calls.
+
+Known issue: at East Legon the cashiers' stand points are on the customer side of the POS counters (floor-plan template); fixing it means regenerating templates, which renumbers sensor codes used by device bindings.
+
 ## Session 3 — digital twin upgrade (branch `feat/digital-twin-upgrade`, uncommitted unless a later commit says otherwise)
 Session 2 is in PR https://github.com/yawboafo/pmcm-command-center/pull/1 (`feat/command-center-prototype` → `main`). Session 3 follows the client's "elevate, don't rebuild" brief; the audit and what was delivered are in `docs/AUDIT.md`. In short:
 - **Menu** priced only from `src/data/menu-catalogue.json` (199 published Chris B items, per-item source + date; refresh with `npx tsx scripts/import-menu.ts`; the Chris B server-action id is re-read from the site on each run). Settings → Menu & prices. A test fails if a simulated item drops out of the catalogue.
