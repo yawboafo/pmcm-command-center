@@ -69,7 +69,7 @@ export default function FeedBoot({ branchId }: { branchId: string }) {
   const locked = t >= STEPS[STEPS.length - 1];
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+    <div data-theme="dark" className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
       {/* Static, scanlines and a rolling bar, fading out as the link locks. */}
       <canvas ref={noise} width={160} height={90} className="absolute inset-0 h-full w-full [image-rendering:pixelated]" style={{ opacity: staticOpacity }} />
       <div className="absolute inset-0" style={{ opacity: panelOpacity * 0.6, backgroundImage: "repeating-linear-gradient(0deg, rgba(0,0,0,0.35) 0 1px, transparent 1px 3px)" }} />

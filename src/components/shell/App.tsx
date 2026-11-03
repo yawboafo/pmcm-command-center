@@ -25,6 +25,7 @@ export default function App() {
   usePhoneLayout();
   useShortcuts();
   useCriticalAlertWatch();
+  useThemeSync();
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-ink text-white">
@@ -69,6 +70,22 @@ function usePhoneLayout() {
       }),
     [],
   );
+}
+
+/** Apply the resolved theme to <html data-theme> and follow the OS while the preference is "auto". */
+function useThemeSync() {
+  const theme = useApp((s) => s.theme);
+  const resolved = useApp((s) => s.resolvedTheme);
+  useEffect(() => {
+    document.documentElement.dataset.theme = resolved;
+  }, [resolved]);
+  useEffect(() => {
+    if (theme !== "auto") return;
+    const mq = window.matchMedia("(prefers-color-scheme: light)");
+    const on = () => useApp.getState().setResolvedTheme(mq.matches ? "light" : "dark");
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, [theme]);
 }
 
 /**

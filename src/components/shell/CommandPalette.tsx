@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Camera, CornerDownLeft, Crosshair, Gauge, Info, MapPin, ReceiptText, Search, ShieldAlert, UserRound, Users, Wrench, type LucideIcon } from "lucide-react";
+import { Building2, Camera, CornerDownLeft, Crosshair, Gauge, Info, MapPin, Moon, ReceiptText, Search, ShieldAlert, Sun, UserRound, Users, Wrench, type LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { requestFlyTo } from "@/components/map/mapState";
 import { focusEquipment } from "@/components/panels/common";
@@ -87,6 +87,8 @@ export default function CommandPalette() {
     for (const [k, label] of [["low", "Low · 5/h"], ["medium", "Medium · 20/h"], ["high", "High · 50/h"]] as const)
       out.push({ id: `demand:${k}`, group: "Simulation", label: `Demand: ${label}`, hint: app.arrivalPreset === k ? "current" : undefined, icon: Gauge, run: () => app.setArrivalPreset(k) });
     for (const u of DEMO_USERS) out.push({ id: `role:${u.id}`, group: "Demo role", label: `View as ${u.roleLabel}`, hint: app.user.id === u.id ? "current" : undefined, icon: UserRound, run: () => app.setUser(u.id) });
+    for (const t of ["dark", "light", "auto"] as const)
+      out.push({ id: `theme:${t}`, group: "Appearance", label: `Theme: ${t === "auto" ? "Auto (system)" : t[0].toUpperCase() + t.slice(1)}`, hint: app.theme === t ? "current" : undefined, icon: t === "light" ? Sun : Moon, run: () => app.setTheme(t) });
     out.push({ id: "about", group: "Go to", label: "About this prototype & integrations", icon: Info, run: () => app.setNoticeOpen(true) });
     for (const n of NAV) out.push({ id: `nav:${n.id}`, group: "Go to", label: n.label, icon: n.icon, run: () => app.setSection(n.id) });
     for (const b of BRANCHES) {

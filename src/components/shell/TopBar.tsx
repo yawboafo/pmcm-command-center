@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Pause, Play, RotateCcw, Search } from "lucide-react";
+import { ArrowLeft, Moon, Pause, Play, RotateCcw, Search, Sun } from "lucide-react";
 import { Btn, SimBadge, cx } from "@/components/ui/primitives";
 import { DEMO_USERS, can } from "@/lib/auth/rbac";
 import { clockSec } from "@/lib/format";
@@ -17,6 +17,8 @@ export default function TopBar() {
   const { speed, paused, setSpeed, setPaused, arrivalPreset, setArrivalPreset, enteredBranchId, exitToMap, user, setUser, notify } = useApp();
   const branch = enteredBranchId ? BRANCH_BY_ID.get(enteredBranchId) : null;
   const realtime = sims().realtime;
+  const resolvedTheme = useApp((s) => s.resolvedTheme);
+  const setTheme = useApp((s) => s.setTheme);
   // Live devices run on the real clock, so speed controls are locked while connected.
   const canControl = can(user, "control:simulation") && !realtime;
   const snaps = useSnapshots();
@@ -57,6 +59,15 @@ export default function TopBar() {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          title={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme`}
+          aria-label={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme`}
+          className="hidden rounded-lg border border-white/10 bg-black/30 p-1.5 text-white/55 hover:border-white/20 hover:text-white md:block"
+        >
+          {resolvedTheme === "dark" ? <Sun size={13} /> : <Moon size={13} />}
+        </button>
         <button type="button" onClick={() => useApp.getState().setPaletteOpen(true)} title="Search and jump anywhere (⌘K)" className="hidden items-center gap-2 rounded-lg border border-white/10 bg-black/30 px-2.5 py-1 text-[11px] text-white/45 hover:border-white/20 hover:text-white/80 md:flex">
           <Search size={13} />
           <span className="hidden 2xl:inline">Search</span>

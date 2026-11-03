@@ -70,7 +70,7 @@ export default function PlanView2D({ sim }: { sim: BranchSimulation }) {
 
   const selId = selection?.id;
   return (
-    <div className="absolute inset-0 z-10 overflow-hidden bg-[#0a0d12]">
+    <div data-theme="dark" className="absolute inset-0 z-10 overflow-hidden bg-[#0a0d12]">
       <svg
         ref={svg}
         viewBox={vb}

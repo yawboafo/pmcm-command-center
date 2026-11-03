@@ -215,7 +215,7 @@ export function OrderComposer({ sim }: { sim: BranchSimulation }) {
           Demo order
         </Btn>
       </div>
-      <p className="mt-1.5 text-[10px] text-white/35">Menu names and prices from the public Chris B catalogue; the order itself is simulated.</p>
+      <p className="mt-1.5 text-[10px] text-white/35">Menu names and prices from the public Chris B catalogue.</p>
     </div>
   );
 }

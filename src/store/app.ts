@@ -78,6 +78,10 @@ interface AppState {
   graphics: "high" | "balanced" | "low";
   paletteOpen: boolean;
   shortcutsOpen: boolean;
+  /** UI theme preference; "auto" follows the operating system. */
+  theme: ThemePref;
+  /** The theme actually applied (auto resolved). */
+  resolvedTheme: "dark" | "light";
   /** Start-up prototype notice (see PrototypeNotice); re-openable from Settings and ⌘K. */
   noticeOpen: boolean;
   /** Inside a branch: show the live 2D operations plan instead of the 3D view. */
@@ -112,11 +116,31 @@ interface AppState {
   setAssetMode: (m: "models" | "procedural") => void;
   setPaletteOpen: (b: boolean) => void;
   setNoticeOpen: (b: boolean) => void;
+  setTheme: (t: ThemePref) => void;
+  setResolvedTheme: (t: "dark" | "light") => void;
   setView2d: (b: boolean) => void;
   setShortcutsOpen: (b: boolean) => void;
   setUser: (id: string) => void;
   setFilters: (f: Partial<{ regionFilter: string | null; statusFilter: string | null; search: string }>) => void;
   notify: (text: string, tone?: "info" | "success" | "warning" | "critical", action?: { label: string; run: () => void }) => void;
+}
+
+export type ThemePref = "dark" | "light" | "auto";
+export const THEME_KEY = "ops.theme";
+
+function storedTheme(): ThemePref {
+  if (typeof window === "undefined") return "dark";
+  try {
+    const t = window.localStorage.getItem(THEME_KEY);
+    return t === "light" || t === "auto" || t === "dark" ? t : "dark";
+  } catch {
+    return "dark";
+  }
+}
+
+export function resolveTheme(t: ThemePref): "dark" | "light" {
+  if (t !== "auto") return t;
+  return typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
 }
 
 /** Show the prototype notice on start-up unless the viewer ticked "Don't show this again". */
@@ -156,6 +180,8 @@ export const useApp = create<AppState>((set, get) => ({
   paletteOpen: false,
   shortcutsOpen: false,
   noticeOpen: noticeDue(),
+  theme: storedTheme(),
+  resolvedTheme: resolveTheme(storedTheme()),
   view2d: false,
   // `?assets=procedural` starts with the procedural stand-ins (side-by-side QA and performance checks).
   assetMode: typeof window !== "undefined" && new URLSearchParams(window.location.search).get("assets") === "procedural" ? "procedural" : "models",
@@ -202,6 +228,15 @@ export const useApp = create<AppState>((set, get) => ({
   setAssetMode: (assetMode) => set({ assetMode }),
   setPaletteOpen: (paletteOpen) => set({ paletteOpen, shortcutsOpen: false }),
   setNoticeOpen: (noticeOpen) => set({ noticeOpen, paletteOpen: false }),
+  setTheme: (theme) => {
+    try {
+      window.localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      /* not persisted */
+    }
+    set({ theme, resolvedTheme: resolveTheme(theme) });
+  },
+  setResolvedTheme: (resolvedTheme) => set({ resolvedTheme }),
   setView2d: (view2d) => set({ view2d, cctvOpen: view2d ? false : get().cctvOpen }),
   setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen, paletteOpen: false }),
   setUser: (id) => set({ user: DEMO_USERS.find((u) => u.id === id) ?? DEMO_USERS[1] }),

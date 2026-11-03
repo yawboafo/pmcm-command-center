@@ -21,7 +21,7 @@ const FIELDS: Array<[keyof SafetyProfile, string, string]> = [
 ];
 
 export default function Settings() {
-  const { user, setUser, graphics, setGraphics, assetMode, setAssetMode, notify } = useApp();
+  const { user, setUser, graphics, setGraphics, assetMode, setAssetMode, theme, setTheme, notify } = useApp();
   const [profile, setProfile] = useState<SafetyProfile>(sims().safety ?? DEFAULT_SAFETY_PROFILE);
   const [seed, setSeed] = useState(String(sims().seed));
   const isAdmin = can(user, "admin") || can(user, "act:safety");
@@ -85,6 +85,14 @@ export default function Settings() {
             ))}
           </div>
           <p className="mt-2 text-[11px] text-white/45">High enables soft shadows and higher pixel ratio; Low disables shadows and caps resolution for mobile devices.</p>
+          <div className="mt-3 text-[11px] text-white/60">Appearance</div>
+          <div className="mt-1 flex gap-2">
+            {(["dark", "light", "auto"] as const).map((t) => (
+              <Btn key={t} active={theme === t} onClick={() => setTheme(t)}>
+                {t === "auto" ? "Auto (system)" : t[0].toUpperCase() + t.slice(1)}
+              </Btn>
+            ))}
+          </div>
           <div className="mt-3 text-[11px] text-white/60">3D equipment</div>
           <div className="mt-1 flex gap-2">
             <Btn active={assetMode === "models"} onClick={() => setAssetMode("models")}>Blender models</Btn>
