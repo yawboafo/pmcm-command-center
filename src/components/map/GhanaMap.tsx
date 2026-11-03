@@ -14,6 +14,8 @@ import { sims } from "@/store/sims";
 import BranchCard from "./BranchCard";
 import { filterBranches, onFlyTo, useMapFilters } from "./mapState";
 import MapToolbar from "./MapToolbar";
+import { CardsMenu, MovableCard } from "@/components/ui/MovableCard";
+import { cardKey, useCardLayout } from "@/components/ui/cardLayout";
 import NationalDashboard from "./NationalDashboard";
 
 // maplibre v6 resolves its worker relative to import.meta.url, which bundlers rewrite;
@@ -138,6 +140,10 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
   const [styleTick, setStyleTick] = useState(0);
   const [mapError, setMapError] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  // A moved branch card only stays moved for that branch; the next one opens beside its marker.
+  useEffect(() => {
+    useCardLayout.getState().resetCard(cardKey("map", "branch"));
+  }, [activeId]);
   const [cardPos, setCardPos] = useState<{ x: number; y: number } | null>(null);
   const [hover, setHover] = useState<{ id: string; x: number; y: number } | null>(null);
 
@@ -511,12 +517,13 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
   const flying = phase === "flying";
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[var(--surface)]">
+    <div data-card-area className="relative h-full w-full overflow-hidden bg-[var(--surface)]">
       <div ref={container} className="!absolute inset-0 h-full w-full" aria-label={`Map of Ghana showing ${TENANT.name} branches`} role="region" />
       {!flying && !(section === "branches" && !enteredBranchId) && (
         <>
           {section !== "central" && <NationalDashboard snaps={visibleBranches.map((x) => x.s)} />}
           {section !== "central" && <MapToolbar visibleCount={visibleBranches.length} />}
+          {section !== "central" && <CardsMenu area="map" className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2" />}
         </>
       )}
       {mapError && <div className="glass absolute bottom-14 left-1/2 z-10 -translate-x-1/2 rounded-lg px-3 py-1.5 text-[11px] text-amber-200">{mapError}</div>}
@@ -532,12 +539,17 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
       )}
 
       {active && activeSnap && cardPos && !flying && (
-        <div
+        <MovableCard
+          key={active.id}
+          area="map"
+          id="branch"
+          title={`${active.name} card`}
+          hideable={false}
           className="absolute z-20 max-md:!left-1/2 max-md:!top-auto max-md:bottom-3 max-md:-translate-x-1/2"
           style={{ left: cardPos.x, top: cardPos.y }}
         >
           <BranchCard b={active} s={activeSnap} onClose={() => setActiveId(null)} />
-        </div>
+        </MovableCard>
       )}
 
       {section === "central" && !enteredBranchId && !flying && (

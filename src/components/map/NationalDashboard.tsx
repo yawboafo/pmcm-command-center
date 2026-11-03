@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { MovableCard } from "@/components/ui/MovableCard";
 import { Readout, SimBadge, cx } from "@/components/ui/primitives";
 import { ghsCompact } from "@/lib/format";
 import type { BranchSnapshot } from "@/lib/network/network";
@@ -46,7 +47,7 @@ export default function NationalDashboard({ snaps }: { snaps: BranchSnapshot[] }
   const delta = lastHour ? (thisHour - lastHour) / lastHour : 0;
 
   return (
-    <div className="glass absolute left-3 top-3 z-10 max-w-[calc(100%-28.5rem)] rounded-xl max-md:max-w-[calc(100%-1.5rem)]">
+    <MovableCard area="map" id="telemetry" title="Network telemetry" className="glass absolute left-3 top-3 z-10 max-w-[calc(100%-28.5rem)] rounded-xl max-md:max-w-[calc(100%-1.5rem)]">
       <div className="flex items-center gap-2 px-3.5 pt-2.5">
         <span className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-white/45">Network telemetry</span>
         <SimBadge />
@@ -54,7 +55,7 @@ export default function NationalDashboard({ snaps }: { snaps: BranchSnapshot[] }
           {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
       </div>
-      <div className={cx("grid gap-x-6 gap-y-3 px-3.5 pb-3 pt-2", open ? "grid-cols-[repeat(2,minmax(128px,1fr))] xl:grid-cols-[repeat(4,minmax(128px,1fr))]" : "grid-cols-[repeat(2,minmax(128px,1fr))]")}>
+      <div className={cx("grid gap-x-6 gap-y-3 px-3.5 pb-3 pt-2", open ? "grid-cols-[repeat(2,minmax(128px,1fr))] min-[1700px]:grid-cols-[repeat(4,minmax(128px,1fr))]" : "grid-cols-[repeat(2,minmax(128px,1fr))]")}>
         <Readout label="Revenue today" value={ghsCompact(t.sales)} trend={cumulative} sub={`${ghsCompact(thisHour)} this hour · ${delta >= 0 ? "+" : ""}${Math.round(delta * 100)}% vs last`} />
         <Readout label="Active orders" value={t.active.toLocaleString()} trend={hourly} trendColor="#a5b4fc" sub={`${t.orders.toLocaleString()} today`} />
         {open && (
@@ -75,6 +76,6 @@ export default function NationalDashboard({ snaps }: { snaps: BranchSnapshot[] }
           </>
         )}
       </div>
-    </div>
+    </MovableCard>
   );
 }
