@@ -1,0 +1,11 @@
+{
+  "_comment": "Device → floor-plan bindings. These 'bench-*' entries are EXAMPLES for bench-testing the live pipeline with scripts/device-sim.ts against the East Legon twin. A binding only accepts data when the device's secret is configured in DEVICE_KEYS (server env). Replace with real installed devices.",
+  "devices": [
+    { "deviceId": "bench-coldroom-01", "branchId": "branch-015", "equipmentId": "walk-in-cold-1", "metric": "temperature_c", "calibrationOffset": 0, "expectedIntervalSec": 30, "model": "Example: LoRaWAN probe (bench)" },
+    { "deviceId": "bench-freezer-01", "branchId": "branch-015", "equipmentId": "walk-in-freezer-1", "metric": "temperature_c", "calibrationOffset": 0, "expectedIntervalSec": 30, "model": "Example: LoRaWAN probe (bench)" },
+    { "deviceId": "bench-hotholding-01", "branchId": "branch-015", "equipmentId": "hot-holding-1", "metric": "temperature_c", "calibrationOffset": 0, "expectedIntervalSec": 30, "model": "Example: Wi-Fi probe (bench)" },
+    { "deviceId": "bench-fryer-01", "branchId": "branch-015", "equipmentId": "fryer-1", "metric": "oil_quality_pct", "calibrationOffset": 0, "expectedIntervalSec": 60, "model": "Example: inline oil-quality sensor (bench)" },
+    { "deviceId": "bench-probe-qc-01", "branchId": "branch-015", "sensorCode": "SNS-034", "metric": "probe_temperature_c", "calibrationOffset": 0, "expectedIntervalSec": 3600, "model": "Example: Bluetooth food probe (bench)" }
+  ],
+  "cameras": []
+}

@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pizzaman Chickenman — Operations Command Center (prototype)
 
-## Getting Started
+A browser-based 3D restaurant digital twin and operations simulation for Pizzaman Chickenman's
+branch network in Ghana. Pick any of the 70 outlets on the Ghana map, fly into a procedurally
+generated 3D restaurant, and watch a deterministic simulation of customers, staff, kitchen
+stations, orders, food-safety sensors, inventory and deliveries.
 
-First, run the development server:
+> **Read this first — what is real and what is not**
+> - Branch names, locations, regions, hours and menu prices come from the company's public
+>   directory and Chris B catalogue (verified 2026-11-03, sources in `docs/research`).
+> - **All floor plans are conceptual.** No public plans exist; layouts A/B/C are design assumptions.
+> - **All operational data is simulated** (orders, sales, staff, temperatures, alerts, stock).
+> - Virtual cameras are 3D viewpoints, **not CCTV**. No POS, IoT, CCTV or rider GPS is connected.
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd web
+npm install
+cp .env.example .env.local   # optional: ANTHROPIC_API_KEY for the full AI assistant
+npm run dev                  # http://localhost:3000
+npm test                     # simulation + floor plan tests
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Without `ANTHROPIC_API_KEY` the assistant runs in a labelled offline mode (rule-based intents over
+the same tools). The map uses OpenFreeMap tiles by default; set `NEXT_PUBLIC_MAPTILER_KEY` to use MapTiler.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Demo walkthrough
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Ghana network** — markers coloured by simulated status; national KPIs; click a marker for
+   today's simulated revenue, orders, staff, kitchen load and alerts.
+2. **Restaurant Branches** — sortable table of all branches with simulated revenue per branch.
+3. **Open digital twin** (East Legon → Model C flagship, Spintex → Model B, KNUST → Model A) —
+   the map flies in, the exterior appears, the camera enters through the front door.
+4. **Demo scenarios** (in the twin) — inject order #… (Large Chicken Pizza + PlayMan Jollof) and
+   follow it through the kitchen; simulate a refrigerator compressor fault and handle the alert.
+5. **Virtual Cameras** — 1/4/9 simultaneous views generated from the floor plan.
+6. **Food Safety / Inventory / Staff / Delivery / Kitchen Operations** — live module panels.
+7. **Floor Plan Editor** — move equipment, validate circulation, save, and see the twin update.
+8. **Ops AI** — "Which branch is performing best?", "Take me to the pizza oven".
 
-## Learn More
+## Layout
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/lib/floorplan   schema, catalogue, wall/camera/sensor derivation, nav grid (A*), SVG export
+src/lib/sim         deterministic engine, menu & recipes, inventory catalogue, safety profile
+src/lib/network     verified branches, lightweight network model, conceptual supply hubs
+src/lib/assistant   AI tool schemas + client-side tool executor
+src/store           Zustand app store, simulation registry, versioned floor plan repository
+src/components      shell · map · twin · panels · editor · analytics · assistant
+src/data            branches.json (from research), floorplans/model-{a,b,c}.json
+scripts             generate-floorplans.ts, import-branches.py
+prisma              target production schema (backend not yet built)
+docs                ARCHITECTURE.md, research/, floorplans/*.svg
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See `docs/ARCHITECTURE.md` for the design, the production target and phase status.

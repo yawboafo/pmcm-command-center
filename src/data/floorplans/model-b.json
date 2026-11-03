@@ -1,0 +1,3264 @@
+{
+ "schemaVersion": 1,
+ "restaurantId": "template-B",
+ "name": "Model B — Standard Restaurant",
+ "format": "B",
+ "conceptual": true,
+ "provenance": "Conceptual layout generated from commercial quick-service kitchen design principles and publicly observable brand characteristics. Not a surveyed or official Pizzaman Chickenman floor plan. Must be reviewed by a qualified architect and food-safety professional before any real-world use.",
+ "dimensions": {
+  "width": 16,
+  "length": 13,
+  "height": 3.4
+ },
+ "frontage": "south",
+ "rooms": [
+  {
+   "id": "b-dining",
+   "name": "Dining Room",
+   "type": "dining",
+   "hygieneZone": "public",
+   "x": 0,
+   "z": 0,
+   "w": 11.5,
+   "d": 6
+  },
+  {
+   "id": "b-order",
+   "name": "Ordering Hall",
+   "type": "customer",
+   "hygieneZone": "public",
+   "x": 11.5,
+   "z": 0,
+   "w": 4.5,
+   "d": 6
+  },
+  {
+   "id": "b-counter",
+   "name": "Service & Collection Counter",
+   "type": "counter",
+   "hygieneZone": "cooked",
+   "x": 7.5,
+   "z": 6,
+   "w": 8.5,
+   "d": 1.4
+  },
+  {
+   "id": "b-dispatch",
+   "name": "Delivery Dispatch",
+   "type": "dispatch",
+   "hygieneZone": "support",
+   "x": 0,
+   "z": 6,
+   "w": 3.5,
+   "d": 4.5
+  },
+  {
+   "id": "b-pack",
+   "name": "Packaging & QC",
+   "type": "packaging",
+   "hygieneZone": "cooked",
+   "x": 3.5,
+   "z": 6,
+   "w": 4,
+   "d": 4.5
+  },
+  {
+   "id": "b-pizza",
+   "name": "Pizza Kitchen",
+   "type": "pizza",
+   "hygieneZone": "cooked",
+   "x": 7.5,
+   "z": 7.4,
+   "w": 5,
+   "d": 3.1
+  },
+  {
+   "id": "b-chicken",
+   "name": "Chicken & Rice Hot Line",
+   "type": "kitchen",
+   "hygieneZone": "cooked",
+   "x": 12.5,
+   "z": 7.4,
+   "w": 3.5,
+   "d": 3.1
+  },
+  {
+   "id": "b-staff",
+   "name": "Staff Room & Manager",
+   "type": "staff",
+   "hygieneZone": "support",
+   "x": 0,
+   "z": 10.5,
+   "w": 2.2,
+   "d": 2.5
+  },
+  {
+   "id": "b-wc",
+   "name": "Staff WC",
+   "type": "toilet",
+   "hygieneZone": "support",
+   "x": 2.2,
+   "z": 10.5,
+   "w": 1.3,
+   "d": 2.5
+  },
+  {
+   "id": "b-dry",
+   "name": "Dry Store",
+   "type": "dry",
+   "hygieneZone": "storage",
+   "x": 3.5,
+   "z": 10.5,
+   "w": 2.2,
+   "d": 2.5
+  },
+  {
+   "id": "b-wash",
+   "name": "Dishwash",
+   "type": "wash",
+   "hygieneZone": "support",
+   "x": 5.7,
+   "z": 10.5,
+   "w": 1.8,
+   "d": 2.5
+  },
+  {
+   "id": "b-cold",
+   "name": "Walk-in Cold Room",
+   "type": "cold",
+   "hygieneZone": "storage",
+   "x": 7.5,
+   "z": 10.5,
+   "w": 5,
+   "d": 2.5
+  },
+  {
+   "id": "b-raw",
+   "name": "Raw Chicken Prep",
+   "type": "chicken",
+   "hygieneZone": "raw",
+   "x": 12.5,
+   "z": 10.5,
+   "w": 3.5,
+   "d": 2.5
+  }
+ ],
+ "openings": [
+  [
+   "b-dining",
+   "b-order"
+  ],
+  [
+   "b-order",
+   "b-counter"
+  ],
+  [
+   "b-dining",
+   "b-counter"
+  ],
+  [
+   "b-counter",
+   "b-pizza"
+  ],
+  [
+   "b-counter",
+   "b-chicken"
+  ],
+  [
+   "b-pizza",
+   "b-chicken"
+  ],
+  [
+   "b-counter",
+   "b-pack"
+  ],
+  [
+   "b-pack",
+   "b-pizza"
+  ]
+ ],
+ "walls": [
+  {
+   "id": "wall-1",
+   "a": [
+    0,
+    0
+   ],
+   "b": [
+    0.7,
+    0
+   ],
+   "thickness": 0.25,
+   "height": 3.4,
+   "exterior": true
+  },
+  {
+   "id": "wall-2",
+   "a": [
+    0.7,
+    0
+   ],
+   "b": [
+    3.1,
+    0
+   ],
+   "thickness": 0.25,
+   "height": 0.45,
+   "exterior": true
+  },
+  {
+   "id": "wall-3",
+   "a": [
+    0.7,
+    0
+   ],
+   "b": [
+    3.1,
+    0
+   ],
+   "thickness": 0.25,
+   "height": 0.8499999999999996,
+   "base": 2.5500000000000003,
+   "exterior": true
+  },
+  {
+   "id": "wall-4",
+   "a": [
+    3.1,
+    0
+   ],
+   "b": [
+    4,
+    0
+   ],
+   "thickness": 0.25,
+   "height": 3.4,
+   "exterior": true
+  },
+  {
+   "id": "wall-5",
+   "a": [
+    4,
+    0
+   ],
+   "b": [
+    6.4,
+    0
+   ],
+   "thickness": 0.25,
+   "height": 0.45,
+   "exterior": true
+  },
+  {
+   "id": "wall-6",
+   "a": [
+    4,
+    0
+   ],
+   "b": [
+    6.4,
+    0
+   ],
+   "thickness": 0.25,
+   "height": 0.8499999999999996,
+   "base": 2.5500000000000003,
+   "exterior": true
+  },
+  {
+   "id": "wall-7",
+   "a": [
+    6.4,
+    0
+   ],
+   "b": [
+    7.3,
+    0
+   ],
+   "thickness": 0.25,
+   "height": 3.4,
+   "exterior": true
+  },
+  {
+   "id": "wall-8",
+   "a": [
+    7.3,
+    0
+   ],
+   "b": [
+    9.7,
+    0
+   ],
+   "thickness": 0.25,
+   "height": 0.45,
+   "exterior": true
+  },
+  {
+   "id": "wall-9",
+   "a": [
+    7.3,
+    0
+   ],
+   "b": [
+    9.7,
+    0
+   ],
+   "thickness": 0.25,
+   "height": 0.8499999999999996,
+   "base": 2.5500000000000003,
+   "exterior": true
+  },
+  {
+   "id": "wall-10",
+   "a": [
+    9.7,
+    0
+   ],
+   "b": [
+    12.85,
+    0
+   ],
+   "thickness": 0.25,
+   "height": 3.4,
+   "exterior": true
+  },
+  {
+   "id": "wall-11",
+   "a": [
+    14.65,
+    0
+   ],
+   "b": [
+    15.8,
+    0
+   ],
+   "thickness": 0.25,
+   "height": 0.45,
+   "exterior": true
+  },
+  {
+   "id": "wall-12",
+   "a": [
+    14.65,
+    0
+   ],
+   "b": [
+    15.8,
+    0
+   ],
+   "thickness": 0.25,
+   "height": 0.8499999999999996,
+   "base": 2.5500000000000003,
+   "exterior": true
+  },
+  {
+   "id": "wall-13",
+   "a": [
+    15.8,
+    0
+   ],
+   "b": [
+    16,
+    0
+   ],
+   "thickness": 0.25,
+   "height": 3.4,
+   "exterior": true
+  },
+  {
+   "id": "wall-14",
+   "a": [
+    0,
+    6
+   ],
+   "b": [
+    7.5,
+    6
+   ],
+   "thickness": 0.15,
+   "height": 3.4,
+   "exterior": false
+  },
+  {
+   "id": "wall-15",
+   "a": [
+    0,
+    0
+   ],
+   "b": [
+    0,
+    2.4
+   ],
+   "thickness": 0.25,
+   "height": 3.4,
+   "exterior": true
+  },
+  {
+   "id": "wall-16",
+   "a": [
+    0,
+    3.6
+   ],
+   "b": [
+    0,
+    7.65
+   ],
+   "thickness": 0.25,
+   "height": 3.4,
+   "exterior": true
+  },
+  {
+   "id": "wall-17",
+   "a": [
+    0,
+    8.85
+   ],
+   "b": [
+    0,
+    13
+   ],
+   "thickness": 0.25,
+   "height": 3.4,
+   "exterior": true
+  },
+  {
+   "id": "wall-18",
+   "a": [
+    16,
+    0
+   ],
+   "b": [
+    16,
+    1.3
+   ],
+   "thickness": 0.25,
+   "height": 3.4,
+   "exterior": true
+  },
+  {
+   "id": "wall-19",
+   "a": [
+    16,
+    1.3
+   ],
+   "b": [
+    16,
+    3.7
+   ],
+   "thickness": 0.25,
+   "height": 0.45,
+   "exterior": true
+  },
+  {
+   "id": "wall-20",
+   "a": [
+    16,
+    1.3
+   ],
+   "b": [
+    16,
+    3.7
+   ],
+   "thickness": 0.25,
+   "height": 0.8499999999999996,
+   "base": 2.5500000000000003,
+   "exterior": true
+  },
+  {
+   "id": "wall-21",
+   "a": [
+    16,
+    3.7
+   ],
+   "b": [
+    16,
+    13
+   ],
+   "thickness": 0.25,
+   "height": 3.4,
+   "exterior": true
+  },
+  {
+   "id": "wall-22",
+   "a": [
+    7.5,
+    10.5
+   ],
+   "b": [
+    7.5,
+    13
+   ],
+   "thickness": 0.15,
+   "height": 3.4,
+   "exterior": false
+  },
+  {
+   "id": "wall-23",
+   "a": [
+    0,
+    10.5
+   ],
+   "b": [
+    0.65,
+    10.5
+   ],
+   "thickness": 0.15,
+   "height": 3.4,
+   "exterior": false
+  },
+  {
+   "id": "wall-24",
+   "a": [
+    1.55,
+    10.5
+   ],
+   "b": [
+    4.15,
+    10.5
+   ],
+   "thickness": 0.15,
+   "height": 3.4,
+   "exterior": false
+  },
+  {
+   "id": "wall-25",
+   "a": [
+    5.05,
+    10.5
+   ],
+   "b": [
+    6.15,
+    10.5
+   ],
+   "thickness": 0.15,
+   "height": 3.4,
+   "exterior": false
+  },
+  {
+   "id": "wall-26",
+   "a": [
+    7.05,
+    10.5
+   ],
+   "b": [
+    7.5,
+    10.5
+   ],
+   "thickness": 0.15,
+   "height": 3.4,
+   "exterior": false
+  },
+  {
+   "id": "wall-27",
+   "a": [
+    8.5,
+    10.5
+   ],
+   "b": [
+    14.75,
+    10.5
+   ],
+   "thickness": 0.15,
+   "height": 3.4,
+   "exterior": false
+  },
+  {
+   "id": "wall-28",
+   "a": [
+    15.65,
+    10.5
+   ],
+   "b": [
+    16,
+    10.5
+   ],
+   "thickness": 0.15,
+   "height": 3.4,
+   "exterior": false
+  },
+  {
+   "id": "wall-29",
+   "a": [
+    3.5,
+    6
+   ],
+   "b": [
+    3.5,
+    7.65
+   ],
+   "thickness": 0.15,
+   "height": 3.4,
+   "exterior": false
+  },
+  {
+   "id": "wall-30",
+   "a": [
+    3.5,
+    8.85
+   ],
+   "b": [
+    3.5,
+    13
+   ],
+   "thickness": 0.15,
+   "height": 3.4,
+   "exterior": false
+  },
+  {
+   "id": "wall-31",
+   "a": [
+    12.5,
+    10.5
+   ],
+   "b": [
+    12.5,
+    10.75
+   ],
+   "thickness": 0.15,
+   "height": 3.4,
+   "exterior": false
+  },
+  {
+   "id": "wall-32",
+   "a": [
+    12.5,
+    11.65
+   ],
+   "b": [
+    12.5,
+    13
+   ],
+   "thickness": 0.15,
+   "height": 3.4,
+   "exterior": false
+  },
+  {
+   "id": "wall-33",
+   "a": [
+    0,
+    13
+   ],
+   "b": [
+    0.6,
+    13
+   ],
+   "thickness": 0.25,
+   "height": 3.4,
+   "exterior": true
+  },
+  {
+   "id": "wall-34",
+   "a": [
+    1.6,
+    13
+   ],
+   "b": [
+    16,
+    13
+   ],
+   "thickness": 0.25,
+   "height": 3.4,
+   "exterior": true
+  },
+  {
+   "id": "wall-35",
+   "a": [
+    2.2,
+    10.5
+   ],
+   "b": [
+    2.2,
+    11.35
+   ],
+   "thickness": 0.15,
+   "height": 3.4,
+   "exterior": false
+  },
+  {
+   "id": "wall-36",
+   "a": [
+    2.2,
+    12.15
+   ],
+   "b": [
+    2.2,
+    13
+   ],
+   "thickness": 0.15,
+   "height": 3.4,
+   "exterior": false
+  },
+  {
+   "id": "wall-37",
+   "a": [
+    5.7,
+    10.5
+   ],
+   "b": [
+    5.7,
+    13
+   ],
+   "thickness": 0.15,
+   "height": 3.4,
+   "exterior": false
+  }
+ ],
+ "doors": [
+  {
+   "id": "door-1",
+   "name": "Main Entrance",
+   "x": 13.75,
+   "z": 0,
+   "width": 1.8,
+   "axis": "x",
+   "kind": "entrance"
+  },
+  {
+   "id": "door-2",
+   "name": "Dining Emergency Exit",
+   "x": 0,
+   "z": 3,
+   "width": 1.2,
+   "axis": "z",
+   "kind": "emergency"
+  },
+  {
+   "id": "door-3",
+   "name": "Rider Door",
+   "x": 0,
+   "z": 8.25,
+   "width": 1.2,
+   "axis": "z",
+   "kind": "delivery"
+  },
+  {
+   "id": "door-4",
+   "name": "Dispatch Pass",
+   "x": 3.5,
+   "z": 8.25,
+   "width": 1.2,
+   "axis": "z",
+   "kind": "internal"
+  },
+  {
+   "id": "door-5",
+   "name": "Staff ↔ Dispatch",
+   "x": 1.1,
+   "z": 10.5,
+   "width": 0.9,
+   "axis": "x",
+   "kind": "staff"
+  },
+  {
+   "id": "door-6",
+   "name": "Rear Emergency Exit",
+   "x": 1.1,
+   "z": 13,
+   "width": 1,
+   "axis": "x",
+   "kind": "emergency"
+  },
+  {
+   "id": "door-7",
+   "name": "Staff WC",
+   "x": 2.2,
+   "z": 11.75,
+   "width": 0.8,
+   "axis": "z",
+   "kind": "internal"
+  },
+  {
+   "id": "door-8",
+   "name": "Dry Store",
+   "x": 4.6,
+   "z": 10.5,
+   "width": 0.9,
+   "axis": "x",
+   "kind": "internal"
+  },
+  {
+   "id": "door-9",
+   "name": "Dishwash",
+   "x": 6.6,
+   "z": 10.5,
+   "width": 0.9,
+   "axis": "x",
+   "kind": "internal"
+  },
+  {
+   "id": "door-10",
+   "name": "Pizza ↔ Cold Room",
+   "x": 8,
+   "z": 10.5,
+   "width": 1,
+   "axis": "x",
+   "kind": "internal"
+  },
+  {
+   "id": "door-11",
+   "name": "Cold Room ↔ Raw Prep",
+   "x": 12.5,
+   "z": 11.2,
+   "width": 0.9,
+   "axis": "z",
+   "kind": "internal"
+  },
+  {
+   "id": "door-12",
+   "name": "Raw Prep ↔ Hot Line",
+   "x": 15.2,
+   "z": 10.5,
+   "width": 0.9,
+   "axis": "x",
+   "kind": "internal"
+  }
+ ],
+ "windows": [
+  {
+   "id": "win-1",
+   "x": 1.9,
+   "z": 0,
+   "width": 2.4,
+   "axis": "x",
+   "sill": 0.45,
+   "height": 2.1
+  },
+  {
+   "id": "win-2",
+   "x": 5.2,
+   "z": 0,
+   "width": 2.4,
+   "axis": "x",
+   "sill": 0.45,
+   "height": 2.1
+  },
+  {
+   "id": "win-3",
+   "x": 8.5,
+   "z": 0,
+   "width": 2.4,
+   "axis": "x",
+   "sill": 0.45,
+   "height": 2.1
+  },
+  {
+   "id": "win-4",
+   "x": 15.2,
+   "z": 0,
+   "width": 1.2,
+   "axis": "x",
+   "sill": 0.45,
+   "height": 2.1
+  },
+  {
+   "id": "win-5",
+   "x": 16,
+   "z": 2.5,
+   "width": 2.4,
+   "axis": "z",
+   "sill": 0.45,
+   "height": 2.1
+  }
+ ],
+ "equipment": [
+  {
+   "id": "pos-counter-1",
+   "type": "pos-counter",
+   "name": "Ordering Counter",
+   "category": "service",
+   "roomId": "b-counter",
+   "position": [
+    13.8,
+    0,
+    6.35
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    3.6,
+    1.05,
+    0.7
+   ],
+   "operational": {
+    "powered": true,
+    "capacity": 2
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "orders"
+    ],
+    "focusDistance": 5.760000000000001
+   },
+   "workstationId": "ws-order-counter-1"
+  },
+  {
+   "id": "pickup-counter-1",
+   "type": "pickup-counter",
+   "name": "Collection Counter",
+   "category": "service",
+   "roomId": "b-counter",
+   "position": [
+    10.4,
+    0,
+    6.3
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    2,
+    1.05,
+    0.6
+   ],
+   "operational": {
+    "powered": true,
+    "capacity": 4
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "orders"
+    ],
+    "focusDistance": 3.2
+   },
+   "workstationId": "ws-pickup-1"
+  },
+  {
+   "id": "menu-board-1",
+   "type": "menu-board",
+   "name": "Digital Menu Board 01",
+   "category": "service",
+   "roomId": "b-counter",
+   "position": [
+    13.8,
+    2.05,
+    7.35
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    3,
+    0.9,
+    0.08
+   ],
+   "operational": {
+    "powered": true
+   },
+   "interaction": {
+    "inspect": [
+     "status"
+    ],
+    "focusDistance": 4.800000000000001
+   }
+  },
+  {
+   "id": "menu-board-2",
+   "type": "menu-board",
+   "name": "Digital Menu Board 02",
+   "category": "service",
+   "roomId": "b-counter",
+   "position": [
+    10.4,
+    2.05,
+    7.35
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    2,
+    0.9,
+    0.08
+   ],
+   "operational": {
+    "powered": true
+   },
+   "interaction": {
+    "inspect": [
+     "status"
+    ],
+    "focusDistance": 3.2
+   }
+  },
+  {
+   "id": "drinks-fridge-1",
+   "type": "drinks-fridge",
+   "name": "Drinks Fridge",
+   "category": "refrigeration",
+   "roomId": "b-order",
+   "position": [
+    15.6,
+    0,
+    2
+   ],
+   "rotation": -1.5707963267948966,
+   "size": [
+    0.7,
+    2,
+    0.7
+   ],
+   "operational": {
+    "powered": true,
+    "setpointC": 4,
+    "maintenanceIntervalDays": 90
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "temperature",
+     "inventory"
+    ],
+    "focusDistance": 2.2
+   }
+  },
+  {
+   "id": "packaging-table-1",
+   "type": "packaging-table",
+   "name": "Packaging Table 01",
+   "category": "service",
+   "roomId": "b-pack",
+   "position": [
+    5,
+    0,
+    6.4
+   ],
+   "rotation": 0,
+   "size": [
+    1.8,
+    0.95,
+    0.8
+   ],
+   "operational": {
+    "powered": true,
+    "capacity": 2
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "orders",
+     "inventory"
+    ],
+    "focusDistance": 2.8800000000000003
+   },
+   "workstationId": "ws-packaging-1"
+  },
+  {
+   "id": "packaging-table-2",
+   "type": "packaging-table",
+   "name": "Packaging Table 02",
+   "category": "service",
+   "roomId": "b-pack",
+   "position": [
+    5.4,
+    0,
+    8.25
+   ],
+   "rotation": 0,
+   "size": [
+    1.8,
+    0.95,
+    0.8
+   ],
+   "operational": {
+    "powered": true,
+    "capacity": 2
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "orders",
+     "inventory"
+    ],
+    "focusDistance": 2.8800000000000003
+   },
+   "workstationId": "ws-packaging-1"
+  },
+  {
+   "id": "qc-pass-1",
+   "type": "qc-pass",
+   "name": "QC Pass",
+   "category": "service",
+   "roomId": "b-pack",
+   "position": [
+    7.2,
+    0,
+    8.8
+   ],
+   "rotation": -1.5707963267948966,
+   "size": [
+    1.5,
+    1.4,
+    0.6
+   ],
+   "operational": {
+    "powered": true,
+    "setpointC": 65,
+    "capacity": 3
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "temperature",
+     "orders"
+    ],
+    "focusDistance": 2.4000000000000004
+   },
+   "workstationId": "ws-qc-1"
+  },
+  {
+   "id": "shelving-1",
+   "type": "shelving",
+   "name": "Packaging Supplies",
+   "category": "storage",
+   "roomId": "b-pack",
+   "position": [
+    3.75,
+    0,
+    9.6
+   ],
+   "rotation": 1.5707963267948966,
+   "size": [
+    1.2,
+    1.9,
+    0.5
+   ],
+   "operational": {
+    "powered": true
+   },
+   "interaction": {
+    "inspect": [
+     "inventory"
+    ],
+    "focusDistance": 2.2
+   }
+  },
+  {
+   "id": "handwash-1",
+   "type": "handwash",
+   "name": "Packaging Handwash",
+   "category": "sanitation",
+   "roomId": "b-pack",
+   "position": [
+    3.73,
+    0,
+    6.6
+   ],
+   "rotation": 1.5707963267948966,
+   "size": [
+    0.5,
+    0.9,
+    0.45
+   ],
+   "operational": {
+    "powered": true
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "cleaning"
+    ],
+    "focusDistance": 2.2
+   }
+  },
+  {
+   "id": "dispatch-rack-1",
+   "type": "dispatch-rack",
+   "name": "Dispatch Rack",
+   "category": "service",
+   "roomId": "b-dispatch",
+   "position": [
+    1.75,
+    0,
+    6.25
+   ],
+   "rotation": 0,
+   "size": [
+    1.6,
+    1.8,
+    0.5
+   ],
+   "operational": {
+    "powered": true,
+    "capacity": 8
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "orders"
+    ],
+    "focusDistance": 2.5600000000000005
+   },
+   "workstationId": "ws-dispatch-1"
+  },
+  {
+   "id": "pizza-makeline-1",
+   "type": "pizza-makeline",
+   "name": "Pizza Make-Line",
+   "category": "preparation",
+   "roomId": "b-pizza",
+   "position": [
+    9.5,
+    0,
+    10.1
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    1.9,
+    1,
+    0.8
+   ],
+   "operational": {
+    "powered": true,
+    "setpointC": 4,
+    "capacity": 2
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "temperature",
+     "orders",
+     "inventory",
+     "cleaning"
+    ],
+    "focusDistance": 3.04
+   },
+   "workstationId": "ws-pizza-prep-1"
+  },
+  {
+   "id": "conveyor-oven-1",
+   "type": "conveyor-oven",
+   "name": "Conveyor Oven 01",
+   "category": "cooking",
+   "roomId": "b-pizza",
+   "position": [
+    11.5,
+    0,
+    10
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    2,
+    1.6,
+    1
+   ],
+   "operational": {
+    "powered": true,
+    "setpointC": 260,
+    "capacity": 4,
+    "maintenanceIntervalDays": 30
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "temperature",
+     "orders",
+     "maintenance",
+     "cleaning"
+    ],
+    "focusDistance": 3.2
+   },
+   "workstationId": "ws-oven-1"
+  },
+  {
+   "id": "hood-1",
+   "type": "hood",
+   "name": "Oven Hood",
+   "category": "ventilation",
+   "roomId": "b-pizza",
+   "position": [
+    11.5,
+    2.15,
+    9.95
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    2.2,
+    0.55,
+    1.1
+   ],
+   "operational": {
+    "powered": true,
+    "maintenanceIntervalDays": 90
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "maintenance",
+     "cleaning"
+    ],
+    "focusDistance": 3.5200000000000005
+   }
+  },
+  {
+   "id": "prep-table-1",
+   "type": "prep-table",
+   "name": "Pizza Cut Table",
+   "category": "preparation",
+   "roomId": "b-pizza",
+   "position": [
+    11.4,
+    0,
+    8
+   ],
+   "rotation": 0,
+   "size": [
+    1.8,
+    0.9,
+    0.75
+   ],
+   "operational": {
+    "powered": true,
+    "capacity": 1
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "orders",
+     "cleaning"
+    ],
+    "focusDistance": 2.8800000000000003
+   },
+   "workstationId": "ws-qc-1"
+  },
+  {
+   "id": "dough-table-1",
+   "type": "dough-table",
+   "name": "Dough Table",
+   "category": "preparation",
+   "roomId": "b-pizza",
+   "position": [
+    8.9,
+    0,
+    8
+   ],
+   "rotation": 0,
+   "size": [
+    1.8,
+    0.9,
+    0.8
+   ],
+   "operational": {
+    "powered": true,
+    "capacity": 1
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "cleaning"
+    ],
+    "focusDistance": 2.8800000000000003
+   }
+  },
+  {
+   "id": "fryer-1",
+   "type": "fryer",
+   "name": "Fryer 01",
+   "category": "cooking",
+   "roomId": "b-chicken",
+   "position": [
+    15.6,
+    0,
+    8.1
+   ],
+   "rotation": -1.5707963267948966,
+   "size": [
+    0.9,
+    1.1,
+    0.8
+   ],
+   "operational": {
+    "powered": true,
+    "setpointC": 175,
+    "capacity": 2,
+    "maintenanceIntervalDays": 14
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "temperature",
+     "orders",
+     "maintenance",
+     "cleaning"
+    ],
+    "focusDistance": 2.2
+   },
+   "workstationId": "ws-fryer-1"
+  },
+  {
+   "id": "fryer-2",
+   "type": "fryer",
+   "name": "Fryer 02",
+   "category": "cooking",
+   "roomId": "b-chicken",
+   "position": [
+    15.6,
+    0,
+    9
+   ],
+   "rotation": -1.5707963267948966,
+   "size": [
+    0.9,
+    1.1,
+    0.8
+   ],
+   "operational": {
+    "powered": true,
+    "setpointC": 175,
+    "capacity": 2,
+    "maintenanceIntervalDays": 14
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "temperature",
+     "orders",
+     "maintenance",
+     "cleaning"
+    ],
+    "focusDistance": 2.2
+   },
+   "workstationId": "ws-fryer-1"
+  },
+  {
+   "id": "hood-2",
+   "type": "hood",
+   "name": "Fryer Hood",
+   "category": "ventilation",
+   "roomId": "b-chicken",
+   "position": [
+    15.45,
+    2.15,
+    8.55
+   ],
+   "rotation": -1.5707963267948966,
+   "size": [
+    2,
+    0.55,
+    1.1
+   ],
+   "operational": {
+    "powered": true,
+    "maintenanceIntervalDays": 90
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "maintenance",
+     "cleaning"
+    ],
+    "focusDistance": 3.2
+   }
+  },
+  {
+   "id": "rice-stove-1",
+   "type": "rice-stove",
+   "name": "Jollof & Fried Rice Stove",
+   "category": "cooking",
+   "roomId": "b-chicken",
+   "position": [
+    13.4,
+    0,
+    10.1
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    1.6,
+    0.9,
+    0.8
+   ],
+   "operational": {
+    "powered": true,
+    "setpointC": 100,
+    "capacity": 2,
+    "maintenanceIntervalDays": 30
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "temperature",
+     "orders",
+     "maintenance"
+    ],
+    "focusDistance": 2.5600000000000005
+   },
+   "workstationId": "ws-rice-1"
+  },
+  {
+   "id": "hood-3",
+   "type": "hood",
+   "name": "Rice Hood",
+   "category": "ventilation",
+   "roomId": "b-chicken",
+   "position": [
+    13.4,
+    2.15,
+    9.95
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    1.8,
+    0.55,
+    1.1
+   ],
+   "operational": {
+    "powered": true,
+    "maintenanceIntervalDays": 90
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "maintenance",
+     "cleaning"
+    ],
+    "focusDistance": 2.8800000000000003
+   }
+  },
+  {
+   "id": "rice-warmer-1",
+   "type": "rice-warmer",
+   "name": "Rice Warmer",
+   "category": "cooking",
+   "roomId": "b-chicken",
+   "position": [
+    13.3,
+    0,
+    7.8
+   ],
+   "rotation": 0,
+   "size": [
+    1.2,
+    1,
+    0.7
+   ],
+   "operational": {
+    "powered": true,
+    "setpointC": 70,
+    "capacity": 3
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "temperature",
+     "orders",
+     "inventory"
+    ],
+    "focusDistance": 2.2
+   },
+   "workstationId": "ws-rice-1"
+  },
+  {
+   "id": "hot-holding-1",
+   "type": "hot-holding",
+   "name": "Chicken Hot-Holding",
+   "category": "cooking",
+   "roomId": "b-chicken",
+   "position": [
+    14,
+    0,
+    9
+   ],
+   "rotation": 1.5707963267948966,
+   "size": [
+    1.2,
+    1.4,
+    0.7
+   ],
+   "operational": {
+    "powered": true,
+    "setpointC": 70,
+    "capacity": 6
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "temperature",
+     "orders"
+    ],
+    "focusDistance": 2.2
+   },
+   "workstationId": "ws-qc-1"
+  },
+  {
+   "id": "walk-in-cold-1",
+   "type": "walk-in-cold",
+   "name": "Cold Room Evaporator",
+   "category": "refrigeration",
+   "roomId": "b-cold",
+   "position": [
+    10,
+    2.35,
+    12.65
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    1.2,
+    0.45,
+    0.55
+   ],
+   "operational": {
+    "powered": true,
+    "setpointC": 3,
+    "maintenanceIntervalDays": 90
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "temperature",
+     "inventory",
+     "maintenance"
+    ],
+    "focusDistance": 2.2
+   }
+  },
+  {
+   "id": "shelving-2",
+   "type": "shelving",
+   "name": "Cold Room Shelf 01",
+   "category": "storage",
+   "roomId": "b-cold",
+   "position": [
+    8.7,
+    0,
+    12.75
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    1.2,
+    1.9,
+    0.5
+   ],
+   "operational": {
+    "powered": true
+   },
+   "interaction": {
+    "inspect": [
+     "inventory"
+    ],
+    "focusDistance": 2.2
+   }
+  },
+  {
+   "id": "shelving-3",
+   "type": "shelving",
+   "name": "Cold Room Shelf 02",
+   "category": "storage",
+   "roomId": "b-cold",
+   "position": [
+    10.1,
+    0,
+    12.75
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    1.2,
+    1.9,
+    0.5
+   ],
+   "operational": {
+    "powered": true
+   },
+   "interaction": {
+    "inspect": [
+     "inventory"
+    ],
+    "focusDistance": 2.2
+   }
+  },
+  {
+   "id": "shelving-4",
+   "type": "shelving",
+   "name": "Cold Room Shelf 03",
+   "category": "storage",
+   "roomId": "b-cold",
+   "position": [
+    11.5,
+    0,
+    12.75
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    1.2,
+    1.9,
+    0.5
+   ],
+   "operational": {
+    "powered": true
+   },
+   "interaction": {
+    "inspect": [
+     "inventory"
+    ],
+    "focusDistance": 2.2
+   }
+  },
+  {
+   "id": "freezer-1",
+   "type": "freezer",
+   "name": "Chicken Freezer 01",
+   "category": "refrigeration",
+   "roomId": "b-cold",
+   "position": [
+    7.9,
+    0,
+    12
+   ],
+   "rotation": 1.5707963267948966,
+   "size": [
+    0.75,
+    2,
+    0.8
+   ],
+   "operational": {
+    "powered": true,
+    "setpointC": -18,
+    "maintenanceIntervalDays": 90
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "temperature",
+     "inventory",
+     "maintenance"
+    ],
+    "focusDistance": 2.2
+   }
+  },
+  {
+   "id": "breading-station-1",
+   "type": "breading-station",
+   "name": "Chicken Breading Station",
+   "category": "preparation",
+   "roomId": "b-raw",
+   "position": [
+    14.25,
+    0,
+    12.62
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    1.5,
+    0.95,
+    0.75
+   ],
+   "operational": {
+    "powered": true,
+    "capacity": 1
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "orders",
+     "cleaning"
+    ],
+    "focusDistance": 2.4000000000000004
+   },
+   "workstationId": "ws-chicken-prep-1"
+  },
+  {
+   "id": "sink-1",
+   "type": "sink",
+   "name": "Raw Prep Sink",
+   "category": "sanitation",
+   "roomId": "b-raw",
+   "position": [
+    12.83,
+    0,
+    12.3
+   ],
+   "rotation": 1.5707963267948966,
+   "size": [
+    1.2,
+    0.95,
+    0.65
+   ],
+   "operational": {
+    "powered": true
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "cleaning"
+    ],
+    "focusDistance": 2.2
+   }
+  },
+  {
+   "id": "handwash-2",
+   "type": "handwash",
+   "name": "Raw Prep Handwash",
+   "category": "sanitation",
+   "roomId": "b-raw",
+   "position": [
+    15.77,
+    0,
+    12.6
+   ],
+   "rotation": -1.5707963267948966,
+   "size": [
+    0.5,
+    0.9,
+    0.45
+   ],
+   "operational": {
+    "powered": true
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "cleaning"
+    ],
+    "focusDistance": 2.2
+   }
+  },
+  {
+   "id": "shelving-5",
+   "type": "shelving",
+   "name": "Dry Store Shelf 01",
+   "category": "storage",
+   "roomId": "b-dry",
+   "position": [
+    4.6,
+    0,
+    12.75
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    1.2,
+    1.9,
+    0.5
+   ],
+   "operational": {
+    "powered": true
+   },
+   "interaction": {
+    "inspect": [
+     "inventory"
+    ],
+    "focusDistance": 2.2
+   }
+  },
+  {
+   "id": "shelving-6",
+   "type": "shelving",
+   "name": "Dry Store Shelf 02",
+   "category": "storage",
+   "roomId": "b-dry",
+   "position": [
+    3.75,
+    0,
+    11.9
+   ],
+   "rotation": 1.5707963267948966,
+   "size": [
+    1.2,
+    1.9,
+    0.5
+   ],
+   "operational": {
+    "powered": true
+   },
+   "interaction": {
+    "inspect": [
+     "inventory"
+    ],
+    "focusDistance": 2.2
+   }
+  },
+  {
+   "id": "dishwasher-1",
+   "type": "dishwasher",
+   "name": "Dishwasher",
+   "category": "sanitation",
+   "roomId": "b-wash",
+   "position": [
+    6.2,
+    0,
+    12.62
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    0.7,
+    1.5,
+    0.75
+   ],
+   "operational": {
+    "powered": true,
+    "maintenanceIntervalDays": 60
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "maintenance",
+     "cleaning"
+    ],
+    "focusDistance": 2.2
+   }
+  },
+  {
+   "id": "sink-2",
+   "type": "sink",
+   "name": "Wash Sink",
+   "category": "sanitation",
+   "roomId": "b-wash",
+   "position": [
+    7.17,
+    0,
+    12
+   ],
+   "rotation": -1.5707963267948966,
+   "size": [
+    1.2,
+    0.95,
+    0.65
+   ],
+   "operational": {
+    "powered": true
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "cleaning"
+    ],
+    "focusDistance": 2.2
+   }
+  },
+  {
+   "id": "desk-1",
+   "type": "desk",
+   "name": "Manager Workstation",
+   "category": "office",
+   "roomId": "b-staff",
+   "position": [
+    0.3,
+    0,
+    11.2
+   ],
+   "rotation": 1.5707963267948966,
+   "size": [
+    1.2,
+    0.75,
+    0.6
+   ],
+   "operational": {
+    "powered": true
+   },
+   "interaction": {
+    "inspect": [
+     "status"
+    ],
+    "focusDistance": 2.2
+   }
+  },
+  {
+   "id": "lockers-1",
+   "type": "lockers",
+   "name": "Staff Lockers",
+   "category": "office",
+   "roomId": "b-staff",
+   "position": [
+    0.25,
+    0,
+    12.4
+   ],
+   "rotation": 1.5707963267948966,
+   "size": [
+    1.2,
+    1.9,
+    0.5
+   ],
+   "operational": {
+    "powered": true
+   },
+   "interaction": {
+    "inspect": [
+     "status"
+    ],
+    "focusDistance": 2.2
+   }
+  },
+  {
+   "id": "toilet-1",
+   "type": "toilet",
+   "name": "Staff WC",
+   "category": "sanitation",
+   "roomId": "b-wc",
+   "position": [
+    2.85,
+    0,
+    12.6
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    0.45,
+    0.8,
+    0.7
+   ],
+   "operational": {
+    "powered": true
+   },
+   "interaction": {
+    "inspect": [
+     "cleaning"
+    ],
+    "focusDistance": 2.2
+   }
+  },
+  {
+   "id": "handwash-3",
+   "type": "handwash",
+   "name": "WC Handwash",
+   "category": "sanitation",
+   "roomId": "b-wc",
+   "position": [
+    2.43,
+    0,
+    11
+   ],
+   "rotation": 1.5707963267948966,
+   "size": [
+    0.5,
+    0.9,
+    0.45
+   ],
+   "operational": {
+    "powered": true
+   },
+   "interaction": {
+    "inspect": [
+     "status",
+     "cleaning"
+    ],
+    "focusDistance": 2.2
+   }
+  }
+ ],
+ "furniture": [
+  {
+   "id": "waiting-bench-1",
+   "type": "waiting-bench",
+   "roomId": "b-order",
+   "position": [
+    11.8,
+    0,
+    2.6
+   ],
+   "rotation": 1.5707963267948966,
+   "size": [
+    1.8,
+    0.45,
+    0.5
+   ],
+   "seats": 3
+  },
+  {
+   "id": "table-4-1",
+   "type": "table-4",
+   "roomId": "b-dining",
+   "position": [
+    4.2,
+    0,
+    1.4
+   ],
+   "rotation": 0,
+   "size": [
+    1.3,
+    0.75,
+    1.7
+   ],
+   "seats": 4
+  },
+  {
+   "id": "table-4-2",
+   "type": "table-4",
+   "roomId": "b-dining",
+   "position": [
+    6.8,
+    0,
+    1.4
+   ],
+   "rotation": 0,
+   "size": [
+    1.3,
+    0.75,
+    1.7
+   ],
+   "seats": 4
+  },
+  {
+   "id": "table-4-3",
+   "type": "table-4",
+   "roomId": "b-dining",
+   "position": [
+    9.4,
+    0,
+    1.4
+   ],
+   "rotation": 0,
+   "size": [
+    1.3,
+    0.75,
+    1.7
+   ],
+   "seats": 4
+  },
+  {
+   "id": "table-4-4",
+   "type": "table-4",
+   "roomId": "b-dining",
+   "position": [
+    4.2,
+    0,
+    4.6
+   ],
+   "rotation": 0,
+   "size": [
+    1.3,
+    0.75,
+    1.7
+   ],
+   "seats": 4
+  },
+  {
+   "id": "table-4-5",
+   "type": "table-4",
+   "roomId": "b-dining",
+   "position": [
+    6.8,
+    0,
+    4.6
+   ],
+   "rotation": 0,
+   "size": [
+    1.3,
+    0.75,
+    1.7
+   ],
+   "seats": 4
+  },
+  {
+   "id": "table-4-6",
+   "type": "table-4",
+   "roomId": "b-dining",
+   "position": [
+    9.4,
+    0,
+    4.6
+   ],
+   "rotation": 0,
+   "size": [
+    1.3,
+    0.75,
+    1.7
+   ],
+   "seats": 4
+  },
+  {
+   "id": "plant-1",
+   "type": "plant",
+   "roomId": "b-dining",
+   "position": [
+    11.1,
+    0,
+    0.4
+   ],
+   "rotation": 0,
+   "size": [
+    0.5,
+    1.2,
+    0.5
+   ],
+   "seats": 0
+  },
+  {
+   "id": "plant-2",
+   "type": "plant",
+   "roomId": "b-dining",
+   "position": [
+    0.4,
+    0,
+    5.6
+   ],
+   "rotation": 0,
+   "size": [
+    0.5,
+    1.2,
+    0.5
+   ],
+   "seats": 0
+  },
+  {
+   "id": "bench-1",
+   "type": "bench",
+   "roomId": "b-dispatch",
+   "position": [
+    2.65,
+    0,
+    10.2
+   ],
+   "rotation": 3.141592653589793,
+   "size": [
+    1.6,
+    0.45,
+    0.45
+   ],
+   "seats": 3
+  }
+ ],
+ "workstations": [
+  {
+   "id": "ws-order-counter-1",
+   "name": "Ordering Counter",
+   "type": "order-counter",
+   "roomId": "b-counter",
+   "equipmentIds": [
+    "pos-counter-1"
+   ],
+   "standPoint": [
+    13.8,
+    5.45
+   ],
+   "capacity": 3
+  },
+  {
+   "id": "ws-pizza-prep-1",
+   "name": "Pizza Make-Line",
+   "type": "pizza-prep",
+   "roomId": "b-pizza",
+   "equipmentIds": [
+    "pizza-makeline-1"
+   ],
+   "standPoint": [
+    9.5,
+    9.15
+   ],
+   "capacity": 2
+  },
+  {
+   "id": "ws-oven-1",
+   "name": "Pizza Oven",
+   "type": "oven",
+   "roomId": "b-pizza",
+   "equipmentIds": [
+    "conveyor-oven-1"
+   ],
+   "standPoint": [
+    11.5,
+    8.95
+   ],
+   "capacity": 5
+  },
+  {
+   "id": "ws-chicken-prep-1",
+   "name": "Chicken Prep",
+   "type": "chicken-prep",
+   "roomId": "b-raw",
+   "equipmentIds": [
+    "breading-station-1"
+   ],
+   "standPoint": [
+    14.25,
+    11.69
+   ],
+   "capacity": 2
+  },
+  {
+   "id": "ws-fryer-1",
+   "name": "Fryers",
+   "type": "fryer",
+   "roomId": "b-chicken",
+   "equipmentIds": [
+    "fryer-1",
+    "fryer-2"
+   ],
+   "standPoint": [
+    14.65,
+    8.1
+   ],
+   "capacity": 4
+  },
+  {
+   "id": "ws-rice-1",
+   "name": "Rice Station",
+   "type": "rice",
+   "roomId": "b-chicken",
+   "equipmentIds": [
+    "rice-warmer-1",
+    "rice-stove-1"
+   ],
+   "standPoint": [
+    13.3,
+    8.7
+   ],
+   "capacity": 3
+  },
+  {
+   "id": "ws-qc-1",
+   "name": "Quality Check",
+   "type": "qc",
+   "roomId": "b-pack",
+   "equipmentIds": [
+    "qc-pass-1",
+    "prep-table-1",
+    "hot-holding-1"
+   ],
+   "standPoint": [
+    6.35,
+    8.8
+   ],
+   "capacity": 3
+  },
+  {
+   "id": "ws-packaging-1",
+   "name": "Packaging",
+   "type": "packaging",
+   "roomId": "b-pack",
+   "equipmentIds": [
+    "packaging-table-1",
+    "packaging-table-2"
+   ],
+   "standPoint": [
+    5,
+    7.35
+   ],
+   "capacity": 3
+  },
+  {
+   "id": "ws-pickup-1",
+   "name": "Collection Counter",
+   "type": "pickup",
+   "roomId": "b-counter",
+   "equipmentIds": [
+    "pickup-counter-1"
+   ],
+   "standPoint": [
+    10.4,
+    5.45
+   ],
+   "capacity": 5
+  },
+  {
+   "id": "ws-dispatch-1",
+   "name": "Delivery Dispatch",
+   "type": "dispatch",
+   "roomId": "b-dispatch",
+   "equipmentIds": [
+    "dispatch-rack-1"
+   ],
+   "standPoint": [
+    1.75,
+    7.05
+   ],
+   "capacity": 10
+  }
+ ],
+ "cameras": [
+  {
+   "id": "cam-1",
+   "code": "CAM-001",
+   "name": "Restaurant Entrance",
+   "roomId": "b-order",
+   "position": [
+    14.95,
+    2.85,
+    0.4
+   ],
+   "target": [
+    13.35,
+    1,
+    -1.8
+   ],
+   "fov": 62,
+   "workstationIds": []
+  },
+  {
+   "id": "cam-2",
+   "code": "CAM-002",
+   "name": "Customer Waiting Area",
+   "roomId": "b-order",
+   "position": [
+    11.8,
+    2.85,
+    0.3
+   ],
+   "target": [
+    14.2,
+    0.8,
+    4.2
+   ],
+   "fov": 72,
+   "workstationIds": []
+  },
+  {
+   "id": "cam-3",
+   "code": "CAM-003",
+   "name": "Dining Area",
+   "roomId": "b-dining",
+   "position": [
+    0.3,
+    2.85,
+    0.3
+   ],
+   "target": [
+    6.9,
+    0.6,
+    3.6
+   ],
+   "fov": 75,
+   "workstationIds": []
+  },
+  {
+   "id": "cam-4",
+   "code": "CAM-004",
+   "name": "Customer Counter",
+   "roomId": "b-counter",
+   "position": [
+    12.9,
+    2.85,
+    6.25
+   ],
+   "target": [
+    13.8,
+    0.95,
+    6.35
+   ],
+   "fov": 60,
+   "workstationIds": [
+    "ws-order-counter-1"
+   ]
+  },
+  {
+   "id": "cam-5",
+   "code": "CAM-005",
+   "name": "Pizza Preparation",
+   "roomId": "b-pizza",
+   "position": [
+    8.6,
+    2.85,
+    8.1
+   ],
+   "target": [
+    9.5,
+    0.95,
+    10.1
+   ],
+   "fov": 60,
+   "workstationIds": [
+    "ws-pizza-prep-1"
+   ]
+  },
+  {
+   "id": "cam-6",
+   "code": "CAM-006",
+   "name": "Pizza Oven",
+   "roomId": "b-pizza",
+   "position": [
+    10.6,
+    2.85,
+    7.9
+   ],
+   "target": [
+    11.5,
+    0.95,
+    10
+   ],
+   "fov": 60,
+   "workstationIds": [
+    "ws-oven-1"
+   ]
+  },
+  {
+   "id": "cam-7",
+   "code": "CAM-007",
+   "name": "Chicken Preparation",
+   "roomId": "b-raw",
+   "position": [
+    13.35,
+    2.85,
+    10.75
+   ],
+   "target": [
+    14.25,
+    0.95,
+    12.62
+   ],
+   "fov": 60,
+   "workstationIds": [
+    "ws-chicken-prep-1"
+   ]
+  },
+  {
+   "id": "cam-8",
+   "code": "CAM-008",
+   "name": "Frying Station",
+   "roomId": "b-chicken",
+   "position": [
+    13.6,
+    2.85,
+    9
+   ],
+   "target": [
+    15.6,
+    0.95,
+    8.1
+   ],
+   "fov": 60,
+   "workstationIds": [
+    "ws-fryer-1"
+   ]
+  },
+  {
+   "id": "cam-9",
+   "code": "CAM-009",
+   "name": "Rice Preparation",
+   "roomId": "b-chicken",
+   "position": [
+    14.2,
+    2.85,
+    9.75
+   ],
+   "target": [
+    13.3,
+    0.95,
+    7.8
+   ],
+   "fov": 60,
+   "workstationIds": [
+    "ws-rice-1"
+   ]
+  },
+  {
+   "id": "cam-10",
+   "code": "CAM-010",
+   "name": "Packaging Station",
+   "roomId": "b-pack",
+   "position": [
+    5.9,
+    2.85,
+    8.4
+   ],
+   "target": [
+    5,
+    0.95,
+    6.4
+   ],
+   "fov": 60,
+   "workstationIds": [
+    "ws-packaging-1"
+   ]
+  },
+  {
+   "id": "cam-11",
+   "code": "CAM-011",
+   "name": "Delivery Dispatch",
+   "roomId": "b-dispatch",
+   "position": [
+    2.65,
+    2.85,
+    8.1
+   ],
+   "target": [
+    1.75,
+    0.95,
+    6.25
+   ],
+   "fov": 60,
+   "workstationIds": [
+    "ws-dispatch-1"
+   ]
+  },
+  {
+   "id": "cam-12",
+   "code": "CAM-012",
+   "name": "Main Kitchen",
+   "roomId": "b-chicken",
+   "position": [
+    12.8,
+    2.85,
+    10.2
+   ],
+   "target": [
+    14.25,
+    0.6,
+    8.95
+   ],
+   "fov": 70,
+   "workstationIds": [
+    "ws-fryer-1",
+    "ws-rice-1"
+   ]
+  },
+  {
+   "id": "cam-13",
+   "code": "CAM-013",
+   "name": "Inventory Storage",
+   "roomId": "b-dry",
+   "position": [
+    5.4,
+    2.85,
+    12.7
+   ],
+   "target": [
+    4.6,
+    0.6,
+    11.75
+   ],
+   "fov": 70,
+   "workstationIds": []
+  },
+  {
+   "id": "cam-14",
+   "code": "CAM-014",
+   "name": "Cold Storage",
+   "roomId": "b-cold",
+   "position": [
+    7.8,
+    2.85,
+    12.7
+   ],
+   "target": [
+    10,
+    0.6,
+    11.75
+   ],
+   "fov": 70,
+   "workstationIds": []
+  }
+ ],
+ "sensors": [
+  {
+   "id": "sensor-1",
+   "code": "SNS-001",
+   "name": "Drinks Fridge — Chilled Temp",
+   "kind": "fridge-temp",
+   "roomId": "b-order",
+   "equipmentId": "drinks-fridge-1",
+   "position": [
+    15.6,
+    2.15,
+    2
+   ],
+   "unit": "°C",
+   "thresholdProfile": "chilled"
+  },
+  {
+   "id": "sensor-2",
+   "code": "SNS-002",
+   "name": "QC Pass — Hot-Holding Temp",
+   "kind": "hot-holding-temp",
+   "roomId": "b-pack",
+   "equipmentId": "qc-pass-1",
+   "position": [
+    7.2,
+    1.5499999999999998,
+    8.8
+   ],
+   "unit": "°C",
+   "thresholdProfile": "hotHolding"
+  },
+  {
+   "id": "sensor-3",
+   "code": "SNS-003",
+   "name": "Packaging Supplies — Storage Inspection",
+   "kind": "storage-inspection",
+   "roomId": "b-pack",
+   "equipmentId": "shelving-1",
+   "position": [
+    3.75,
+    2.05,
+    9.6
+   ],
+   "unit": "status"
+  },
+  {
+   "id": "sensor-4",
+   "code": "SNS-004",
+   "name": "Packaging Handwash — Handwash Station",
+   "kind": "handwash-compliance",
+   "roomId": "b-pack",
+   "equipmentId": "handwash-1",
+   "position": [
+    3.73,
+    1.05,
+    6.6
+   ],
+   "unit": "status"
+  },
+  {
+   "id": "sensor-5",
+   "code": "SNS-005",
+   "name": "Pizza Make-Line — Chilled Temp",
+   "kind": "fridge-temp",
+   "roomId": "b-pizza",
+   "equipmentId": "pizza-makeline-1",
+   "position": [
+    9.5,
+    1.15,
+    10.1
+   ],
+   "unit": "°C",
+   "thresholdProfile": "chilled"
+  },
+  {
+   "id": "sensor-6",
+   "code": "SNS-006",
+   "name": "Conveyor Oven 01 — Equipment Health",
+   "kind": "equipment-health",
+   "roomId": "b-pizza",
+   "equipmentId": "conveyor-oven-1",
+   "position": [
+    11.5,
+    1.75,
+    10
+   ],
+   "unit": "status"
+  },
+  {
+   "id": "sensor-7",
+   "code": "SNS-007",
+   "name": "Oven Hood — Equipment Health",
+   "kind": "equipment-health",
+   "roomId": "b-pizza",
+   "equipmentId": "hood-1",
+   "position": [
+    11.5,
+    2.85,
+    9.95
+   ],
+   "unit": "status"
+  },
+  {
+   "id": "sensor-8",
+   "code": "SNS-008",
+   "name": "Fryer 01 — Oil Quality",
+   "kind": "oil-quality",
+   "roomId": "b-chicken",
+   "equipmentId": "fryer-1",
+   "position": [
+    15.6,
+    1.25,
+    8.1
+   ],
+   "unit": "%",
+   "thresholdProfile": "oilQuality"
+  },
+  {
+   "id": "sensor-9",
+   "code": "SNS-009",
+   "name": "Fryer 02 — Oil Quality",
+   "kind": "oil-quality",
+   "roomId": "b-chicken",
+   "equipmentId": "fryer-2",
+   "position": [
+    15.6,
+    1.25,
+    9
+   ],
+   "unit": "%",
+   "thresholdProfile": "oilQuality"
+  },
+  {
+   "id": "sensor-10",
+   "code": "SNS-010",
+   "name": "Fryer Hood — Equipment Health",
+   "kind": "equipment-health",
+   "roomId": "b-chicken",
+   "equipmentId": "hood-2",
+   "position": [
+    15.45,
+    2.85,
+    8.55
+   ],
+   "unit": "status"
+  },
+  {
+   "id": "sensor-11",
+   "code": "SNS-011",
+   "name": "Rice Hood — Equipment Health",
+   "kind": "equipment-health",
+   "roomId": "b-chicken",
+   "equipmentId": "hood-3",
+   "position": [
+    13.4,
+    2.85,
+    9.95
+   ],
+   "unit": "status"
+  },
+  {
+   "id": "sensor-12",
+   "code": "SNS-012",
+   "name": "Rice Warmer — Hot-Holding Temp",
+   "kind": "hot-holding-temp",
+   "roomId": "b-chicken",
+   "equipmentId": "rice-warmer-1",
+   "position": [
+    13.3,
+    1.15,
+    7.8
+   ],
+   "unit": "°C",
+   "thresholdProfile": "hotHolding"
+  },
+  {
+   "id": "sensor-13",
+   "code": "SNS-013",
+   "name": "Chicken Hot-Holding — Hot-Holding Temp",
+   "kind": "hot-holding-temp",
+   "roomId": "b-chicken",
+   "equipmentId": "hot-holding-1",
+   "position": [
+    14,
+    1.5499999999999998,
+    9
+   ],
+   "unit": "°C",
+   "thresholdProfile": "hotHolding"
+  },
+  {
+   "id": "sensor-14",
+   "code": "SNS-014",
+   "name": "Cold Room Evaporator — Chilled Temp",
+   "kind": "fridge-temp",
+   "roomId": "b-cold",
+   "equipmentId": "walk-in-cold-1",
+   "position": [
+    10,
+    2.95,
+    12.65
+   ],
+   "unit": "°C",
+   "thresholdProfile": "chilled"
+  },
+  {
+   "id": "sensor-15",
+   "code": "SNS-015",
+   "name": "Cold Room Shelf 01 — Storage Inspection",
+   "kind": "storage-inspection",
+   "roomId": "b-cold",
+   "equipmentId": "shelving-2",
+   "position": [
+    8.7,
+    2.05,
+    12.75
+   ],
+   "unit": "status"
+  },
+  {
+   "id": "sensor-16",
+   "code": "SNS-016",
+   "name": "Chicken Freezer 01 — Frozen Temp",
+   "kind": "freezer-temp",
+   "roomId": "b-cold",
+   "equipmentId": "freezer-1",
+   "position": [
+    7.9,
+    2.15,
+    12
+   ],
+   "unit": "°C",
+   "thresholdProfile": "frozen"
+  },
+  {
+   "id": "sensor-17",
+   "code": "SNS-017",
+   "name": "Raw Prep Handwash — Handwash Station",
+   "kind": "handwash-compliance",
+   "roomId": "b-raw",
+   "equipmentId": "handwash-2",
+   "position": [
+    15.77,
+    1.05,
+    12.6
+   ],
+   "unit": "status"
+  },
+  {
+   "id": "sensor-18",
+   "code": "SNS-018",
+   "name": "Dry Store Shelf 01 — Storage Inspection",
+   "kind": "storage-inspection",
+   "roomId": "b-dry",
+   "equipmentId": "shelving-5",
+   "position": [
+    4.6,
+    2.05,
+    12.75
+   ],
+   "unit": "status"
+  },
+  {
+   "id": "sensor-19",
+   "code": "SNS-019",
+   "name": "Dishwasher — Equipment Health",
+   "kind": "equipment-health",
+   "roomId": "b-wash",
+   "equipmentId": "dishwasher-1",
+   "position": [
+    6.2,
+    1.65,
+    12.62
+   ],
+   "unit": "status"
+  },
+  {
+   "id": "sensor-20",
+   "code": "SNS-020",
+   "name": "WC Handwash — Handwash Station",
+   "kind": "handwash-compliance",
+   "roomId": "b-wc",
+   "equipmentId": "handwash-3",
+   "position": [
+    2.43,
+    1.05,
+    11
+   ],
+   "unit": "status"
+  },
+  {
+   "id": "sensor-21",
+   "code": "SNS-021",
+   "name": "Quality Check — Cook Temp Verification",
+   "kind": "cook-temp-check",
+   "roomId": "b-pack",
+   "position": [
+    6.35,
+    1.4,
+    8.8
+   ],
+   "unit": "°C",
+   "thresholdProfile": "cookCore"
+  },
+  {
+   "id": "sensor-22",
+   "code": "SNS-022",
+   "name": "Packaging & QC — Cleaning Checklist",
+   "kind": "cleaning-checklist",
+   "roomId": "b-pack",
+   "position": [
+    3.8,
+    1.5,
+    6.3
+   ],
+   "unit": "status"
+  },
+  {
+   "id": "sensor-23",
+   "code": "SNS-023",
+   "name": "Pizza Kitchen — Cleaning Checklist",
+   "kind": "cleaning-checklist",
+   "roomId": "b-pizza",
+   "position": [
+    7.8,
+    1.5,
+    7.7
+   ],
+   "unit": "status"
+  },
+  {
+   "id": "sensor-24",
+   "code": "SNS-024",
+   "name": "Chicken & Rice Hot Line — Cleaning Checklist",
+   "kind": "cleaning-checklist",
+   "roomId": "b-chicken",
+   "position": [
+    12.8,
+    1.5,
+    7.7
+   ],
+   "unit": "status"
+  },
+  {
+   "id": "sensor-25",
+   "code": "SNS-025",
+   "name": "Dishwash — Cleaning Checklist",
+   "kind": "cleaning-checklist",
+   "roomId": "b-wash",
+   "position": [
+    6,
+    1.5,
+    10.8
+   ],
+   "unit": "status"
+  },
+  {
+   "id": "sensor-26",
+   "code": "SNS-026",
+   "name": "Raw Chicken Prep — Cleaning Checklist",
+   "kind": "cleaning-checklist",
+   "roomId": "b-raw",
+   "position": [
+    12.8,
+    1.5,
+    10.8
+   ],
+   "unit": "status"
+  }
+ ],
+ "navigationPaths": [
+  {
+   "id": "path-customer",
+   "name": "Walk-in customer journey",
+   "kind": "customer",
+   "points": [
+    [
+     13.75,
+     -5
+    ],
+    [
+     13.75,
+     0.9
+    ],
+    [
+     13.8,
+     5.3
+    ],
+    [
+     12.2,
+     1.6
+    ],
+    [
+     10.4,
+     5.4
+    ],
+    [
+     13.75,
+     0.9
+    ],
+    [
+     13.75,
+     -5
+    ]
+   ]
+  },
+  {
+   "id": "path-rider",
+   "name": "Delivery rider collection",
+   "kind": "delivery",
+   "points": [
+    [
+     0.6,
+     6.25
+    ],
+    [
+     0.6,
+     8.25
+    ],
+    [
+     1.6,
+     7.6
+    ]
+   ]
+  },
+  {
+   "id": "path-pizza",
+   "name": "Pizza product flow",
+   "kind": "staff",
+   "points": [
+    [
+     9.5,
+     9.15
+    ],
+    [
+     11.5,
+     8.95
+    ],
+    [
+     6.35,
+     8.8
+    ],
+    [
+     5,
+     7.35
+    ]
+   ]
+  },
+  {
+   "id": "path-chicken",
+   "name": "Chicken product flow",
+   "kind": "staff",
+   "points": [
+    [
+     14.25,
+     11.69
+    ],
+    [
+     14.65,
+     8.1
+    ],
+    [
+     6.35,
+     8.8
+    ],
+    [
+     5,
+     7.35
+    ]
+   ]
+  },
+  {
+   "id": "path-rice",
+   "name": "Rice product flow",
+   "kind": "staff",
+   "points": [
+    [
+     13.3,
+     8.7
+    ],
+    [
+     5,
+     7.35
+    ],
+    [
+     1.75,
+     7.05
+    ]
+   ]
+  },
+  {
+   "id": "path-exit-door-1",
+   "name": "Exit route — Main Entrance",
+   "kind": "emergency",
+   "points": [
+    [
+     13.75,
+     1.2
+    ],
+    [
+     13.75,
+     0
+    ],
+    [
+     13.75,
+     -1.5
+    ]
+   ]
+  },
+  {
+   "id": "path-exit-door-2",
+   "name": "Exit route — Dining Emergency Exit",
+   "kind": "emergency",
+   "points": [
+    [
+     1.2,
+     3
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     -1.5,
+     3
+    ]
+   ]
+  },
+  {
+   "id": "path-exit-door-6",
+   "name": "Exit route — Rear Emergency Exit",
+   "kind": "emergency",
+   "points": [
+    [
+     1.1,
+     11.8
+    ],
+    [
+     1.1,
+     13
+    ],
+    [
+     1.1,
+     14.5
+    ]
+   ]
+  }
+ ],
+ "workflow": [
+  {
+   "from": "order-counter",
+   "to": "pizza-prep",
+   "flow": "pizza"
+  },
+  {
+   "from": "pizza-prep",
+   "to": "oven",
+   "flow": "pizza"
+  },
+  {
+   "from": "oven",
+   "to": "qc",
+   "flow": "pizza"
+  },
+  {
+   "from": "order-counter",
+   "to": "chicken-prep",
+   "flow": "chicken"
+  },
+  {
+   "from": "chicken-prep",
+   "to": "fryer",
+   "flow": "chicken"
+  },
+  {
+   "from": "fryer",
+   "to": "qc",
+   "flow": "chicken"
+  },
+  {
+   "from": "order-counter",
+   "to": "rice",
+   "flow": "rice"
+  },
+  {
+   "from": "qc",
+   "to": "packaging",
+   "flow": "all"
+  },
+  {
+   "from": "rice",
+   "to": "packaging",
+   "flow": "rice"
+  },
+  {
+   "from": "packaging",
+   "to": "pickup",
+   "flow": "all"
+  },
+  {
+   "from": "packaging",
+   "to": "dispatch",
+   "flow": "all"
+  }
+ ],
+ "anchors": {
+  "outside": [
+   13.75,
+   -5
+  ],
+  "entrance": [
+   13.75,
+   0.9
+  ],
+  "queueHead": [
+   13.8,
+   5.3
+  ],
+  "queueDir": [
+   0,
+   -1
+  ],
+  "waiting": [
+   12.2,
+   1.6
+  ],
+  "pickup": [
+   10.4,
+   5.4
+  ],
+  "riderDoor": [
+   0.6,
+   8.25
+  ],
+  "riderWait": [
+   1.6,
+   7.6
+  ],
+  "staffRest": [
+   1.1,
+   11.9
+  ]
+ }
+}
