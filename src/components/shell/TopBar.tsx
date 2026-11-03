@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Pause, Play, RotateCcw } from "lucide-react";
+import { ArrowLeft, Pause, Play, RotateCcw, Search } from "lucide-react";
 import { Btn, SimBadge, cx } from "@/components/ui/primitives";
 import { DEMO_USERS, can } from "@/lib/auth/rbac";
 import { clockSec } from "@/lib/format";
@@ -45,19 +45,24 @@ export default function TopBar() {
       )}
 
       {/* Network status at a glance: what needs attention right now, and how much data is real. */}
-      <div className="ml-4 hidden items-center gap-3 font-mono text-[10.5px] tracking-wide lg:flex" aria-label="Network status">
-        <StatusCount n={count("critical")} label="CRIT" color="bg-red-500" strong />
-        <StatusCount n={count("warning")} label="WARN" color="bg-amber-400" />
-        <StatusCount n={count("normal")} label="NOMINAL" color="bg-emerald-500" />
-        <StatusCount n={count("closed")} label="CLOSED" color="bg-white/30" />
+      <div className="ml-2 hidden shrink-0 items-center gap-3 whitespace-nowrap font-mono text-[10.5px] tracking-wide xl:flex" aria-label="Network status">
+        <StatusCount n={count("critical")} label="CRIT" color="bg-red-500" strong title="Branches with a critical issue" />
+        <StatusCount n={count("warning")} label="WARN" color="bg-amber-400" title="Branches with a warning" />
+        <StatusCount n={count("normal")} label="OK" color="bg-emerald-500" title="Branches operating normally" />
+        {count("closed") > 0 && <StatusCount n={count("closed")} label="CLOSED" color="bg-white/30" title="Branches outside opening hours" />}
         <span className="h-4 w-px bg-white/10" />
         <span className={cx(liveBranches ? "text-emerald-300" : "text-white/35")} title="Branches receiving data from connected devices or order systems">
-          {liveBranches} LIVE SOURCE{liveBranches === 1 ? "" : "S"}
+          LIVE {liveBranches}
         </span>
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        <span className="max-md:hidden">{realtime ? <SimBadge label="LIVE DEVICES + SIMULATION" /> : <SimBadge label="DEMO SIMULATION" />}</span>
+        <button type="button" onClick={() => useApp.getState().setPaletteOpen(true)} title="Search and jump anywhere (⌘K)" className="hidden items-center gap-2 rounded-lg border border-white/10 bg-black/30 px-2.5 py-1 text-[11px] text-white/45 hover:border-white/20 hover:text-white/80 md:flex">
+          <Search size={13} />
+          <span className="hidden 2xl:inline">Search</span>
+          <kbd className="font-mono text-[10px] text-white/35">⌘K</kbd>
+        </button>
+        <span className="whitespace-nowrap max-md:hidden">{realtime ? <SimBadge label="LIVE + SIMULATION" /> : <SimBadge label="SIMULATION" />}</span>
         <span className="md:hidden">{realtime ? <SimBadge label="LIVE + SIM" /> : <SimBadge label="DEMO" />}</span>
         <div className={cx("hidden items-center gap-1 rounded-lg border px-2 py-1 md:flex", realtime ? "border-emerald-400/40 bg-emerald-400/10" : "border-white/10 bg-black/30")} title={realtime ? "Real wall clock — live devices connected" : "Simulated clock (Africa/Accra, GMT)"}>
           {realtime && <span className="font-mono text-[9px] font-semibold tracking-wider text-emerald-300">LIVE CLOCK</span>}
@@ -89,7 +94,7 @@ export default function TopBar() {
             <RotateCcw size={13} />
           </button>
         </div>
-        <label className="hidden items-center gap-1.5 text-[10px] text-white/45 lg:flex">
+        <label className="hidden items-center gap-1.5 text-[10px] text-white/45 min-[1760px]:flex">
           Demand
           <select value={arrivalPreset} disabled={!canControl} onChange={(e) => setArrivalPreset(e.target.value as "low" | "medium" | "high")} className="rounded-md border border-white/10 bg-black/40 px-1.5 py-1 text-[11px] text-white">
             <option value="low">Low · 5/h</option>
@@ -97,7 +102,7 @@ export default function TopBar() {
             <option value="high">High · 50/h</option>
           </select>
         </label>
-        <select value={user.id} onChange={(e) => setUser(e.target.value)} className="hidden max-w-44 truncate rounded-md border border-white/10 bg-black/40 px-1.5 py-1 text-[11px] text-white xl:block" aria-label="Demo user role">
+        <select value={user.id} onChange={(e) => setUser(e.target.value)} className="hidden max-w-44 truncate rounded-md border border-white/10 bg-black/40 px-1.5 py-1 text-[11px] text-white min-[1760px]:block" aria-label="Demo user role">
           {DEMO_USERS.map((u) => (
             <option key={u.id} value={u.id}>
               {u.roleLabel}
@@ -109,9 +114,9 @@ export default function TopBar() {
   );
 }
 
-function StatusCount({ n, label, color, strong }: { n: number; label: string; color: string; strong?: boolean }) {
+function StatusCount({ n, label, color, strong, title }: { n: number; label: string; color: string; strong?: boolean; title: string }) {
   return (
-    <span className={cx("flex items-center gap-1.5", n === 0 ? "text-white/30" : strong ? "text-red-200" : "text-white/70")}>
+    <span title={title} className={cx("flex items-center gap-1.5", n === 0 ? "text-white/30" : strong ? "text-red-200" : "text-white/70")}>
       <span className={cx("h-1.5 w-1.5 rounded-full", color, n > 0 && strong && "animate-pulse")} />
       <span className="tabular-nums text-white/90">{n}</span>
       {label}

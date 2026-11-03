@@ -43,3 +43,6 @@ next-env.d.ts
 
 # parallel dev servers
 /.next-*/
+
+# Agent worktrees
+/.claude/worktrees/

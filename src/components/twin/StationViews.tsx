@@ -6,7 +6,7 @@ import type { FloorPlan, RoomType, Vec3, WorkstationType } from "@/lib/floorplan
 import { useApp } from "@/store/app";
 import { useTwin } from "./twinStore";
 
-interface Preset {
+export interface Preset {
   id: string;
   label: string;
   position: Vec3;
@@ -31,7 +31,7 @@ const ZONES: Array<{ id: string; label: string; rooms: RoomType[]; height: numbe
 ];
 
 /** Camera presets derived from the floor plan, so every branch layout gets matching views. */
-function presets(plan: FloorPlan): Preset[] {
+export function stationPresets(plan: FloorPlan): Preset[] {
   const out: Preset[] = [];
   const eq = new Map(plan.equipment.map((e) => [e.id, e]));
   for (const z of ZONES) {
@@ -71,7 +71,7 @@ export function StationViews({ plan }: { plan: FloorPlan }) {
   const setOpen = useTwin((s) => s.setStationsOpen);
   const requestCamera = useApp((s) => s.requestCamera);
   const select = useApp((s) => s.select);
-  const list = useMemo(() => presets(plan), [plan]);
+  const list = useMemo(() => stationPresets(plan), [plan]);
   return (
     <div className="pointer-events-auto relative">
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="glass flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11.5px] font-semibold text-white hover:bg-white/10">

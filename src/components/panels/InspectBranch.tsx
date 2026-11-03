@@ -5,7 +5,7 @@ import { Btn, ConceptBadge, SectionTitle, SimBadge, Stat, StatusDot, VerifiedBad
 import { canSeeBranch } from "@/lib/auth/rbac";
 import { ghs, ghsCompact, mins, pct } from "@/lib/format";
 import { useSnapshots } from "@/lib/hooks/useSim";
-import { BRANCHES, BRANCH_BY_ID, demoBranchIds } from "@/lib/network/branches";
+import { BRANCH_BY_ID, demoBranchIds } from "@/lib/network/branches";
 import type { BranchSimulation } from "@/lib/sim/engine";
 import type { WorkstationType } from "@/lib/floorplan/types";
 import PriorityQueue from "@/components/ops/PriorityQueue";
@@ -156,8 +156,6 @@ export function NationalSummary() {
   const snaps = useSnapshots();
   const enterBranch = useApp((s) => s.enterBranch);
   const selectB = useApp((s) => s.selectBranch);
-  const open = snaps.filter((s) => s.open);
-  const sales = snaps.reduce((s, x) => s + x.salesToday, 0);
   const top = [...snaps].sort((a, b) => b.salesToday - a.salesToday).slice(0, 5);
   return (
     <div className="space-y-3 p-4">
@@ -166,16 +164,9 @@ export function NationalSummary() {
           <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">National summary</span>
           <SimBadge />
         </div>
-        <p className="text-[11px] text-white/45">Select a branch marker on the map for details.</p>
+        <p className="text-[11px] text-white/45">Select a branch on the map, or press ⌘K to jump anywhere.</p>
       </div>
-      <div className="grid grid-cols-3 gap-3">
-        <Stat label="Branches" value={BRANCHES.length} sub="official directory" />
-        <Stat label="Open now" value={open.length} />
-        <Stat label="Revenue" value={ghsCompact(sales)} />
-        <Stat label="Active orders" value={snaps.reduce((s, x) => s + x.activeOrders, 0)} />
-        <Stat label="Critical" value={snaps.filter((s) => s.status === "critical").length} tone="red" />
-        <Stat label="Warnings" value={snaps.filter((s) => s.status === "warning").length} tone="yellow" />
-      </div>
+      <PriorityQueue />
       <div>
         <SectionTitle>Top branches by revenue</SectionTitle>
         {top.map((s, i) => (
@@ -187,7 +178,6 @@ export function NationalSummary() {
           </button>
         ))}
       </div>
-      <PriorityQueue />
       <div>
         <SectionTitle>Demonstration branches</SectionTitle>
         <div className="flex flex-wrap gap-1.5">

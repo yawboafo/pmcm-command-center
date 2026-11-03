@@ -25,7 +25,7 @@ import { cx } from "@/components/ui/primitives";
 import { useSnapshots } from "@/lib/hooks/useSim";
 import { useApp, type Section } from "@/store/app";
 
-const NAV: Array<{ id: Section; label: string; icon: LucideIcon; group: string }> = [
+export const NAV: Array<{ id: Section; label: string; icon: LucideIcon; group: string }> = [
   { id: "network", label: "Ghana Network", icon: MapIcon, group: "Network" },
   { id: "branches", label: "Restaurant Branches", icon: Building2, group: "Network" },
   { id: "twin", label: "3D Digital Twin", icon: Cuboid, group: "Restaurant" },

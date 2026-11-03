@@ -96,8 +96,8 @@ export function Stat({ label, value, sub, tone }: { label: string; value: ReactN
   const color = tone === "red" ? "text-red-400" : tone === "green" ? "text-emerald-400" : tone === "yellow" ? "text-amber-300" : "text-white";
   return (
     <div className="min-w-0">
-      <div className="truncate text-[10px] font-medium uppercase tracking-wider text-white/45">{label}</div>
-      <div className={cx("font-display text-lg font-semibold tabular-nums leading-tight", color)}>{value}</div>
+      <div className="truncate font-mono text-[9.5px] uppercase tracking-[0.14em] text-white/40">{label}</div>
+      <div className={cx("font-mono text-[17px] font-medium tabular-nums leading-tight tracking-tight", color)}>{value}</div>
       {sub && <div className="truncate text-[10px] text-white/40">{sub}</div>}
     </div>
   );
@@ -124,8 +124,9 @@ export function Btn({ children, onClick, active, tone, className, disabled, titl
 
 export function SectionTitle({ children, right }: { children: ReactNode; right?: ReactNode }) {
   return (
-    <div className="mb-2 flex items-center justify-between gap-2">
-      <h3 className="font-display text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">{children}</h3>
+    <div className="mb-2 flex items-center gap-2">
+      <h3 className="shrink-0 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-white/50">{children}</h3>
+      <span className="h-px flex-1 bg-white/[0.06]" aria-hidden />
       {right}
     </div>
   );
@@ -139,6 +140,43 @@ export function Meter({ value, color = "#EE1D25" }: { value: number; color?: str
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
       <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(0, Math.min(1, value)) * 100}%`, background: color }} />
+    </div>
+  );
+}
+
+/** Minimal trend line for telemetry readouts (no axes; the last point is marked). */
+export function Sparkline({ values, color = "#7dd3fc", width = 84, height = 22, className }: { values: number[]; color?: string; width?: number; height?: number; className?: string }) {
+  if (values.length < 2) return <svg width={width} height={height} className={className} aria-hidden />;
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const span = max - min || 1;
+  const pts = values.map((v, i) => [(i / (values.length - 1)) * (width - 3) + 1.5, height - 2 - ((v - min) / span) * (height - 4)] as const);
+  const d = pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join("");
+  const [lx, ly] = pts[pts.length - 1];
+  return (
+    <svg width={width} height={height} className={className} aria-hidden>
+      <path d={`${d}L${lx.toFixed(1)},${height}L1.5,${height}Z`} fill={color} opacity={0.08} />
+      <path d={d} fill="none" stroke={color} strokeWidth={1.25} strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={lx} cy={ly} r={2} fill={color} />
+    </svg>
+  );
+}
+
+/**
+ * Telemetry readout: mono label, large tabular value with a smaller unit, and an optional
+ * secondary line or sparkline. The unit of the dashboard's visual language.
+ */
+export function Readout({ label, value, unit, sub, tone = "default", trend, trendColor, className }: { label: string; value: ReactNode; unit?: string; sub?: ReactNode; tone?: "default" | "red" | "yellow" | "green" | "muted"; trend?: number[]; trendColor?: string; className?: string }) {
+  const color = tone === "red" ? "text-red-300" : tone === "yellow" ? "text-amber-200" : tone === "green" ? "text-emerald-300" : tone === "muted" ? "text-white/45" : "text-white";
+  return (
+    <div className={cx("min-w-0", className)}>
+      <div className="truncate font-mono text-[9.5px] uppercase tracking-[0.16em] text-white/40">{label}</div>
+      <div className={cx("mt-1 whitespace-nowrap font-mono text-[19px] font-medium leading-none tabular-nums tracking-tight", color)}>
+        {value}
+        {unit && <span className="ml-0.5 text-[11px] font-normal text-white/45">{unit}</span>}
+      </div>
+      {trend && <Sparkline values={trend} color={trendColor} width={128} height={18} className="mt-1.5 block max-w-full" />}
+      {sub && <div className="mt-1 truncate text-[10px] text-white/40">{sub}</div>}
     </div>
   );
 }
