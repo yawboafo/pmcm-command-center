@@ -11,6 +11,8 @@ import { sims } from "@/store/sims";
 import CameraRig from "./CameraRig";
 import { CameraDevices, CctvOverlay, MultiViewRenderer, PathsOverlay } from "./CctvGrid";
 import { CameraList, CctvLabel, DemoMenu, FollowBanner, FpsHud, IntroOverlay, Toolbar } from "./Hud";
+import PerfProbe from "./PerfProbe";
+import { StationViews } from "./StationViews";
 import RestaurantModel from "./RestaurantModel";
 
 const QUALITY = {
@@ -92,6 +94,7 @@ export default function TwinView({ branchId }: { branchId: string }) {
         }}
         onPointerMissed={() => useApp.getState().selection?.kind !== "order" && select(null)}
       >
+        {process.env.NODE_ENV !== "production" && <PerfProbe />}
         <PerformanceMonitor
           onDecline={() => {
             setDpr(1);
@@ -142,6 +145,9 @@ export default function TwinView({ branchId }: { branchId: string }) {
           </div>
           <div className="pointer-events-none absolute right-3 top-14 z-10">
             <CameraList sim={live} />
+          </div>
+          <div className="pointer-events-none absolute left-3 top-14 z-10">
+            <StationViews plan={live.plan} />
           </div>
           <div className="pointer-events-none absolute bottom-3 right-3 z-10">
             <DemoMenu sim={live} />

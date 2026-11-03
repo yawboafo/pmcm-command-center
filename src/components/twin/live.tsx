@@ -261,7 +261,7 @@ function ReadyBags({ sim, e, fulfilment }: { sim: BranchSimulation; e: Equipment
     <group {...placed(e)}>
       {Array.from({ length: slots }).map((_, i) => {
         const pos: [number, number, number] =
-          fulfilment === "delivery" ? [(-0.3 + (i % 4) * 0.2) * w, 0.17 + Math.floor(i / 4) * ((h - 0.2) / 3), 0] : [(-0.4 + i * 0.2) * w, h + 0.15, -d * 0.1];
+          fulfilment === "delivery" ? [(-0.3 + (i % 4) * 0.2) * w, 0.15 + 0.15 + Math.floor(i / 4) * ((h - 0.2) / 3), 0] : [(-0.4 + i * 0.2) * w, h + 0.15, -d * 0.1];
         return <mesh key={i} ref={(el) => void (bags.current[i] = el)} geometry={G.box} material={M.bag()} position={pos} scale={[0.22, 0.3, 0.14]} visible={false} castShadow />;
       })}
     </group>
@@ -335,8 +335,10 @@ export const LiveLayer = memo(function LiveLayer({ sim }: { sim: BranchSimulatio
           case "breading-station":
             return <WorkItemsLive key={e.id} e={e} index={index} frameRef={frameRef} kind="prep" />;
           case "qc-pass":
-          case "prep-table":
             return <WorkItemsLive key={e.id} e={e} index={index} frameRef={frameRef} kind="qc" />;
+          // A prep table's items sit on its worktop, not on the QC pass shelf height.
+          case "prep-table":
+            return <WorkItemsLive key={e.id} e={e} index={index} frameRef={frameRef} kind="prep" />;
           case "pickup-counter":
             return <ReadyBags key={e.id} sim={sim} e={e} fulfilment="pickup" />;
           case "dispatch-rack":

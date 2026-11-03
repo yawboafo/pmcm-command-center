@@ -14,8 +14,10 @@
 :root {
   color-scheme: dark;
   --bg: #07090d;
-  --panel: rgba(14, 17, 23, 0.78);
-  --panel-border: rgba(255, 255, 255, 0.08);
+  /* Operational surfaces: near-opaque so text over the map/3D stays readable, hairline edges. */
+  --panel: rgba(11, 14, 19, 0.86);
+  --panel-border: rgba(255, 255, 255, 0.075);
+  --panel-highlight: rgba(255, 255, 255, 0.035);
 }
 
 html,
@@ -29,9 +31,17 @@ body {
 .glass {
   background: var(--panel);
   border: 1px solid var(--panel-border);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  box-shadow: 0 10px 40px -12px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
+  box-shadow:
+    inset 0 1px 0 var(--panel-highlight),
+    0 12px 32px -14px rgba(0, 0, 0, 0.7);
+}
+
+/* Numbers in an operations UI must not jitter as they tick. */
+.font-mono,
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 .scroll-thin {

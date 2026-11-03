@@ -1,6 +1,19 @@
-# Handover — Pizzaman Chickenman Operations Command Center (updated 2026-11-03, session 2)
+# Handover — Pizzaman Chickenman Operations Command Center (updated 2026-11-03, session 3)
 
-Read `README.md`, `docs/ARCHITECTURE.md`, `docs/INTEGRATION.md`, then this file. Research + sources: `docs/research/`.
+Read `README.md`, `docs/AUDIT.md`, `docs/ARCHITECTURE.md`, `docs/INTEGRATION.md`, `docs/ASSETS.md`, then this file.
+
+## Session 3 — digital twin upgrade (branch `feat/digital-twin-upgrade`, uncommitted unless a later commit says otherwise)
+Session 2 is in PR https://github.com/yawboafo/pmcm-command-center/pull/1 (`feat/command-center-prototype` → `main`). Session 3 follows the client's "elevate, don't rebuild" brief; the audit and what was delivered are in `docs/AUDIT.md`. In short:
+- **Menu** priced only from `src/data/menu-catalogue.json` (199 published Chris B items, per-item source + date; refresh with `npx tsx scripts/import-menu.ts`; the Chris B server-action id is re-read from the site on each run). Settings → Menu & prices. A test fails if a simulated item drops out of the catalogue.
+- **Orders**: status = least-advanced item; payment step (simulated, method mix is an assumption); recipe stock deducted at sale and returned on cancel-before-production; `estimateReadyAt()` (ESTIMATED badge); event trail + stock movements in the order inspector.
+- **Provenance**: LIVE / SIMULATED / ESTIMATED / UNAVAILABLE badges (`primitives.tsx`).
+- **Command center**: ranked priority queue (`lib/ops/priority.ts`), network status strip in the top bar, crisper panels.
+- **3D**: 24 equipment + 5 furniture GLBs from the scripted Blender pipeline (`blender/`, contact sheet `blender/renders/contact-sheet.png`), loaded with procedural fallback; Settings switch; `?assets=procedural` URL flag. Measured: fewer draw calls than procedural, 57–60 FPS (table in AUDIT.md). The menu board stays procedural (it shows the real menu).
+- **Cameras**: Stations & zones presets derived from each floor plan.
+- **Perf probe**: `window.__pmcmPerf` in development. Headless GPU measurement script pattern: Playwright with `--use-angle=metal` (the built-in browser pane pauses rendering when hidden).
+- 41 tests pass; tsc and eslint clean.
+
+Next for the upgrade: rigged characters and branded storefront (artist work, list in `docs/ASSETS.md`); menu texture on the scripted menu board; a measured East Legon floor plan; KDS events for live orders. Research + sources: `docs/research/`.
 
 ## Standing requirement (from the client)
 This prototype **will be connected to real IoT sensors, physical cameras, POS and every system a command center needs.** Build every layer swap-ready: UI must never depend on simulation internals for anything a device supplies; every value must show LIVE vs SIMULATED provenance. Floor plans are conceptual; operational data is simulated unless it came through the integration layer.

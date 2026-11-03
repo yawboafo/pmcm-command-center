@@ -2,6 +2,7 @@
 
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
+import { statusLabel } from "@/components/panels/InspectOrder";
 import { SimBadge, cx } from "@/components/ui/primitives";
 import { clock, ghs } from "@/lib/format";
 import { useSnapshots, useTick } from "@/lib/hooks/useSim";
@@ -93,7 +94,7 @@ export default function BottomPanel() {
                       <td className="max-w-80 truncate text-white/70">{o.lines.map((l) => `${l.qty}× ${l.name}`).join(", ")}</td>
                       <td className="font-mono text-white/70">{ghs(o.total)}</td>
                       <td>
-                        <span className={cx("rounded px-1.5 py-px text-[10px] font-semibold", o.delayed ? "bg-red-500/20 text-red-300" : o.status === "READY" ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-white/70")}>{o.status.replace(/_/g, " ")}</span>
+                        <span className={cx("rounded px-1.5 py-px text-[10px] font-semibold", o.delayed ? "bg-red-500/20 text-red-300" : o.status === "READY" ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-white/70")}>{statusLabel(o.status, o)}</span>
                       </td>
                       <td>
                         {entered && (

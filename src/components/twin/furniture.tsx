@@ -1,10 +1,13 @@
 "use client";
 
 import type { ThreeEvent } from "@react-three/fiber";
-import { memo, useLayoutEffect, useMemo, useRef } from "react";
+import { useGLTF } from "@react-three/drei";
+import { Suspense, memo, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { Furniture } from "@/lib/floorplan/types";
+import { useApp } from "@/store/app";
 import { M } from "./materials";
+import { AssetBoundary, useManifest, type AssetEntry } from "./modelAssets";
 import { Box, Cyl, G, Slab } from "./parts";
 
 interface Part {
@@ -21,8 +24,73 @@ const tmp = new THREE.Object3D();
  * handful of draw calls. Chair placements mirror the simulation's seat
  * offsets so seated customers line up with the chairs.
  */
-export const FurnitureLayer = memo(function FurnitureLayer({ items, onSelect }: { items: Furniture[]; onSelect?: (id: string, e: ThreeEvent<PointerEvent>) => void }) {
-  const parts = useMemo(() => buildParts(items), [items]);
+type OnSelect = (id: string, e: ThreeEvent<PointerEvent>) => void;
+
+export const FurnitureLayer = memo(function FurnitureLayer({ items, onSelect }: { items: Furniture[]; onSelect?: OnSelect }) {
+  const manifest = useManifest();
+  const mode = useApp((s) => s.assetMode);
+  // Every third table keeps the yellow armchairs seen in branch photos (no scripted model for them).
+  const armchairs = useMemo(() => new Set(items.filter((f) => f.type === "table-2" || f.type === "table-4").filter((_, i) => i % 3 === 0).map((f) => f.id)), [items]);
+  const modelled = (f: Furniture) => mode === "models" && !!manifest?.assets[f.type] && !armchairs.has(f.id);
+  const glb = items.filter(modelled);
+  const procedural = items.filter((f) => !modelled(f));
+  const fallback = <ProceduralFurniture items={glb} armchairs={armchairs} onSelect={onSelect} />;
+  return (
+    <group>
+      <ProceduralFurniture items={procedural} armchairs={armchairs} onSelect={onSelect} />
+      {glb.length > 0 && manifest && (
+        <AssetBoundary fallback={fallback}>
+          <Suspense fallback={fallback}>
+            <GlbFurniture items={glb} assets={manifest.assets} onSelect={onSelect} />
+          </Suspense>
+        </AssetBoundary>
+      )}
+    </group>
+  );
+});
+
+/**
+ * Blender-built furniture, still instanced: every mesh of each model becomes one
+ * InstancedMesh across all pieces of that type, so the dining room stays a handful of
+ * draw calls. Node transforms are kept (meshopt quantisation stores geometry scale there).
+ */
+function GlbFurniture({ items, assets, onSelect }: { items: Furniture[]; assets: Record<string, AssetEntry>; onSelect?: OnSelect }) {
+  const types = [...new Set(items.map((f) => f.type))];
+  const gltfs = useGLTF(types.map((t) => `/${assets[t].path}`), false, true);
+  const parts = useMemo(() => {
+    const out: Part[] = [];
+    types.forEach((type, ti) => {
+      const a = assets[type];
+      const root = gltfs[ti].scene;
+      root.updateMatrixWorld(true);
+      const mine = items.filter((f) => f.type === type);
+      root.traverse((o) => {
+        const mesh = o as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        const local = mesh.matrixWorld.clone();
+        const mats = mine.map((f) => {
+          tmp.position.set(...f.position);
+          tmp.rotation.set(0, f.rotation, 0);
+          tmp.scale.set(f.size[0] / a.size[0], f.size[1] / a.size[1], f.size[2] / a.size[2]);
+          tmp.updateMatrix();
+          return new THREE.Matrix4().multiplyMatrices(tmp.matrix, local);
+        });
+        out.push({ geo: mesh.geometry, mat: mesh.material as THREE.Material, mats, owners: mine.map((f) => f.id) });
+      });
+    });
+    return out;
+  }, [gltfs, items, assets]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <group>
+      {parts.map((p, i) => (
+        <InstancedPart key={i} part={p} onSelect={onSelect} />
+      ))}
+    </group>
+  );
+}
+
+function ProceduralFurniture({ items, armchairs, onSelect }: { items: Furniture[]; armchairs: Set<string>; onSelect?: OnSelect }) {
+  const parts = useMemo(() => buildParts(items, armchairs), [items, armchairs]);
   const singles = items.filter((f) => ["waiting-bench", "bench", "stool-bar", "plant"].includes(f.type));
   return (
     <group>
@@ -41,7 +109,7 @@ export const FurnitureLayer = memo(function FurnitureLayer({ items, onSelect }: 
       ))}
     </group>
   );
-});
+}
 
 function InstancedPart({ part, onSelect }: { part: Part; onSelect?: (id: string, e: ThreeEvent<PointerEvent>) => void }) {
   const ref = useRef<THREE.InstancedMesh>(null);
@@ -63,7 +131,7 @@ function InstancedPart({ part, onSelect }: { part: Part; onSelect?: (id: string,
   );
 }
 
-function buildParts(items: Furniture[]): Part[] {
+function buildParts(items: Furniture[], armchairs: Set<string>): Part[] {
   const parts = new Map<string, Part>();
   const add = (key: string, geo: THREE.BufferGeometry, mat: THREE.Material, owner: string, base: THREE.Matrix4, p: [number, number, number], s: [number, number, number], ry = 0) => {
     let part = parts.get(key);
@@ -75,7 +143,7 @@ function buildParts(items: Furniture[]): Part[] {
     part.mats.push(new THREE.Matrix4().multiplyMatrices(base, tmp.matrix));
     part.owners.push(owner);
   };
-  items.forEach((f, idx) => {
+  items.forEach((f) => {
     if (f.type !== "table-4" && f.type !== "table-2" && f.type !== "booth-4") return;
     tmp.position.set(...f.position);
     tmp.rotation.set(0, f.rotation, 0);
@@ -98,7 +166,7 @@ function buildParts(items: Furniture[]): Part[] {
     add("foot", G.cylLow, M.black(), f.id, base, [0, 0.015, 0], [0.55, 0.03, 0.55]);
     const seats: Array<[number, number]> = four ? [[-0.35, -0.62], [0.35, -0.62], [-0.35, 0.62], [0.35, 0.62]] : [[0, -0.55], [0, 0.55]];
     // Alternate the two chair styles seen in branch photos: yellow armchairs and lime shell chairs.
-    const armchair = idx % 3 === 0;
+    const armchair = armchairs.has(f.id);
     for (const [x, z] of seats) {
       const face = z < 0 ? 0 : Math.PI;
       const back = z < 0 ? -0.2 : 0.2;

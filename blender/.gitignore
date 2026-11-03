@@ -1,0 +1,4 @@
+out/
+__pycache__/
+renders/*
+!renders/contact-sheet.png

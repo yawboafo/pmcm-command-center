@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { modelA, modelB, modelC } from "../../floorplan/templates";
 import { NavGrid } from "../../floorplan/nav";
 import { BranchSimulation } from "../engine";
+import { MENU, MENU_UNPRICED } from "../menu";
 
 const START = Date.UTC(2026, 10, 3, 11, 30);
 const make = (plan = modelB(), seed = 42) =>
@@ -14,6 +15,16 @@ describe("floor plans", () => {
     for (const ws of plan.workstations) expect(grid.findPath(plan.anchors.staffRest, ws.standPoint), ws.name).not.toBeNull();
     expect(plan.cameras.length).toBeGreaterThanOrEqual(10);
     expect(new Set(plan.equipment.map((e) => e.id)).size).toBe(plan.equipment.length);
+  });
+});
+
+describe("menu", () => {
+  it("prices every simulated item from the published catalogue", () => {
+    expect(MENU_UNPRICED).toEqual([]);
+    for (const m of MENU) {
+      expect(m.price, m.id).toBeGreaterThan(0);
+      expect(m.sourceUrl, m.id).toMatch(/^https:\/\/chrisb\.app\//);
+    }
   });
 });
 
@@ -81,5 +92,28 @@ describe("simulation", () => {
     sim.advance(3600, 1e9);
     expect(o.customerId).toBeDefined();
     expect(o.status).toBe("COMPLETED");
+  });
+
+  it("order status follows its least-advanced item, with payment and an estimated ready time", () => {
+    const sim = make(modelB(), 5);
+    const o = sim.placeOrder([{ menuId: "pz-chicken-l", qty: 1 }, { menuId: "rc-playman-jollof", qty: 1 }], "online", "pickup");
+    expect(o.payment).toBeUndefined();
+    // Even before acceptance the estimate must include the pizza bake.
+    expect(sim.estimateReadyAt(o)! - sim.t).toBeGreaterThan(5 * 60);
+    sim.advance(30, 1e9);
+    expect(o.payment?.paidAt).toBeDefined();
+    const eta0 = sim.estimateReadyAt(o)!;
+    expect(eta0).toBeGreaterThan(sim.t + 5 * 60); // the pizza still has to bake
+    // While the pizza is still on the make-line or in the oven, the order cannot be at QC,
+    // even though the rice is portioned straight from the warmer.
+    for (let i = 0; i < 40 && !o.readyAt; i++) {
+      sim.advance(15, 1e9);
+      const pizza = o.unitIds.map((u) => sim.units.get(u)!).find((u) => u.kind === "pizza")!;
+      if (!pizza.done && pizza.stages[pizza.stageIndex]?.phase !== "QUALITY_CHECK") expect(o.status).not.toBe("QUALITY_CHECK");
+    }
+    sim.advance(1800, 1e9);
+    expect(o.readyAt).toBeDefined();
+    expect(sim.estimateReadyAt(o)).toBe(o.readyAt);
+    expect(Math.abs(o.readyAt! - eta0)).toBeLessThan(6 * 60); // estimate within 6 min
   });
 });

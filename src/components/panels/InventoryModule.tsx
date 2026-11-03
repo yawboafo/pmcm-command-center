@@ -150,7 +150,7 @@ export default function InventoryModule({ sim }: { sim: BranchSimulation }) {
 
       {tab === "Ledger" && (
         <div>
-          <p className="mb-1.5 text-[10.5px] text-white/45">Every stock movement with its idempotency key — each order is deducted exactly once on completion.</p>
+          <p className="mb-1.5 text-[10.5px] text-white/45">Every stock movement with its idempotency key — each order is deducted exactly once at the moment of sale (returned if cancelled before production).</p>
           <table className="w-full text-[11px]">
             <thead>
               <tr className="text-left text-[9.5px] uppercase tracking-wider text-white/35">

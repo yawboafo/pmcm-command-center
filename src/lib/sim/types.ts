@@ -57,7 +57,11 @@ export interface Order {
   externalRef?: string;
   /** Latest status reported by the source system (live orders). */
   externalStatus?: string;
+  /** Simulated payment step; undefined for live orders whose source does not report payment. */
+  payment?: { method: PaymentMethod; paidAt: number };
 }
+
+export type PaymentMethod = "mobile-money" | "card" | "cash";
 
 export interface Unit {
   id: string;

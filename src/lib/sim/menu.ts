@@ -1,8 +1,9 @@
+import catalogue from "../../data/menu-catalogue.json";
 import type { WorkstationType } from "../floorplan/types";
 
 /**
- * Menu items, names and GH₵ prices come from the public Chris B catalogue
- * (https://chrisb.app/menu, retrieved 2026-11-03 — see research/RESEARCH.md §4).
+ * Menu items and GH₵ prices come from the published Chris B catalogue snapshot in
+ * src/data/menu-catalogue.json (https://chrisb.app/menu — see docs/research/MENU-SOURCES.md).
  * Portion sizes for rice items are published; everything about *how* items are
  * produced (stages, durations, batch sizes) is a documented simulation assumption.
  */
@@ -23,15 +24,38 @@ export interface ProductionUnitSpec {
   recipe: Record<string, number>;
 }
 
-export interface MenuItem {
+interface MenuDef {
   id: string;
+  /** Catalogue entry (src/data/menu-catalogue.json) this item is sold as. */
+  catalogueSlug: string;
   name: string;
   category: "Pizza" | "Rice" | "Chicken" | "Sides" | "Packages" | "Drinks";
-  price: number;
   units: ProductionUnitSpec[];
   /** Relative popularity weight for the demand generator (assumption). */
   weight: number;
 }
+
+export interface MenuItem extends MenuDef {
+  /** Selling price in GH₵ from the catalogue (promotional price when one is published). */
+  price: number;
+  regularPrice: number;
+  /** Name exactly as published in the catalogue. */
+  publishedName: string;
+  verification: "verified" | "unverified";
+  sourceUrl: string;
+  verifiedAt: string;
+}
+
+interface CatalogueEntry {
+  slug: string;
+  name: string;
+  prices: { regular: number | null; promotional: number | null };
+  available: boolean;
+  verification: "verified" | "unverified";
+  sourceUrl: string;
+  verifiedAt: string;
+}
+const CATALOGUE = new Map((catalogue as { items: CatalogueEntry[] }).items.map((c) => [c.slug, c]));
 
 const PIZZA_DOUGH: Record<PizzaSize, number> = { S: 0.22, M: 0.32, L: 0.42, J: 0.6 };
 const PIZZA_CHEESE: Record<PizzaSize, number> = { S: 0.1, M: 0.15, L: 0.2, J: 0.3 };
@@ -66,34 +90,50 @@ function round(n: number) {
   return Math.round(n * 1000) / 1000;
 }
 
-export const MENU: MenuItem[] = [
-  { id: "pz-chicken-m", name: "Chicken Pizza — Medium", category: "Pizza", price: 130, weight: 6, units: [pizza("Chicken Pizza", "M", { "CHK-BRS": 0.12, "VEG-001": 0.04 })] },
-  { id: "pz-chicken-l", name: "Chicken Pizza — Large", category: "Pizza", price: 150, weight: 5, units: [pizza("Chicken Pizza", "L", { "CHK-BRS": 0.12, "VEG-001": 0.04 })] },
-  { id: "pz-klarabella-m", name: "Klarabella (Beef) — Medium", category: "Pizza", price: 130, weight: 4, units: [pizza("Klarabella", "M", { "BEF-001": 0.12, "VEG-001": 0.05 })] },
-  { id: "pz-chibella-m", name: "Chibella — Medium", category: "Pizza", price: 145, weight: 6, units: [pizza("Chibella", "M", { "CHK-BRS": 0.06, "BEF-001": 0.06, "SSG-001": 0.05 })] },
-  { id: "pz-chibella-l", name: "Chibella — Large", category: "Pizza", price: 190, weight: 3, units: [pizza("Chibella", "L", { "CHK-BRS": 0.06, "BEF-001": 0.06, "SSG-001": 0.05 })] },
-  { id: "pz-triplec-l", name: "Triple C — Large", category: "Pizza", price: 190, weight: 3, units: [pizza("Triple C", "L", { "CHK-BRS": 0.16 })] },
-  { id: "pz-chicham-m", name: "Chicham — Medium", category: "Pizza", price: 135, weight: 2, units: [pizza("Chicham", "M", { "CHK-BRS": 0.07, "HAM-001": 0.06, "VEG-001": 0.04 })] },
-  { id: "pz-dukeman-l", name: "Dukeman — Large", category: "Pizza", price: 220, weight: 1, units: [pizza("Dukeman", "L", { "CHK-BRS": 0.05, "BEF-001": 0.05, "HAM-001": 0.04, "SSG-001": 0.04, "TUN-001": 0.04 })] },
-  { id: "rc-guyman-jollof", name: "Guyman Metreat Jollof", category: "Rice", price: 49, weight: 9, units: [rice("Guyman", 300, "Jollof"), chicken("1 drumstick", 1, "CHK-DRM")] },
-  { id: "rc-guyman-fried", name: "Guyman Metreat Fried Rice", category: "Rice", price: 49, weight: 6, units: [rice("Guyman", 300, "Fried Rice"), chicken("1 drumstick", 1, "CHK-DRM")] },
-  { id: "rc-playman-jollof", name: "PlayMan Jollof", category: "Rice", price: 79, weight: 7, units: [rice("PlayMan", 400, "Jollof"), chicken("4 wings", 4, "CHK-WNG"), plantain, coleslaw] },
-  { id: "rc-playman-fried", name: "PlayMan Fried Rice", category: "Rice", price: 79, weight: 4, units: [rice("PlayMan", 400, "Fried Rice"), chicken("4 wings", 4, "CHK-WNG"), plantain, coleslaw] },
-  { id: "rc-mini-bucket", name: "Jollof Mini Bucket", category: "Rice", price: 150, weight: 3, units: [rice("Mini Bucket", 800, "Jollof"), chicken("8 wings", 8, "CHK-WNG"), plantain, coleslaw] },
-  { id: "ck-bucket-5", name: "Chicken Bucket — 5 pcs", category: "Chicken", price: 55, weight: 4, units: [chicken("5 pcs chicken", 5, "CHK-DRM")] },
-  { id: "ck-bucket-10", name: "Chicken Bucket — 10 pcs", category: "Chicken", price: 105, weight: 3, units: [chicken("10 pcs chicken", 10, "CHK-DRM")] },
-  { id: "ck-wings-10", name: "Wings Bucket — 10 pcs", category: "Chicken", price: 80, weight: 4, units: [chicken("10 tossed wings", 10, "CHK-WNG")] },
-  { id: "ck-wings-15", name: "Wings Bucket — 15 pcs", category: "Chicken", price: 125, weight: 2, units: [chicken("8 tossed wings", 8, "CHK-WNG"), chicken("7 tossed wings", 7, "CHK-WNG")] },
-  { id: "sd-sweet-potato", name: "Spicy Sweet Potato Bucket", category: "Sides", price: 130, weight: 2, units: [{ kind: "side", label: "Spicy sweet potato bucket", recipe: { "SWP-001": 0.6, "OIL-001": 0.05, "PKG-BKT": 1 } }] },
-  { id: "sd-plantain", name: "Extra Plantain", category: "Sides", price: 10, weight: 3, units: [plantain] },
-  { id: "pk-genz", name: "Gen-Z Pack", category: "Packages", price: 150, weight: 4, units: [pizza("Chibella", "M", { "CHK-BRS": 0.06, "BEF-001": 0.06, "SSG-001": 0.05 }), rice("Guyman", 300, "Jollof"), chicken("4 wings", 4, "CHK-WNG")] },
-  { id: "pk-borgaman", name: "Borgaman Pack", category: "Packages", price: 199, weight: 3, units: [pizza("Kersame", "M", { "CHK-BRS": 0.06, "BEF-001": 0.06, "VEG-001": 0.05 }), chicken("10 wings", 10, "CHK-WNG"), drink("Coke 0.45 L", "DRK-COK")] },
-  { id: "pk-complete-guyman", name: "Complete Guyman", category: "Packages", price: 99, weight: 3, units: [rice("Complete Guyman", 400, "Jollof"), chicken("4 wings", 4, "CHK-WNG"), plantain] },
-  { id: "dr-coke", name: "Coke 0.45 L", category: "Drinks", price: 15, weight: 6, units: [drink("Coke 0.45 L", "DRK-COK")] },
-  { id: "dr-water", name: "Bottle Water", category: "Drinks", price: 5, weight: 4, units: [drink("Bottle Water", "DRK-WTR")] },
-  { id: "dr-malt", name: "Malt", category: "Drinks", price: 20, weight: 3, units: [drink("Malt", "DRK-MLT")] },
-  { id: "dr-sobolo", name: "Tealeys Sobolo", category: "Drinks", price: 25, weight: 2, units: [drink("Tealeys Sobolo", "DRK-SOB")] },
+const DEFS: MenuDef[] = [
+  { id: "pz-chicken-m", catalogueSlug: "pizzaman-chicken-pizza-medium", name: "Chicken Pizza — Medium", category: "Pizza", weight: 6, units: [pizza("Chicken Pizza", "M", { "CHK-BRS": 0.12, "VEG-001": 0.04 })] },
+  { id: "pz-chicken-l", catalogueSlug: "pizzaman-chicken-pizza-large", name: "Chicken Pizza — Large", category: "Pizza", weight: 5, units: [pizza("Chicken Pizza", "L", { "CHK-BRS": 0.12, "VEG-001": 0.04 })] },
+  { id: "pz-klarabella-m", catalogueSlug: "pizzaman-klarabella-medium", name: "Klarabella (Beef) — Medium", category: "Pizza", weight: 4, units: [pizza("Klarabella", "M", { "BEF-001": 0.12, "VEG-001": 0.05 })] },
+  { id: "pz-chibella-m", catalogueSlug: "pizzaman-chibella-medium", name: "Chibella — Medium", category: "Pizza", weight: 6, units: [pizza("Chibella", "M", { "CHK-BRS": 0.06, "BEF-001": 0.06, "SSG-001": 0.05 })] },
+  { id: "pz-chibella-l", catalogueSlug: "pizzaman-chibella-large", name: "Chibella — Large", category: "Pizza", weight: 3, units: [pizza("Chibella", "L", { "CHK-BRS": 0.06, "BEF-001": 0.06, "SSG-001": 0.05 })] },
+  { id: "pz-triplec-l", catalogueSlug: "pizzaman-triple-c-large", name: "Triple C — Large", category: "Pizza", weight: 3, units: [pizza("Triple C", "L", { "CHK-BRS": 0.16 })] },
+  { id: "pz-chicham-m", catalogueSlug: "pizzaman-chicham-medium", name: "Chicham — Medium", category: "Pizza", weight: 2, units: [pizza("Chicham", "M", { "CHK-BRS": 0.07, "HAM-001": 0.06, "VEG-001": 0.04 })] },
+  { id: "pz-dukeman-l", catalogueSlug: "pizzaman-dukeman-large", name: "Dukeman — Large", category: "Pizza", weight: 1, units: [pizza("Dukeman", "L", { "CHK-BRS": 0.05, "BEF-001": 0.05, "HAM-001": 0.04, "SSG-001": 0.04, "TUN-001": 0.04 })] },
+  { id: "rc-guyman-jollof", catalogueSlug: "chickenman-guyman-metreat-jollof-chicken", name: "Guyman Metreat Jollof", category: "Rice", weight: 9, units: [rice("Guyman", 300, "Jollof"), chicken("1 drumstick", 1, "CHK-DRM")] },
+  { id: "rc-guyman-fried", catalogueSlug: "chickenman-guyman-metreat-fried-rice-chicken", name: "Guyman Metreat Fried Rice", category: "Rice", weight: 6, units: [rice("Guyman", 300, "Fried Rice"), chicken("1 drumstick", 1, "CHK-DRM")] },
+  { id: "rc-playman-jollof", catalogueSlug: "chickenman-playman-jollof-wings", name: "PlayMan Jollof", category: "Rice", weight: 7, units: [rice("PlayMan", 400, "Jollof"), chicken("4 wings", 4, "CHK-WNG"), plantain, coleslaw] },
+  { id: "rc-playman-fried", catalogueSlug: "chickenman-playman-fried-rice-wings", name: "PlayMan Fried Rice", category: "Rice", weight: 4, units: [rice("PlayMan", 400, "Fried Rice"), chicken("4 wings", 4, "CHK-WNG"), plantain, coleslaw] },
+  { id: "rc-mini-bucket", catalogueSlug: "chickenman-jollof-mini-bucket-wings", name: "Jollof Mini Bucket", category: "Rice", weight: 3, units: [rice("Mini Bucket", 800, "Jollof"), chicken("8 wings", 8, "CHK-WNG"), plantain, coleslaw] },
+  { id: "ck-bucket-5", catalogueSlug: "chickenman-5-bucket", name: "Chicken Bucket — 5 pcs", category: "Chicken", weight: 4, units: [chicken("5 pcs chicken", 5, "CHK-DRM")] },
+  { id: "ck-bucket-10", catalogueSlug: "chickenman-10-bucket", name: "Chicken Bucket — 10 pcs", category: "Chicken", weight: 3, units: [chicken("10 pcs chicken", 10, "CHK-DRM")] },
+  { id: "ck-wings-10", catalogueSlug: "chickenman-wings-10pcs", name: "Wings Bucket — 10 pcs", category: "Chicken", weight: 4, units: [chicken("10 tossed wings", 10, "CHK-WNG")] },
+  { id: "ck-wings-15", catalogueSlug: "chickenman-wings-15pcs", name: "Wings Bucket — 15 pcs", category: "Chicken", weight: 2, units: [chicken("8 tossed wings", 8, "CHK-WNG"), chicken("7 tossed wings", 7, "CHK-WNG")] },
+  { id: "sd-sweet-potato", catalogueSlug: "chickenman-spicy-sweet-potatoes-bucket", name: "Spicy Sweet Potato Bucket", category: "Sides", weight: 2, units: [{ kind: "side", label: "Spicy sweet potato bucket", recipe: { "SWP-001": 0.6, "OIL-001": 0.05, "PKG-BKT": 1 } }] },
+  { id: "sd-plantain", catalogueSlug: "chickenman-extra-plantain", name: "Extra Plantain", category: "Sides", weight: 3, units: [plantain] },
+  { id: "pk-genz", catalogueSlug: "package-gen-z-pack-jollof-wings", name: "Gen-Z Pack", category: "Packages", weight: 4, units: [pizza("Chibella", "M", { "CHK-BRS": 0.06, "BEF-001": 0.06, "SSG-001": 0.05 }), rice("Guyman", 300, "Jollof"), chicken("4 wings", 4, "CHK-WNG")] },
+  { id: "pk-borgaman", catalogueSlug: "package-borgaman-pack-kersame", name: "Borgaman Pack", category: "Packages", weight: 3, units: [pizza("Kersame", "M", { "CHK-BRS": 0.06, "BEF-001": 0.06, "VEG-001": 0.05 }), chicken("10 wings", 10, "CHK-WNG"), drink("Coke 0.45 L", "DRK-COK")] },
+  { id: "pk-complete-guyman", catalogueSlug: "package-complete-guyman-jollof-wings", name: "Complete Guyman", category: "Packages", weight: 3, units: [rice("Complete Guyman", 400, "Jollof"), chicken("4 wings", 4, "CHK-WNG"), plantain] },
+  { id: "dr-coke", catalogueSlug: "drinks-coke-0-45l", name: "Coke 0.45 L", category: "Drinks", weight: 6, units: [drink("Coke 0.45 L", "DRK-COK")] },
+  { id: "dr-water", catalogueSlug: "drinks-bottle-water", name: "Bottle Water", category: "Drinks", weight: 4, units: [drink("Bottle Water", "DRK-WTR")] },
+  { id: "dr-malt", catalogueSlug: "drinks-malt", name: "Malt", category: "Drinks", weight: 3, units: [drink("Malt", "DRK-MLT")] },
+  { id: "dr-sobolo", catalogueSlug: "drinks-tealeys-sobolo", name: "Tealeys Sobolo", category: "Drinks", weight: 2, units: [drink("Tealeys Sobolo", "DRK-SOB")] },
 ];
+
+/**
+ * The simulation's menu: production recipes (assumptions, above) joined to the published
+ * catalogue (`src/data/menu-catalogue.json`, refreshed by `scripts/import-menu.ts`), which is
+ * the only source of prices. An item missing from the catalogue gets no price and is left out
+ * of simulated demand rather than given an invented one.
+ */
+export const MENU: MenuItem[] = DEFS.flatMap((d) => {
+  const c = CATALOGUE.get(d.catalogueSlug);
+  const price = c?.prices.promotional ?? c?.prices.regular ?? null;
+  if (!c || price === null || !c.available) return [];
+  return [{ ...d, price, regularPrice: c.prices.regular ?? price, publishedName: c.name, verification: c.verification, sourceUrl: c.sourceUrl, verifiedAt: c.verifiedAt }];
+});
+
+/** Simulation items that could not be priced from the catalogue (shown in Settings → Menu & prices). */
+export const MENU_UNPRICED = DEFS.filter((d) => !MENU.some((m) => m.id === d.id)).map((d) => d.catalogueSlug);
 
 export const MENU_BY_ID = new Map(MENU.map((m) => [m.id, m]));
 
@@ -162,4 +202,6 @@ export const SIMULATION_ASSUMPTIONS = [
   "Jollof / fried rice is cooked in batches (≈40 portions, 15 min) and held hot; orders are portioned from the warmer in ≈35 s.",
   "Packaging takes 20 s plus 5 s per production unit; collection hand-over 8 s.",
   "Customer arrival follows a Poisson process scaled by a lunch/dinner demand curve; channel mix is a demo setting.",
+  "Payment: walk-in orders are paid at the counter when placed, remote orders on acceptance. Method mix (mobile money 60%, card 15%, cash 25% walk-in only) is a demo assumption, not company data.",
+  "Order status follows the least-advanced item: an order is in Cooking until every item has finished cooking.",
 ];

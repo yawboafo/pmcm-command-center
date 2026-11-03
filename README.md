@@ -6,8 +6,9 @@ generated 3D restaurant, and watch a deterministic simulation of customers, staf
 stations, orders, food-safety sensors, inventory and deliveries.
 
 > **Read this first — what is real and what is not**
-> - Branch names, locations, regions, hours and menu prices come from the company's public
->   directory and Chris B catalogue (verified 2026-11-03, sources in `docs/research`).
+> - Branch names, locations, regions and hours come from the company's public directory; menu
+>   items and prices from the published Chris B catalogue, with a source URL and verification
+>   date per item (`src/data/menu-catalogue.json`, `docs/research/MENU-SOURCES.md`).
 > - **All floor plans are conceptual.** No public plans exist; layouts A/B/C are design assumptions.
 > - **Operational data is simulated** (orders, sales, staff, temperatures, alerts, stock) unless it
 >   is marked **LIVE**: bound IoT sensors and connected POS / ordering systems can feed the twin
@@ -24,6 +25,18 @@ npm install
 cp .env.example .env.local   # optional: ANTHROPIC_API_KEY for the full AI assistant
 npm run dev                  # http://localhost:3000
 npm test                     # simulation, floor plan and integration tests
+```
+
+Refresh menu prices from the published Chris B catalogue (no code change needed):
+
+```bash
+npx tsx scripts/import-menu.ts
+```
+
+Rebuild the Blender equipment models (Blender 5.2+, see `blender/README.md` and `docs/ASSETS.md`):
+
+```bash
+blender -b --factory-startup --python blender/build_assets.py && python3 blender/postprocess.py
 ```
 
 Bench-test the live paths (keys go in `.env.local`, see `.env.example`):
@@ -64,7 +77,8 @@ src/components      shell · map · twin · panels · editor · analytics · ass
 src/data            branches.json (from research), floorplans/model-{a,b,c}.json, devices.json
 scripts             generate-floorplans.ts, import-branches.py, device-sim.ts, pos-sim.ts
 prisma              target production schema (backend not yet built)
-docs                ARCHITECTURE.md, INTEGRATION.md, HANDOVER.md, research/, floorplans/*.svg
+docs                ARCHITECTURE.md, AUDIT.md, ASSETS.md, INTEGRATION.md, HANDOVER.md, research/, floorplans/*.svg
+blender             scripted Blender → glTF asset pipeline (output in public/models)
 ```
 
 See `docs/ARCHITECTURE.md` for the design, the production target and phase status.

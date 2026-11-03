@@ -67,7 +67,7 @@ Deterministic (seeded PRNG, fixed 0.25 s steps), event-driven, one instance per 
 - **Equipment & safety** — temperature models with injectable faults, configurable thresholds,
   alert lifecycle (open → acknowledged → resolved; resolution requires a corrective action **and**
   an in-range reading), cleaning checklists, cook-temperature verification log, oil quality.
-- **Inventory** — recipe-based deduction on completion with an idempotent ledger key
+- **Inventory** — recipe-based deduction at the moment of sale (credited back if cancelled before production) with an idempotent ledger key
   (`order:<id>`), batch production consumption, low-stock/expiry status, auto-replenishment.
 
 Tests: `npx vitest run` (determinism, flow-to-completion on all three layouts, ledger dedup,
@@ -136,4 +136,5 @@ alert rules, demo order routing, reachability of every workstation).
 | 6 Editor, virtual cameras, AI assistant, central kitchens | Done (central kitchens conceptual) |
 | Integration layer: signed device + POS ingestion, SSE live stream, device/camera registry, WHEP camera proxy, Settings → Integrations | Done (in-process hub; verified with bench scripts; camera path unit-tested, not yet run against a real gateway) |
 | Mobile layout (overlay sidebar and inspector below `md`) | Done |
+| Digital twin upgrade: source-backed menu, order lifecycle (payment, ETA, event trail), provenance taxonomy, priority queue, Blender glTF assets, station camera presets | Done — see `docs/AUDIT.md` |
 | Backend services (NestJS, Postgres, Redis, WebSockets), production pipeline, server-side alerting | Designed, not built |

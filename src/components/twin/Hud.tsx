@@ -25,6 +25,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import { statusLabel } from "@/components/panels/InspectOrder";
 import { BRANCH_BY_ID } from "@/lib/network/branches";
 import { clockSec } from "@/lib/format";
 import type { BranchSimulation } from "@/lib/sim/engine";
@@ -280,7 +281,7 @@ export function FollowBanner({ sim }: { sim: BranchSimulation }) {
       <button type="button" className="font-semibold hover:underline" onClick={() => select({ kind: "order", id })}>
         Following order #{o.number}
       </button>
-      <span className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[10px]">{o.status.replace(/_/g, " ")}</span>
+      <span className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[10px]">{statusLabel(o.status, o)}</span>
       {task && <span className="max-w-64 truncate text-white/60">{task.label}</span>}
       <button type="button" onClick={() => followOrder(null)} className="rounded-md p-1 text-white/60 hover:bg-white/10 hover:text-white" aria-label="Stop following">
         <X size={13} />

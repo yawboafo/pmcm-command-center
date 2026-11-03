@@ -11,7 +11,7 @@ import type { Equipment, FloorPlan } from "@/lib/floorplan/types";
 import type { BranchSimulation } from "@/lib/sim/engine";
 import { AgentsLayer } from "./agents";
 import { Ceilings, Doors, Exterior, Floors, RoomLabels, Site, Walls, Windows } from "./building";
-import { EquipmentModel } from "./equipment";
+import { EquipmentAsset } from "./modelAssets";
 import { FurnitureLayer } from "./furniture";
 import { FaultLabels, LiveLayer, OrderChips, SelectionBox } from "./live";
 
@@ -168,7 +168,7 @@ const EquipmentLayer = memo(function EquipmentLayer({
             onClick(e.id, ev.delta);
           }}
         >
-          <EquipmentModel e={e} />
+          <EquipmentAsset e={e} />
           {highlight?.includes(e.id) && (
             <mesh position={[0, e.size[1] / 2, 0]} scale={[e.size[0] + 0.1, e.size[1] + 0.1, e.size[2] + 0.1]}>
               <boxGeometry />

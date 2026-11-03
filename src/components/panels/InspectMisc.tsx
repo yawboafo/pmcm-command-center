@@ -7,7 +7,7 @@ import { mins, pct } from "@/lib/format";
 import { roleLabel, type BranchSimulation } from "@/lib/sim/engine";
 import { useApp } from "@/store/app";
 import { Card, HistoryChart, KV, Pill, ProgressBar, focusEquipment, focusPoint, limitFor, statusTone } from "./common";
-import { taskProgress } from "./InspectOrder";
+import { statusLabel, taskProgress } from "./InspectOrder";
 
 const CUSTOMER_PHASE: Record<string, string> = {
   "to-queue": "Walking to queue",
@@ -80,7 +80,7 @@ export function InspectAgent({ sim, id }: { sim: BranchSimulation; id: string })
       )}
       {order && (
         <Btn size="xs" onClick={() => select({ kind: "order", id: order.id })}>
-          Order #{order.number} · {order.status.replace(/_/g, " ")}
+          Order #{order.number} · {statusLabel(order.status, order)}
         </Btn>
       )}
       {a.kind === "staff" && <p className="text-[10px] leading-snug text-white/35">Fictional demo staff. A production deployment must not track real employees&apos; locations without consent, a lawful basis, privacy controls and dedicated tracking infrastructure.</p>}
@@ -137,7 +137,7 @@ export function InspectCamera({ sim, id }: { sim: BranchSimulation; id: string }
             {orders.slice(0, 10).map((o) => (
               <li key={o.id}>
                 <button type="button" className="text-white/75 hover:underline" onClick={() => select({ kind: "order", id: o.id })}>
-                  #{o.number} · {o.status.replace(/_/g, " ")}
+                  #{o.number} · {statusLabel(o.status, o)}
                 </button>
               </li>
             ))}
