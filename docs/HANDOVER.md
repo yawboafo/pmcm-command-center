@@ -8,7 +8,7 @@ This prototype **will be connected to real IoT sensors, physical cameras, POS an
 ## State
 - `npm run dev` (port 3000 is running from the previous session), `npm test` → **26/26 passing**, `npx tsc --noEmit -p .` → clean.
 - Secrets live in `web/.env.local` (gitignored): `ANTHROPIC_API_KEY` (client should rotate it — it was pasted in chat) and generated bench `DEVICE_KEYS`. Never commit or print them.
-- Nothing has been committed to git yet (repo initialised in `web/`). Ask the user before committing.
+- Git: repo is `web/` → **https://github.com/yawboafo/pmcm-command-center** (private). Work is on branch `feat/command-center-prototype` (pushed); `main` holds only the scaffold. No PR opened yet. Ask before pushing or merging.
 
 ## Built and verified
 | Area | Where | Notes |
@@ -32,7 +32,7 @@ This prototype **will be connected to real IoT sensors, physical cameras, POS an
 4. **`docs/INTEGRATION.md`**: contracts (`contracts.ts`), MQTT topic `pmcm/v1/{branchCode}/{deviceId}/telemetry`, signing headers, binding file `src/data/devices.json`, recommended hardware (wireless temperature probes/LoRaWAN or Wi-Fi with gateway, food probes, fryer oil sensors, ONVIF/RTSP IP cameras + MediaMTX), NTP time sync, calibration offsets, offline buffering on devices, production path (MQTT broker with mTLS → Redis Streams/Kafka → TimescaleDB → NestJS WebSocket gateway), privacy/legal (Ghana Data Protection Act 2012, Act 843 — confirm registration duties with counsel; CCTV signage/retention), and POS webhook contract (`PosOrderEvent`, route not yet written: `/api/ingest/pos`).
 5. Map-agent shell requests: (a) mobile — below `md`, overlay/collapse sidebar + 340 px inspector; (b) `lib/network/supply.ts` spread runs across the day (currently 04–07h, 13–16h, so the 12:15 demo shows no trucks); (c) delay `TwinView` mount until the map flight is nearly done (`MainView.tsx`).
 6. Engine/panel small gaps: injected pickup orders have no customer to collect them (composer is delivery-only); agents don't avoid each other.
-7. Update `README.md` / `docs/ARCHITECTURE.md` phase table with the integration layer, then propose a commit to the user.
+7. Update `README.md` / `docs/ARCHITECTURE.md` phase table with the integration layer; offer to open a PR into `main`.
 
 ## Gotchas
 - Next.js 16.4 with `cacheComponents`: route segment `export const dynamic` is **removed**; read `node_modules/next/dist/docs/` before using Next APIs. Route params are a Promise.
