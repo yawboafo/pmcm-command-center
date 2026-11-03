@@ -101,11 +101,11 @@ export default function IntroOverlay({ onSkip, onGesture }: { onSkip: () => void
 }
 
 const CAPTIONS: Array<[number, number, string]> = [
-  [1.2, 4.2, "Digital twin · East Legon"],
-  [4.4, 7.3, "Fryer line · hot holding"],
-  [7.5, 10.3, "Front counter · tills and queue"],
-  [10.5, 13, "Dining · occupancy"],
-  [13.2, 15.2, "Rider bay · dispatch"],
+  [1.2, 4.5, "Digital twin · East Legon"],
+  [4.7, 6.6, "Kitchen line"],
+  [6.8, 8.4, "Front counter · queue"],
+  [8.6, 10, "Dining"],
+  [10.2, 12.2, "Rider bay · live instruments"],
 ];
 
 function Caption({ t }: { t: number }) {

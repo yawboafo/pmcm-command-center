@@ -9,7 +9,6 @@ import { sims } from "@/store/sims";
 import { launchAudio } from "./audio";
 import Gate from "./Gate";
 import IntroOverlay from "./IntroOverlay";
-import IntroVideo from "./IntroVideo";
 import { detectTier, useLaunch, type LaunchPhase } from "./launchStore";
 
 const LaunchScene = dynamic(() => import("./LaunchScene"), { ssr: false });
@@ -120,8 +119,7 @@ export default function Launch({ children }: { children: ReactNode }) {
   const unlocking = useLaunch.getState().phase === "unlock";
   return (
     <div className="launch-root fixed inset-0 overflow-hidden bg-black text-white" data-theme="dark">
-      {sim && tier !== "video" && <LaunchScene sim={sim} onIntroEnd={endIntro} />}
-      {step === "intro" && tier === "video" && <IntroVideo onEnd={endIntro} />}
+      {sim && tier !== "none" && <LaunchScene sim={sim} onIntroEnd={endIntro} />}
       {step === "intro" && <IntroOverlay onSkip={endIntro} onGesture={gesture} />}
       {step === "gate" && <Gate onUnlocked={unlocked} onDeny={() => audio.deny()} unlocking={unlocking} />}
       <div className={`pointer-events-none absolute inset-0 z-40 bg-black transition-opacity duration-700 ${fade ? "opacity-100" : "opacity-0"}`} />
