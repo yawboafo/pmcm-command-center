@@ -74,6 +74,8 @@ interface AppState {
   tick: number;
   panels: { left: boolean; right: boolean; bottom: boolean };
   graphics: "high" | "balanced" | "low";
+  /** Equipment rendering: Blender-built glTF models (when available) or the procedural stand-ins. */
+  assetMode: "models" | "procedural";
   user: DemoUser;
   regionFilter: string | null;
   statusFilter: string | null;
@@ -98,6 +100,7 @@ interface AppState {
   bumpTick: () => void;
   togglePanel: (p: "left" | "right" | "bottom") => void;
   setGraphics: (g: "high" | "balanced" | "low") => void;
+  setAssetMode: (m: "models" | "procedural") => void;
   setUser: (id: string) => void;
   setFilters: (f: Partial<{ regionFilter: string | null; statusFilter: string | null; search: string }>) => void;
   notify: (text: string, tone?: "info" | "success" | "warning" | "critical") => void;
@@ -126,6 +129,8 @@ export const useApp = create<AppState>((set, get) => ({
   // Phones start with every side panel folded so the map or twin gets the screen (the app is client-only).
   panels: typeof window !== "undefined" && window.innerWidth < 768 ? { left: false, right: false, bottom: false } : { left: true, right: true, bottom: true },
   graphics: "balanced",
+  // `?assets=procedural` starts with the procedural stand-ins (side-by-side QA and performance checks).
+  assetMode: typeof window !== "undefined" && new URLSearchParams(window.location.search).get("assets") === "procedural" ? "procedural" : "models",
   user: DEMO_USERS[1],
   regionFilter: null,
   statusFilter: null,
@@ -165,6 +170,7 @@ export const useApp = create<AppState>((set, get) => ({
   bumpTick: () => set({ tick: get().tick + 1 }),
   togglePanel: (p) => set({ panels: { ...get().panels, [p]: !get().panels[p] } }),
   setGraphics: (graphics) => set({ graphics }),
+  setAssetMode: (assetMode) => set({ assetMode }),
   setUser: (id) => set({ user: DEMO_USERS.find((u) => u.id === id) ?? DEMO_USERS[1] }),
   setFilters: (f) => set(f),
   notify: (text, tone = "info") => set({ toast: { id: Date.now(), text, tone } }),

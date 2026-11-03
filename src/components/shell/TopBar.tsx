@@ -5,7 +5,8 @@ import { Btn, SimBadge, cx } from "@/components/ui/primitives";
 import { DEMO_USERS, can } from "@/lib/auth/rbac";
 import { clockSec } from "@/lib/format";
 import { BRANCH_BY_ID } from "@/lib/network/branches";
-import { useTick } from "@/lib/hooks/useSim";
+import { useSnapshots, useTick } from "@/lib/hooks/useSim";
+import { useLive } from "@/lib/integration/liveClient";
 import { useApp } from "@/store/app";
 import { sims } from "@/store/sims";
 
@@ -18,6 +19,9 @@ export default function TopBar() {
   const realtime = sims().realtime;
   // Live devices run on the real clock, so speed controls are locked while connected.
   const canControl = can(user, "control:simulation") && !realtime;
+  const snaps = useSnapshots();
+  const liveBranches = useLive((s) => s.liveBranches.length);
+  const count = (st: string) => snaps.filter((x) => x.status === st).length;
 
   return (
     <header className="glass z-20 flex h-12 shrink-0 items-center gap-3 rounded-none border-x-0 border-t-0 px-3">
@@ -35,10 +39,22 @@ export default function TopBar() {
         </div>
       ) : (
         <div className="min-w-0">
-          <div className="font-display text-sm font-bold text-white">Ghana Operations</div>
-          <div className="text-[10px] text-white/45 max-md:hidden">70 outlets from the official directory · verified 2026-11-03</div>
+          <div className="truncate font-display text-sm font-bold text-white">Ghana Operations</div>
+          <div className="truncate text-[10px] text-white/45 max-md:hidden">70 outlets from the official directory · verified 2026-11-03</div>
         </div>
       )}
+
+      {/* Network status at a glance: what needs attention right now, and how much data is real. */}
+      <div className="ml-4 hidden items-center gap-3 font-mono text-[10.5px] tracking-wide lg:flex" aria-label="Network status">
+        <StatusCount n={count("critical")} label="CRIT" color="bg-red-500" strong />
+        <StatusCount n={count("warning")} label="WARN" color="bg-amber-400" />
+        <StatusCount n={count("normal")} label="NOMINAL" color="bg-emerald-500" />
+        <StatusCount n={count("closed")} label="CLOSED" color="bg-white/30" />
+        <span className="h-4 w-px bg-white/10" />
+        <span className={cx(liveBranches ? "text-emerald-300" : "text-white/35")} title="Branches receiving data from connected devices or order systems">
+          {liveBranches} LIVE SOURCE{liveBranches === 1 ? "" : "S"}
+        </span>
+      </div>
 
       <div className="ml-auto flex items-center gap-2">
         <span className="max-md:hidden">{realtime ? <SimBadge label="LIVE DEVICES + SIMULATION" /> : <SimBadge label="DEMO SIMULATION" />}</span>
@@ -90,5 +106,15 @@ export default function TopBar() {
         </select>
       </div>
     </header>
+  );
+}
+
+function StatusCount({ n, label, color, strong }: { n: number; label: string; color: string; strong?: boolean }) {
+  return (
+    <span className={cx("flex items-center gap-1.5", n === 0 ? "text-white/30" : strong ? "text-red-200" : "text-white/70")}>
+      <span className={cx("h-1.5 w-1.5 rounded-full", color, n > 0 && strong && "animate-pulse")} />
+      <span className="tabular-nums text-white/90">{n}</span>
+      {label}
+    </span>
   );
 }

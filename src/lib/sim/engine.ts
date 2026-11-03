@@ -407,6 +407,15 @@ export class BranchSimulation {
     return order;
   }
 
+  /** Simulated payment (method mix is a documented demo assumption). */
+  private pay(order: Order) {
+    if (order.payment) return;
+    const counter = order.channel === "walk-in" || order.channel === "pos";
+    const r = this.rng.next();
+    const method = counter ? (r < 0.5 ? "mobile-money" : r < 0.65 ? "card" : "cash") : r < 0.8 ? "mobile-money" : "card";
+    order.payment = { method, paidAt: this.t };
+  }
+
   /** Manually inject an order (used by the demo "new order" control and the AI assistant). */
   placeOrder(lines: Array<{ menuId: string; qty: number }>, channel: Channel = "demo", fulfilment: Fulfilment = "delivery") {
     const o = this.createOrder(lines, channel, fulfilment);
@@ -429,6 +438,8 @@ export class BranchSimulation {
       o = this.createOrder(lines, e.channel, e.fulfilment);
       o.source = "live";
       o.externalRef = e.externalRef;
+      // Payment is not part of the order webhook: never show a simulated payment on a live order.
+      o.payment = undefined;
       // The source system's prices are authoritative.
       o.lines.forEach((l, i) => (l.price = lines[i].unitPriceGhs));
       o.total = o.lines.reduce((s, l) => s + l.qty * l.price, 0);
@@ -443,6 +454,7 @@ export class BranchSimulation {
   }
 
   private accept(order: Order) {
+    if (order.source === "simulated") this.pay(order);
     this.setStatus(order, "ACCEPTED");
     order.acceptedAt = this.t;
     for (const l of order.lines) {
@@ -455,6 +467,9 @@ export class BranchSimulation {
         }
     }
     this.setStatus(order, "KITCHEN_QUEUE");
+    // Theoretical usage: the recipe is deducted at the moment of sale, as a POS-driven
+    // inventory system would, so stock and shortages react as soon as an order lands.
+    if (this.consumeForOrder(order)) this.log("inventory", "info", `Recipe stock deducted for order #${order.number}`, { orderId: order.id });
     for (const uid of order.unitIds) this.advanceUnit(this.units.get(uid)!);
     this.checkOrderUnitsDone(order);
   }
@@ -505,7 +520,10 @@ export class BranchSimulation {
   cancelOrder(orderId: string, reason = "Cancelled by manager") {
     const o = this.orders.get(orderId);
     if (!o || ["COMPLETED", "CANCELLED", "REFUNDED"].includes(o.status)) return false;
+    const started = [...this.tasks.values()].some((t) => t.orderId === orderId && t.kind === "stage" && (t.state === "working" || t.state === "machine" || t.state === "done"));
     for (const t of this.tasks.values()) if (t.orderId === orderId && t.state !== "done") this.releaseTask(t, true);
+    // Nothing produced yet: the deducted ingredients are still on the shelf.
+    if (o.inventoryConsumed && !started && this.restock(`order-cancel:${o.id}`, o)) this.log("inventory", "info", `Recipe stock returned for cancelled order #${o.number}`, { orderId });
     this.setStatus(o, "CANCELLED", reason);
     o.note = reason;
     this.log("order", "warning", `Order #${o.number} cancelled — ${reason}`, { orderId });
@@ -529,7 +547,6 @@ export class BranchSimulation {
     this.setStatus(o, "COMPLETED");
     o.completedAt = this.t;
     if (o.acceptedAt !== undefined && o.readyAt !== undefined) this.prepTimes.push((o.readyAt - o.acceptedAt) / 60);
-    this.consumeForOrder(o);
     this.log("order", "success", `Order #${o.number} completed (${fulfilmentLabel(o.fulfilment)})`, { orderId: o.id });
   }
 
@@ -659,10 +676,58 @@ export class BranchSimulation {
       if (st) st.activeJobs++;
     }
     const order = task.orderId ? this.orders.get(task.orderId) : undefined;
-    if (order && task.unitId) {
-      const phase = this.units.get(task.unitId)!.stages[this.units.get(task.unitId)!.stageIndex]?.phase;
-      if (phase) this.setStatus(order, phase);
+    if (order && task.unitId) this.syncOrderPhase(order);
+  }
+
+  /**
+   * Order status follows its least-advanced item: an order is COOKING until every item has
+   * at least reached cooking, and so on. (setStatus never moves an order backwards.)
+   */
+  private syncOrderPhase(order: Order) {
+    const flow = ["KITCHEN_QUEUE", "PREPARATION", "COOKING", "QUALITY_CHECK"] as const;
+    let least: number = flow.length - 1;
+    for (const uid of order.unitIds) {
+      const u = this.units.get(uid);
+      if (!u || u.done) continue;
+      const started = [...this.tasks.values()].some((t) => t.unitId === uid && t.kind === "stage" && (t.state === "working" || t.state === "machine"));
+      const stage = started ? u.stages[u.stageIndex] : u.stages[u.stageIndex - 1];
+      least = Math.min(least, stage ? flow.indexOf(stage.phase) : 0);
     }
+    if (least > 0) this.setStatus(order, flow[least]);
+  }
+
+  /**
+   * ESTIMATED time (sim seconds) the order will be ready: remaining stage time of the slowest
+   * item, plus work already queued at each station, plus packing and hand-over. Recomputed on
+   * every call, so it reacts to queue changes.
+   */
+  estimateReadyAt(order: Order): number | null {
+    if (order.readyAt !== undefined) return order.readyAt;
+    if (["CANCELLED", "FAILED", "REFUNDED"].includes(order.status)) return null;
+    const queued = new Map<string, number>();
+    for (const t of this.tasks.values()) if (t.state === "pending") queued.set(t.ws, (queued.get(t.ws) ?? 0) + t.duration);
+    const capacity = (ws: string) => Math.max(1, this.plan.workstations.filter((w) => w.type === ws).reduce((n, w) => n + Math.max(1, w.capacity), 0));
+    let slowest = 0;
+    // Not accepted yet: items have not been expanded into production units, so use the menu's stages.
+    if (!order.unitIds.length)
+      for (const l of order.lines)
+        for (const spec of MENU_BY_ID.get(l.menuId)?.units ?? []) {
+          const stages = stagesFor(spec);
+          const first = stages[0];
+          const wait = first ? (queued.get(first.ws) ?? 0) / capacity(first.ws) : 0;
+          slowest = Math.max(slowest, wait + stages.reduce((a, st) => a + st.duration, 0));
+        }
+    for (const uid of order.unitIds) {
+      const u = this.units.get(uid);
+      if (!u || u.done) continue;
+      const cur = [...this.tasks.values()].find((t) => t.unitId === uid && t.kind === "stage" && t.state !== "done");
+      let rest = cur?.endsAt !== undefined ? Math.max(0, cur.endsAt - this.t) : (u.stages[u.stageIndex]?.duration ?? 0) + (queued.get(u.stages[u.stageIndex]?.ws ?? "") ?? 0) / capacity(u.stages[u.stageIndex]?.ws ?? "");
+      for (const st of u.stages.slice(u.stageIndex + 1)) rest += st.duration;
+      slowest = Math.max(slowest, rest);
+    }
+    const packed = ["READY", "OUT_FOR_DELIVERY", "COMPLETED"].includes(order.status);
+    const start = order.acceptedAt ?? this.t + 25;
+    return Math.max(this.t, start) + slowest + (packed ? 0 : 20 + 5 * order.unitIds.length + 4);
   }
 
   private finishWork(agent: Agent, task: Task) {
@@ -1477,16 +1542,33 @@ export class BranchSimulation {
     return true;
   }
 
-  /** Deduct recipe quantities once per order (idempotent via the ledger key). */
-  consumeForOrder(o: Order) {
-    if (o.inventoryConsumed) return false;
+  /** Credit an order's recipe back to stock once (idempotent via the ledger key). */
+  private restock(key: string, o: Order) {
+    if (this.ledgerKeys.has(key)) return false;
+    this.ledgerKeys.add(key);
+    for (const [sku, q] of Object.entries(this.recipeTotals(o))) {
+      const item = this.inventory.find((i) => i.sku === sku);
+      if (!item || !q) continue;
+      item.qty = Math.round((item.qty + q) * 1000) / 1000;
+      this.ledger.push({ id: `${this.branchId}-led-${++this.seq}`, key, t: this.now(), sku, delta: q, reason: "adjustment", ref: o.id });
+    }
+    return true;
+  }
+
+  private recipeTotals(o: Order) {
     const total: Record<string, number> = { "PKG-BAG": 1 };
     for (const l of o.lines) {
       const m = MENU_BY_ID.get(l.menuId);
       if (!m) continue;
       for (const u of m.units) for (const [sku, q] of Object.entries(u.recipe)) total[sku] = (total[sku] ?? 0) + q * l.qty;
     }
-    const ok = this.consume(`order:${o.id}`, total, "order", o.id);
+    return total;
+  }
+
+  /** Deduct recipe quantities once per order (idempotent via the ledger key). */
+  consumeForOrder(o: Order) {
+    if (o.inventoryConsumed) return false;
+    const ok = this.consume(`order:${o.id}`, this.recipeTotals(o), "order", o.id);
     o.inventoryConsumed = true;
     return ok;
   }

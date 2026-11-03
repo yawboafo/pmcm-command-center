@@ -9,7 +9,7 @@ import { channelLabel, type BranchSimulation } from "@/lib/sim/engine";
 import type { Channel, Order } from "@/lib/sim/types";
 import { useApp } from "@/store/app";
 import { Pill, simMs } from "./common";
-import { orderTone } from "./InspectOrder";
+import { orderTone, statusLabel } from "./InspectOrder";
 
 const GROUPS: Array<{ key: string; label: string; match: (o: Order) => boolean }> = [
   { key: "all", label: "All", match: () => true },
@@ -96,7 +96,7 @@ export default function OrdersBoard({ sim }: { sim: BranchSimulation }) {
                     {o.lines.map((l) => `${l.qty}× ${l.name}`).join(", ")}
                   </td>
                   <td className="pr-1">
-                    <Pill tone={orderTone(o)}>{o.delayed && active ? "delayed" : o.status.replace(/_/g, " ").toLowerCase()}</Pill>
+                    <Pill tone={orderTone(o)}>{o.delayed && active ? "delayed" : statusLabel(o.status, o).toLowerCase()}</Pill>
                   </td>
                   <td className="pr-1 text-right font-mono text-white/70">{ghs(o.total)}</td>
                   <td className="whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>

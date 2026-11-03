@@ -1,10 +1,11 @@
 "use client";
 
 import { Check, Navigation } from "lucide-react";
-import { Btn, SectionTitle, SourceBadge, cx } from "@/components/ui/primitives";
+import { Btn, EstimatedBadge, SectionTitle, SourceBadge, UnavailableBadge, cx } from "@/components/ui/primitives";
 import { can } from "@/lib/auth/rbac";
 import { clockSec, ghs, mins } from "@/lib/format";
 import { channelLabel, fulfilmentLabel, type BranchSimulation } from "@/lib/sim/engine";
+import { MENU_BY_ID } from "@/lib/sim/menu";
 import { ORDER_FLOW, type Order, type Task } from "@/lib/sim/types";
 import { useApp } from "@/store/app";
 import { Card, KV, Pill, ProgressBar, simMs } from "./common";
@@ -13,6 +14,29 @@ export function taskProgress(sim: BranchSimulation, t: Task): number {
   if (t.state === "machine" && t.endsAt !== undefined) return 1 - Math.max(0, t.endsAt - sim.t) / Math.max(1, t.duration);
   if (t.state === "working" && t.startedAt !== undefined && t.endsAt !== undefined) return (sim.t - t.startedAt) / Math.max(1, t.endsAt - t.startedAt);
   return 0;
+}
+
+const PAYMENT_LABEL = { "mobile-money": "Mobile money", card: "Card", cash: "Cash" } as const;
+
+/** Operator-facing names for each lifecycle step (the last step depends on fulfilment). */
+export function statusLabel(s: Order["status"], o?: Pick<Order, "fulfilment">): string {
+  if (s === "COMPLETED") return o?.fulfilment === "delivery" ? "Delivered" : o?.fulfilment === "dine-in" ? "Served" : "Collected";
+  return (
+    {
+      RECEIVED: "Order placed",
+      ACCEPTED: "Accepted",
+      KITCHEN_QUEUE: "Kitchen queue",
+      PREPARATION: "Preparation",
+      COOKING: "Cooking",
+      QUALITY_CHECK: "Quality check",
+      PACKAGING: "Packaging",
+      READY: "Ready",
+      OUT_FOR_DELIVERY: "Dispatched",
+      CANCELLED: "Cancelled",
+      FAILED: "Failed",
+      REFUNDED: "Refunded",
+    } as Record<string, string>
+  )[s];
 }
 
 export function orderTone(o: Order): "red" | "yellow" | "green" | "blue" | "default" {
@@ -36,7 +60,24 @@ export default function InspectOrder({ sim, id }: { sim: BranchSimulation; id: s
   const reached = new Map(o.history.map((h) => [h.status, h.t]));
   const flow = o.fulfilment === "delivery" ? ORDER_FLOW : ORDER_FLOW.filter((s) => s !== "OUT_FOR_DELIVERY");
   const tasks = sim.tasksFor(o.id);
+  const eta = sim.estimateReadyAt(o);
+  // Every engine event and stock movement that references this order, oldest first.
+  const trail = sim.events.filter((e) => e.refs?.orderId === o.id);
+  const invName = new Map(sim.inventory.map((i) => [i.sku, `${i.unit} ${i.name}`]));
+  const stockBy = new Map<string, number>();
+  for (const l of sim.ledger) if (l.ref === o.id) stockBy.set(l.sku, (stockBy.get(l.sku) ?? 0) + l.delta);
+  const stock = [...stockBy].filter(([, d]) => Math.abs(d) > 1e-9);
   const units = o.unitIds.map((u) => sim.units.get(u)!).filter(Boolean);
+  // Order placed → Payment → Kitchen queue → … → Ready → Served / Collected / Dispatched → Delivered.
+  const steps: Array<{ key: string; label: string; t?: number; current: boolean }> = [];
+  for (const s of flow) {
+    if (s === "ACCEPTED") {
+      // Payment is its own step; acceptance is shown inside it for remote orders.
+      steps.push({ key: "PAYMENT", label: o.source === "live" && !o.payment ? "Payment (not reported)" : "Payment", t: o.payment?.paidAt, current: false });
+      continue;
+    }
+    steps.push({ key: s, label: statusLabel(s, o), t: reached.get(s), current: o.status === s });
+  }
 
   return (
     <div className="space-y-3 p-4">
@@ -47,7 +88,7 @@ export default function InspectOrder({ sim, id }: { sim: BranchSimulation; id: s
         </div>
         <div className="flex items-center gap-2">
           <h2 className="font-display text-xl font-bold text-white">#{o.number}</h2>
-          <Pill tone={orderTone(o)}>{o.status.replace(/_/g, " ")}</Pill>
+          <Pill tone={orderTone(o)}>{statusLabel(o.status, o)}</Pill>
           {o.delayed && <Pill tone="red">Delayed</Pill>}
         </div>
       </div>
@@ -59,6 +100,32 @@ export default function InspectOrder({ sim, id }: { sim: BranchSimulation; id: s
         <KV k="Fulfilment" v={fulfilmentLabel(o.fulfilment)} />
         <KV k="Elapsed" v={mins(elapsed)} mono tone={o.delayed ? "red" : undefined} />
         <KV k="Target (demo SLA)" v={`${o.slaMin} min to ready`} mono />
+        {eta !== null && o.readyAt === undefined && (
+          <KV
+            k={
+              <span className="inline-flex items-center gap-1.5">
+                Ready by <EstimatedBadge />
+              </span>
+            }
+            v={`${clockSec(simMs(sim, eta))} · in ${mins(Math.max(0, eta - sim.t))}`}
+            mono
+            tone={o.acceptedAt !== undefined && eta - o.acceptedAt > o.slaMin * 60 ? "yellow" : undefined}
+          />
+        )}
+        <KV
+          k="Payment"
+          v={
+            o.payment ? (
+              `${PAYMENT_LABEL[o.payment.method]} · ${clockSec(simMs(sim, o.payment.paidAt))}`
+            ) : o.source === "live" ? (
+              <span className="inline-flex items-center gap-1.5">
+                Not reported by source <UnavailableBadge />
+              </span>
+            ) : (
+              "Pending"
+            )
+          }
+        />
         {o.note && <KV k="Note" v={o.note} />}
       </Card>
 
@@ -66,7 +133,7 @@ export default function InspectOrder({ sim, id }: { sim: BranchSimulation; id: s
         <SectionTitle>Items</SectionTitle>
         <ul className="space-y-1 text-[11.5px]">
           {o.lines.map((l) => (
-            <li key={l.menuId} className="flex justify-between gap-2">
+            <li key={l.menuId} className="flex justify-between gap-2" title={MENU_BY_ID.get(l.menuId) ? `Published as "${MENU_BY_ID.get(l.menuId)!.publishedName}" · ${MENU_BY_ID.get(l.menuId)!.sourceUrl} · verified ${MENU_BY_ID.get(l.menuId)!.verifiedAt}` : undefined}>
               <span className="text-white/80">
                 {l.qty}× {l.name}
               </span>
@@ -74,7 +141,7 @@ export default function InspectOrder({ sim, id }: { sim: BranchSimulation; id: s
             </li>
           ))}
           <li className="flex justify-between border-t border-white/10 pt-1 font-semibold">
-            <span className="text-white/60">{o.source === "live" ? "Total (source system prices, GH₵)" : "Total (menu prices, GH₵)"}</span>
+            <span className="text-white/60">{o.source === "live" ? "Total (source system prices, GH₵)" : "Total (published menu prices, GH₵)"}</span>
             <span className="font-mono text-white">{ghs(o.total)}</span>
           </li>
         </ul>
@@ -83,19 +150,15 @@ export default function InspectOrder({ sim, id }: { sim: BranchSimulation; id: s
       <div>
         <SectionTitle>Lifecycle</SectionTitle>
         <ol className="space-y-1">
-          {flow.map((s) => {
-            const t = reached.get(s);
-            const current = o.status === s;
-            return (
-              <li key={s} className="flex items-center gap-2 text-[11px]">
-                <span className={cx("grid h-4 w-4 shrink-0 place-items-center rounded-full border", t !== undefined ? "border-emerald-400/60 bg-emerald-400/20 text-emerald-300" : "border-white/15 text-transparent", current && "ring-2 ring-emerald-400/40")}>
-                  <Check size={10} />
-                </span>
-                <span className={cx("flex-1", t !== undefined ? "text-white/85" : "text-white/35")}>{s.replace(/_/g, " ")}</span>
-                <span className="font-mono text-white/40">{t !== undefined ? clockSec(simMs(sim, t)) : ""}</span>
-              </li>
-            );
-          })}
+          {steps.map(({ key, label, t, current }) => (
+            <li key={key} className="flex items-center gap-2 text-[11px]">
+              <span className={cx("grid h-4 w-4 shrink-0 place-items-center rounded-full border", t !== undefined ? "border-emerald-400/60 bg-emerald-400/20 text-emerald-300" : "border-white/15 text-transparent", current && "ring-2 ring-emerald-400/40")}>
+                <Check size={10} />
+              </span>
+              <span className={cx("flex-1", t !== undefined ? "text-white/85" : "text-white/35")}>{label}</span>
+              <span className="font-mono text-white/40">{t !== undefined ? clockSec(simMs(sim, t)) : ""}</span>
+            </li>
+          ))}
           {["CANCELLED", "REFUNDED", "FAILED"].map((s) =>
             reached.has(s as Order["status"]) ? (
               <li key={s} className="flex items-center gap-2 text-[11px] text-red-300">
@@ -145,6 +208,29 @@ export default function InspectOrder({ sim, id }: { sim: BranchSimulation; id: s
             ))}
         </div>
       )}
+
+      <div>
+        <SectionTitle>Event trail</SectionTitle>
+        <ol className="space-y-0.5 border-l border-white/10 pl-2.5">
+          {trail.map((e) => (
+            <li key={e.id} className="relative text-[10.5px] leading-snug">
+              <span className={cx("absolute -left-[13px] top-1.5 h-1.5 w-1.5 rounded-full", e.severity === "critical" ? "bg-red-400" : e.severity === "warning" ? "bg-amber-300" : e.severity === "success" ? "bg-emerald-400" : "bg-white/40")} />
+              <span className="mr-1.5 font-mono text-white/35">{clockSec(e.t)}</span>
+              <span className="text-white/70">{e.message}</span>
+            </li>
+          ))}
+        </ol>
+        {stock.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {stock.map(([sku, d]) => (
+              <span key={sku} title={`Ledger movement for ${sku}`} className={cx("rounded border px-1.5 py-px font-mono text-[9.5px]", d < 0 ? "border-white/10 text-white/55" : "border-emerald-400/30 text-emerald-300")}>
+                {d > 0 ? "+" : "−"}
+                {Math.abs(d).toLocaleString("en-GH", { maximumFractionDigits: 3 })} {invName.get(sku) ?? sku}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
 
       {o.delivery && (
         <div>

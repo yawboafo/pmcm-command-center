@@ -1,0 +1,1130 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-03T17:53:24+00:00",
+  "generator": "blender/build_assets.py + blender/postprocess.py",
+  "units": "metres, +Y up, front +Z",
+  "compression": "EXT_meshopt_compression",
+  "extensionsRequired": [
+    "EXT_meshopt_compression",
+    "KHR_mesh_quantization"
+  ],
+  "assets": {
+    "booth-4": {
+      "path": "models/furniture/booth-4.glb",
+      "lod1": null,
+      "size": [
+        1.4,
+        1.1,
+        1.9
+      ],
+      "triangles": 2532,
+      "bytes": 20708,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "furniture",
+      "label": "Booth for 4",
+      "bounds": {
+        "min": [
+          -0.71,
+          -0.0,
+          -0.95
+        ],
+        "max": [
+          0.71,
+          1.1,
+          0.95
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 7,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "breading-station": {
+      "path": "models/equipment/breading-station.glb",
+      "lod1": null,
+      "size": [
+        1.5,
+        0.95,
+        0.75
+      ],
+      "triangles": 1540,
+      "bytes": 14564,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Breading & Marination Station",
+      "bounds": {
+        "min": [
+          -0.75,
+          -0.0,
+          -0.375
+        ],
+        "max": [
+          0.75,
+          1.054,
+          0.375
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "FOOD"
+      ],
+      "drawCalls": 4,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "conveyor-oven": {
+      "path": "models/equipment/conveyor-oven.glb",
+      "lod1": "models/equipment/conveyor-oven.lod1.glb",
+      "size": [
+        2.0,
+        1.6,
+        1.0
+      ],
+      "triangles": 4420,
+      "bytes": 37108,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Conveyor Pizza Oven",
+      "bounds": {
+        "min": [
+          -1.0,
+          -0.0,
+          -0.48
+        ],
+        "max": [
+          1.0,
+          1.604,
+          0.4525
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "GLASS",
+        "STATUS"
+      ],
+      "drawCalls": 9,
+      "lod1Triangles": 1276,
+      "lod1Bytes": 19864,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "dishwasher": {
+      "path": "models/equipment/dishwasher.glb",
+      "lod1": null,
+      "size": [
+        0.7,
+        1.5,
+        0.75
+      ],
+      "triangles": 628,
+      "bytes": 11796,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Hood Dishwasher",
+      "bounds": {
+        "min": [
+          -0.35,
+          -0.0,
+          -0.375
+        ],
+        "max": [
+          0.35,
+          1.5,
+          0.419
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "STATUS"
+      ],
+      "drawCalls": 7,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "dispatch-rack": {
+      "path": "models/equipment/dispatch-rack.glb",
+      "lod1": "models/equipment/dispatch-rack.lod1.glb",
+      "size": [
+        1.6,
+        1.8,
+        0.5
+      ],
+      "triangles": 2926,
+      "bytes": 29232,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Delivery Dispatch Rack",
+      "bounds": {
+        "min": [
+          -0.8005,
+          -0.0,
+          -0.2514
+        ],
+        "max": [
+          0.8005,
+          1.8,
+          0.2725
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "LABEL",
+        "PROPS"
+      ],
+      "drawCalls": 5,
+      "lod1Triangles": 414,
+      "lod1Bytes": 9568,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "dough-table": {
+      "path": "models/equipment/dough-table.glb",
+      "lod1": "models/equipment/dough-table.lod1.glb",
+      "size": [
+        1.8,
+        0.9,
+        0.8
+      ],
+      "triangles": 2176,
+      "bytes": 19272,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Dough Table",
+      "bounds": {
+        "min": [
+          -0.9,
+          -0.0,
+          -0.4
+        ],
+        "max": [
+          0.9,
+          0.9685,
+          0.4
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "FOOD",
+        "PROPS"
+      ],
+      "drawCalls": 6,
+      "lod1Triangles": 664,
+      "lod1Bytes": 11964,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "drinks-fridge": {
+      "path": "models/equipment/drinks-fridge.glb",
+      "lod1": null,
+      "size": [
+        0.7,
+        2.0,
+        0.7
+      ],
+      "triangles": 5250,
+      "bytes": 45600,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Drinks Display Fridge",
+      "bounds": {
+        "min": [
+          -0.35,
+          -0.0,
+          -0.35
+        ],
+        "max": [
+          0.35,
+          2.0,
+          0.392
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "GLASS",
+        "LABEL",
+        "LIGHT",
+        "STATUS",
+        "STOCK"
+      ],
+      "drawCalls": 10,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "freezer": {
+      "path": "models/equipment/freezer.glb",
+      "lod1": null,
+      "size": [
+        0.75,
+        2.0,
+        0.8
+      ],
+      "triangles": 952,
+      "bytes": 16376,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Upright Freezer",
+      "bounds": {
+        "min": [
+          -0.376,
+          -0.0,
+          -0.4
+        ],
+        "max": [
+          0.375,
+          2.0,
+          0.448
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "STATUS"
+      ],
+      "drawCalls": 9,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "fridge": {
+      "path": "models/equipment/fridge.glb",
+      "lod1": null,
+      "size": [
+        0.75,
+        2.0,
+        0.8
+      ],
+      "triangles": 940,
+      "bytes": 15592,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Upright Refrigerator",
+      "bounds": {
+        "min": [
+          -0.376,
+          -0.0,
+          -0.4
+        ],
+        "max": [
+          0.375,
+          2.0,
+          0.448
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "STATUS"
+      ],
+      "drawCalls": 8,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "fryer": {
+      "path": "models/equipment/fryer.glb",
+      "lod1": null,
+      "size": [
+        0.9,
+        1.1,
+        0.8
+      ],
+      "triangles": 2532,
+      "bytes": 25992,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Twin-Basket Fryer",
+      "bounds": {
+        "min": [
+          -0.45,
+          -0.0,
+          -0.4
+        ],
+        "max": [
+          0.45,
+          1.1,
+          0.441
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "STATUS"
+      ],
+      "drawCalls": 10,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "handwash": {
+      "path": "models/equipment/handwash.glb",
+      "lod1": null,
+      "size": [
+        0.5,
+        0.9,
+        0.45
+      ],
+      "triangles": 602,
+      "bytes": 9564,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Handwash Basin",
+      "bounds": {
+        "min": [
+          -0.25,
+          0.0,
+          -0.225
+        ],
+        "max": [
+          0.25,
+          1.795,
+          0.225
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "LABEL"
+      ],
+      "drawCalls": 5,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "hood": {
+      "path": "models/equipment/hood.glb",
+      "lod1": null,
+      "size": [
+        2.0,
+        0.55,
+        1.1
+      ],
+      "triangles": 1212,
+      "bytes": 16824,
+      "origin": "item-bottom-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Extraction Hood",
+      "bounds": {
+        "min": [
+          -1.0,
+          -0.0,
+          -0.55
+        ],
+        "max": [
+          1.0,
+          1.15,
+          0.555
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "DUCT",
+        "LIGHT"
+      ],
+      "drawCalls": 7,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "hot-holding": {
+      "path": "models/equipment/hot-holding.glb",
+      "lod1": null,
+      "size": [
+        1.2,
+        1.4,
+        0.7
+      ],
+      "triangles": 1720,
+      "bytes": 21252,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Hot-Holding Cabinet",
+      "bounds": {
+        "min": [
+          -0.6,
+          -0.0,
+          -0.35
+        ],
+        "max": [
+          0.6,
+          1.4,
+          0.392
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "GLASS",
+        "LIGHT",
+        "STATUS"
+      ],
+      "drawCalls": 9,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "menu-board": {
+      "path": "models/equipment/menu-board.glb",
+      "lod1": null,
+      "size": [
+        3.0,
+        0.9,
+        0.08
+      ],
+      "triangles": 166,
+      "bytes": 5484,
+      "origin": "item-bottom-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Digital Menu Board",
+      "bounds": {
+        "min": [
+          -1.53,
+          -0.03,
+          -0.04
+        ],
+        "max": [
+          1.53,
+          1.73,
+          0.042
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "SCREEN"
+      ],
+      "drawCalls": 3,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "packaging-table": {
+      "path": "models/equipment/packaging-table.glb",
+      "lod1": "models/equipment/packaging-table.lod1.glb",
+      "size": [
+        1.8,
+        0.95,
+        0.8
+      ],
+      "triangles": 2504,
+      "bytes": 22892,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Packaging Table",
+      "bounds": {
+        "min": [
+          -0.9,
+          -0.0,
+          -0.4
+        ],
+        "max": [
+          0.9,
+          1.7445,
+          0.4
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "PROPS",
+        "STATUS"
+      ],
+      "drawCalls": 7,
+      "lod1Triangles": 636,
+      "lod1Bytes": 14800,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "pickup-counter": {
+      "path": "models/equipment/pickup-counter.glb",
+      "lod1": null,
+      "size": [
+        1.8,
+        1.05,
+        0.6
+      ],
+      "triangles": 710,
+      "bytes": 15856,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Collection Counter",
+      "bounds": {
+        "min": [
+          -0.91,
+          -0.0,
+          -0.31
+        ],
+        "max": [
+          0.98,
+          1.825,
+          0.324
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "LABEL",
+        "SCREEN",
+        "STATUS"
+      ],
+      "drawCalls": 10,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "pizza-makeline": {
+      "path": "models/equipment/pizza-makeline.glb",
+      "lod1": "models/equipment/pizza-makeline.lod1.glb",
+      "size": [
+        2.0,
+        1.0,
+        0.8
+      ],
+      "triangles": 5152,
+      "bytes": 39836,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Refrigerated Pizza Make-Line",
+      "bounds": {
+        "min": [
+          -1.0,
+          -0.0,
+          -0.4889
+        ],
+        "max": [
+          1.0,
+          1.2873,
+          0.413
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "FOOD",
+        "STATUS"
+      ],
+      "drawCalls": 10,
+      "lod1Triangles": 1324,
+      "lod1Bytes": 22112,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "pos-counter": {
+      "path": "models/equipment/pos-counter.glb",
+      "lod1": "models/equipment/pos-counter.lod1.glb",
+      "size": [
+        3.0,
+        1.05,
+        0.7
+      ],
+      "triangles": 2156,
+      "bytes": 26620,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Ordering Counter (POS)",
+      "bounds": {
+        "min": [
+          -1.51,
+          -0.0,
+          -0.366
+        ],
+        "max": [
+          1.51,
+          1.3798,
+          0.374
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "PROPS",
+        "SCREEN",
+        "STATUS"
+      ],
+      "drawCalls": 11,
+      "lod1Triangles": 816,
+      "lod1Bytes": 19648,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "prep-table": {
+      "path": "models/equipment/prep-table.glb",
+      "lod1": null,
+      "size": [
+        1.8,
+        0.9,
+        0.75
+      ],
+      "triangles": 1228,
+      "bytes": 12444,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Stainless Prep Table",
+      "bounds": {
+        "min": [
+          -0.9,
+          -0.0,
+          -0.375
+        ],
+        "max": [
+          0.9,
+          1.02,
+          0.375
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "PROPS"
+      ],
+      "drawCalls": 4,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "qc-pass": {
+      "path": "models/equipment/qc-pass.glb",
+      "lod1": null,
+      "size": [
+        1.5,
+        1.4,
+        0.6
+      ],
+      "triangles": 1304,
+      "bytes": 20720,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Heated QC Pass",
+      "bounds": {
+        "min": [
+          -0.75,
+          -0.0,
+          -0.3
+        ],
+        "max": [
+          0.75,
+          1.4,
+          0.3
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "LIGHT",
+        "PROPS",
+        "STATUS"
+      ],
+      "drawCalls": 10,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "rice-warmer": {
+      "path": "models/equipment/rice-warmer.glb",
+      "lod1": null,
+      "size": [
+        1.2,
+        1.0,
+        0.7
+      ],
+      "triangles": 3160,
+      "bytes": 27976,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Rice Hot-Holding Warmer",
+      "bounds": {
+        "min": [
+          -0.6,
+          -0.0,
+          -0.35
+        ],
+        "max": [
+          0.6,
+          1.0034,
+          0.51
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "FOOD",
+        "GLASS",
+        "STATUS"
+      ],
+      "drawCalls": 8,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "shelving": {
+      "path": "models/equipment/shelving.glb",
+      "lod1": null,
+      "size": [
+        1.2,
+        1.9,
+        0.5
+      ],
+      "triangles": 3448,
+      "bytes": 28000,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Storage Shelving",
+      "bounds": {
+        "min": [
+          -0.6005,
+          -0.0,
+          -0.2514
+        ],
+        "max": [
+          0.6005,
+          2.0905,
+          0.2514
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "STOCK"
+      ],
+      "drawCalls": 3,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "sink": {
+      "path": "models/equipment/sink.glb",
+      "lod1": null,
+      "size": [
+        1.2,
+        0.95,
+        0.65
+      ],
+      "triangles": 2060,
+      "bytes": 18952,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Three-Compartment Sink",
+      "bounds": {
+        "min": [
+          -0.6,
+          -0.0,
+          -0.325
+        ],
+        "max": [
+          0.6,
+          1.2,
+          0.325
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "GLASS"
+      ],
+      "drawCalls": 4,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "stool-bar": {
+      "path": "models/furniture/stool-bar.glb",
+      "lod1": null,
+      "size": [
+        2.4,
+        1.05,
+        0.9
+      ],
+      "triangles": 2664,
+      "bytes": 23800,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "furniture",
+      "label": "Window Bar + Stools",
+      "bounds": {
+        "min": [
+          -1.2,
+          -0.0,
+          -0.2
+        ],
+        "max": [
+          1.2,
+          1.075,
+          0.73
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 5,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "table-2": {
+      "path": "models/furniture/table-2.glb",
+      "lod1": null,
+      "size": [
+        0.8,
+        0.75,
+        1.5
+      ],
+      "triangles": 1160,
+      "bytes": 14840,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "furniture",
+      "label": "Table for 2",
+      "bounds": {
+        "min": [
+          -0.356,
+          -0.0027,
+          -0.8099
+        ],
+        "max": [
+          0.356,
+          0.8666,
+          0.8099
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 6,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "table-4": {
+      "path": "models/furniture/table-4.glb",
+      "lod1": null,
+      "size": [
+        1.3,
+        0.75,
+        1.7
+      ],
+      "triangles": 1864,
+      "bytes": 19348,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "furniture",
+      "label": "Table for 4",
+      "bounds": {
+        "min": [
+          -0.581,
+          -0.0027,
+          -0.8799
+        ],
+        "max": [
+          0.581,
+          0.8666,
+          0.8799
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 6,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "waiting-bench": {
+      "path": "models/furniture/waiting-bench.glb",
+      "lod1": null,
+      "size": [
+        1.8,
+        0.45,
+        0.5
+      ],
+      "triangles": 1260,
+      "bytes": 8644,
+      "origin": "floor-centre",
+      "source": "scripted",
+      "kind": "furniture",
+      "label": "Waiting Bench",
+      "bounds": {
+        "min": [
+          -0.9,
+          -0.0,
+          -0.2644
+        ],
+        "max": [
+          0.9,
+          0.8993,
+          0.22
+        ]
+      },
+      "nodes": [
+        "BODY"
+      ],
+      "drawCalls": 2,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "walk-in-cold": {
+      "path": "models/equipment/walk-in-cold.glb",
+      "lod1": null,
+      "size": [
+        1.2,
+        0.45,
+        0.55
+      ],
+      "triangles": 976,
+      "bytes": 11148,
+      "origin": "item-bottom-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Cold Room Evaporator",
+      "bounds": {
+        "min": [
+          -0.6,
+          -0.0,
+          -0.275
+        ],
+        "max": [
+          0.6,
+          0.45,
+          0.2914
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "STATUS"
+      ],
+      "drawCalls": 4,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    },
+    "walk-in-freezer": {
+      "path": "models/equipment/walk-in-freezer.glb",
+      "lod1": null,
+      "size": [
+        1.2,
+        0.45,
+        0.55
+      ],
+      "triangles": 976,
+      "bytes": 11188,
+      "origin": "item-bottom-centre",
+      "source": "scripted",
+      "kind": "equipment",
+      "label": "Freezer Room Evaporator",
+      "bounds": {
+        "min": [
+          -0.6,
+          -0.0,
+          -0.275
+        ],
+        "max": [
+          0.6,
+          0.45,
+          0.2914
+        ]
+      },
+      "nodes": [
+        "BODY",
+        "STATUS"
+      ],
+      "drawCalls": 4,
+      "lod1Triangles": null,
+      "lod1Bytes": null,
+      "extensionsRequired": [
+        "EXT_meshopt_compression",
+        "KHR_mesh_quantization"
+      ]
+    }
+  }
+}
