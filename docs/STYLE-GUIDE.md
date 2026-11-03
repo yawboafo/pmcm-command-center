@@ -5,33 +5,38 @@ One deliberate look: a **dark control-room surface** in either app theme (the ce
 and hierarchy, not in decoration. If an element does not help the owner decide something in
 the next 60 seconds, it is not on the screen.
 
+## Scope
+
+These rules now apply to the whole platform, not only the camera centre: the tokens live in
+`src/app/globals.css` (`:root`), every status utility (`emerald`, `amber`, `red`) is mapped onto
+the same three status colours, and every readout uses the `.num` display numerals.
+
 ## Colour
 
 | Token | Value | Use |
 |---|---|---|
-| `--cam-bg` | `#07090d` | Page / canvas background (painted by the renderer) |
-| `--cam-panel` | `#0d1117` | Panels, cards |
-| `--cam-panel-2` | `#121821` | Raised controls |
-| `--cam-line` | `rgba(255,255,255,.08)` | Hairlines, borders, neutral rings |
-| `--cam-fg` / `--cam-muted` / `--cam-faint` | `#e8eaed` / 55 % / 35 % | Text in three strengths only |
-| `--accent` | `#ee1d25` (brand red) | Primary action, the active camera, recording dot, scrubber thumb. Sparingly. |
-| `--ok` | `#22c55e` | Running right |
-| `--watch` | `#f59e0b` | Watch |
-| `--act` | `#ef4444` | Act now |
+| `--bg` / `--cam-bg` | `#070a10` / `#07090d` | Page, canvas background |
+| `--panel` / `--cam-panel` | `rgba(12,16,22,.88)` / `#0c1016` | Panels, cards, glass surfaces (gradient highlight + soft shadow) |
+| `--panel-border` / `--cam-line` | `rgba(255,255,255,.075)` | Hairlines, borders, neutral rings |
+| text | `#eceef1` / 58 % / 36 % | Text in three strengths only |
+| `--accent` | `#ee1d25` (brand red) | Primary action (gradient `btn-primary`), the active camera, recording dot, scrubber thumb. Sparingly. |
+| `--ok` | `#3ccf8e` | Running right |
+| `--watch` | `#f5b02e` | Watch |
+| `--act` | `#f0483e` | Act now |
+| `--viz` | `#7f9cc0` (steel) | The single information hue: chart series, map ramp, progress. Never a status. |
 
-Rules: one neutral scale, one accent, three status colours. **Status colours are never
-decorative**: green/amber/red only ever mean healthy/watch/act. People boxes use neutral
-white (customers) or the accent (staff) unless a timed state turns them amber/red. Heat map is
-a single calibrated ramp (accent at low alpha → accent).
+Rules: one neutral scale, one accent, three status colours, one information hue. **Status
+colours are never decorative**: green/amber/red only ever mean healthy/watch/act. Multi-series
+charts use steel, sand `#d1a86a`, mauve `#a98fc9`, teal `#6fb8b0` — muted, equal weight.
 
 ## Type
 
-- **Numbers and readouts**: Geist Mono, tabular figures (`font-variant-numeric: tabular-nums`
-  on every mono element), so values tick without jitter.
-- **Labels and sentences**: Inter.
-- **Scale** (max three sizes per screen plus the hero): 11 px meta / 13 px body and buttons /
-  20–22 px metrics; hero metric 40 px (64 px on wall screens). Letter-spaced mono uppercase at
-  10–11 px for section eyebrows only.
+- **Numbers and readouts**: the brand display face (Montserrat) through `.num` — 700 weight,
+  tabular lining figures, −2 % tracking — so values tick without jitter and read from 3 m.
+- **Instrument plates and timestamps** (on feeds, timelines): Geist Mono, tabular.
+- **Labels and sentences**: Inter with `cv11`/`ss01` alternates, antialiased.
+- **Scale**: 11 px meta / 13 px body and buttons / 16 px titles / 20–24 px metrics; hero metric
+  44 px (64 px on wall screens). Letter-spaced mono uppercase at 10–11 px for eyebrows only.
 
 ## Geometry
 
