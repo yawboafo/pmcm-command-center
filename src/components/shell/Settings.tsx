@@ -4,6 +4,7 @@ import { useState } from "react";
 import IntegrationsPanel from "@/components/integration/IntegrationsPanel";
 import MenuCatalogue from "@/components/menu/MenuCatalogue";
 import { Btn, ConceptBadge, Glass, LiveBadge, SectionTitle, VerifiedBadge } from "@/components/ui/primitives";
+import { gate, introPrefs, relaunch } from "@/lib/auth/gate";
 import { DEMO_USERS, can } from "@/lib/auth/rbac";
 import { DEFAULT_SAFETY_PROFILE, type SafetyProfile } from "@/lib/sim/catalog";
 import { SIMULATION_ASSUMPTIONS } from "@/lib/sim/menu";
@@ -73,6 +74,19 @@ export default function Settings() {
               <li key={a}>{a}</li>
             ))}
           </ul>
+        </Glass>
+
+        <Glass className="p-4">
+          <SectionTitle>Launch &amp; access</SectionTitle>
+          <div className="flex flex-wrap gap-2">
+            <Btn onClick={() => relaunch({ forceIntro: true })}>Play intro</Btn>
+            <Btn active={!introPrefs.skipOnLaunch()} onClick={() => (introPrefs.setSkipOnLaunch(!introPrefs.skipOnLaunch()), notify(introPrefs.skipOnLaunch() ? "Intro will be skipped on launch on this device" : "Intro will play on launch", "info"))}>
+              Intro on launch
+            </Btn>
+            <Btn onClick={() => (introPrefs.setMuted(!introPrefs.muted()), notify(introPrefs.muted() ? "Intro sound off" : "Intro sound on", "info"))}>Intro sound</Btn>
+            <Btn tone="red" onClick={() => (gate().endSession(), relaunch())}>Sign out</Btn>
+          </div>
+          <p className="mt-2 text-[11px] text-white/45">The access key is stored hashed in src/config/launch.ts; sessions are kept per device for 7 days. How to change the key or swap in real sign-in: docs/LAUNCH.md.</p>
         </Glass>
 
         <Glass className="p-4">

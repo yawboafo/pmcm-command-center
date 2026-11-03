@@ -3,6 +3,8 @@
 import dynamic from "next/dynamic";
 import { PLATFORM, TENANT } from "@/config/platform";
 
+const Launch = dynamic(() => import("@/components/launch/Launch"), { ssr: false, loading: () => <div className="fixed inset-0 bg-black" /> });
+
 const App = dynamic(() => import("./App"), {
   ssr: false,
   loading: () => (
@@ -16,5 +18,9 @@ const App = dynamic(() => import("./App"), {
 });
 
 export default function ClientApp() {
-  return <App />;
+  return (
+    <Launch>
+      <App />
+    </Launch>
+  );
 }
