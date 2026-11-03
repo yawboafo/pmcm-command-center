@@ -28,7 +28,7 @@ const dir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'intro-frames-'));
   await page.waitForFunction(() => !!window.__opsLaunch, null, { timeout: 180000 });
   await page.waitForTimeout(6000);
   // Hide the HTML controls; the title, captions and fade stay (they are part of the film).
-  await page.addStyleTag({ content: '.launch-overlay button, .launch-overlay label { display: none !important; }' });
+  await page.addStyleTag({ content: '.launch-overlay button, .launch-overlay label, nextjs-portal { display: none !important; }' });
   const n = Math.round(DUR * FPS);
   for (let i = 0; i < n; i++) {
     const t = i / FPS;

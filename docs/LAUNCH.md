@@ -90,3 +90,25 @@ The gate UI only talks to a `GateProvider` (`src/lib/auth/gate.ts`): `verify(inp
 `LAUNCH.intro.when`: `"before-login"` (default: intro on every cold launch, then the gate) or
 `"after-login"` (gate first, intro once the key is accepted). `LAUNCH.intro.enabled` turns it off
 globally; the per-device "Don't show again" turns it off locally.
+
+## Proof
+
+Captured from the real scene in headless Chromium (software GL, so the post stack is the
+`cinema` tier at 1440×900 and iPhone 13 at 2×). Intro beats, then the gate states, then the app:
+
+| Beat | Desktop | Phone |
+|---|---|---|
+| 0.8 s · black, one light | `desktop-intro-0_8s.png` | `phone-intro-0_8s.png` |
+| 2.6 s · particles settle | `desktop-intro-2_6s.png` | `phone-intro-2_6s.png` |
+| 5 s · fryer line | `desktop-intro-5s.png` | `phone-intro-5s.png` |
+| 8 s · counter | `desktop-intro-8s.png` | `phone-intro-8s.png` |
+| 11 s · dining | `desktop-intro-11s.png` | `phone-intro-11s.png` |
+| 13.6 s · rider bay + instruments | `desktop-intro-13_6s.png` | `phone-intro-13_6s.png` |
+| 16.6 s · hero + title | `desktop-intro-16_6s.png` | `phone-intro-16_6s.png` |
+| Gate | `desktop-gate.png` | `phone-gate.png` |
+| Wrong key | `desktop-gate-wrong.png` | `phone-gate-wrong.png` |
+| Unlock | `desktop-unlock.png` | `phone-unlock.png` |
+| App | `desktop-app.png` | `phone-app.png` |
+
+Demo videos of the whole flow (intro → gate → wrong key → unlock → app):
+`docs/launch/launch-desktop.mp4` and `docs/launch/launch-phone.mp4`. All files live in `docs/launch/`.
