@@ -55,35 +55,48 @@ Chapter captions (lower-left, monospace) name each beat. The overlay is HTML, so
   hint. Five failures: 30-second cooldown with a live countdown (the field and button disable).
 - Sessions: *Keep me signed in* stores the session in `localStorage` for 7 days; off stores it in
   `sessionStorage` (tab lifetime). Expired or signed-out sessions show the gate again.
+- A correct key also earns a signed, HttpOnly session cookie from `/api/session`. Server routes
+  check that cookie; the browser-side session above only decides which screen to show. Today
+  `/api/assistant` requires it, because it spends the Anthropic credential. If the session has
+  ended, the assistant switches to offline mode and says so.
   Sign out: Settings → Launch & access → *Sign out*, or ⌘K → *Sign out*.
 - Keyboard-safe on phones (`100dvh`, 16 px input to avoid zoom, `enterKeyHint="go"`), field
   auto-focused, labels and live regions for assistive tech, 44 px targets.
 
 ## Changing the password
 
-The key is never in the UI code: `LAUNCH.gate.accessKeyHash` holds the SHA-256 of the
-normalised key (trimmed, lower-cased). To change it:
+The key is checked only on the server, and its hash never reaches the browser. The hash is the
+SHA-256 of the normalised key (trimmed, lower-cased). To change it:
 
 ```bash
 node -e "console.log(require('crypto').createHash('sha256').update('new key'.trim().toLowerCase()).digest('hex'))"
 ```
 
-Paste the result into `src/config/launch.ts`, or set `NEXT_PUBLIC_ACCESS_KEY_HASH` at build time.
+Set the result as `ACCESS_KEY_HASH` on the server (no rebuild needed), or replace
+`DEFAULT_ACCESS_KEY_HASH` in `src/lib/auth/session.ts`.
+
+Set `SESSION_SECRET` (32+ characters) so sessions survive a restart or redeploy. Without it the
+server makes a random secret at startup and everyone enters the key again after a restart.
+
+Key attempts are limited on the server: `maxAttempts` failures from one address start a
+`cooldownSec` lockout, and 60 failures a minute across all callers pause sign-in for everyone.
+
 `LAUNCH.gate` also holds `maxAttempts`, `cooldownSec`, `sessionDays`, `keepSignedInDefault`.
 
 ## Swapping in real authentication
 
 The gate UI only talks to a `GateProvider` (`src/lib/auth/gate.ts`): `verify(input)`,
-`startSession(keep)`, `sessionValid()`, `endSession()`. The browser-side implementation
-(`makeGate`) exists for the prototype; a real deployment replaces it:
+`startSession(keep)`, `sessionValid()`, `endSession()`. `makeGate` checks one shared key through
+`/api/session`, which exists for the prototype; a real deployment replaces it:
 
 1. Implement `GateProvider` against your identity service (OIDC / SSO): `verify` posts the
    credential to the server (or redirects), `sessionValid` checks a server-issued session cookie,
    `endSession` revokes it. Keep the same UI; nothing else changes.
-2. Move attempt limiting server-side (the local counter is a UX nicety, not a control).
+2. Replace the shared key and per-instance counters in `src/lib/auth/session.ts` (the local
+   counter in the browser is a UX nicety, not a control).
 3. The RBAC model for what each user may see is already in `src/lib/auth/rbac.ts`; map identity
    claims to `DemoUser` roles there.
-4. Remove `accessKeyHash` from the config once the server owns credentials.
+4. Remove `DEFAULT_ACCESS_KEY_HASH` once the identity service owns credentials.
 
 ## Intro before or after login
 

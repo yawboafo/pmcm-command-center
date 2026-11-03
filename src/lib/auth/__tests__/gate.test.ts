@@ -8,16 +8,16 @@ const kv = (): KV => {
 
 describe("access gate", () => {
   it("accepts the key case-insensitively and trimmed, never in plain text", async () => {
-    const hash = await hashKey("apostle");
+    const hash = await hashKey("test-key");
     expect(hash).toMatch(/^[0-9a-f]{64}$/);
-    expect(normaliseKey("  ApOsTle ")).toBe("apostle");
-    expect(await verifyKey("  ApOsTle ", hash)).toBe(true);
-    expect(await verifyKey("apostles", hash)).toBe(false);
+    expect(normaliseKey("  TeSt-KeY ")).toBe("test-key");
+    expect(await verifyKey("  TeSt-KeY ", hash)).toBe(true);
+    expect(await verifyKey("test-keys", hash)).toBe(false);
     expect(await verifyKey("", hash)).toBe(false);
   });
 
   it("locks for the cooldown after five failures and counts down", async () => {
-    const g = makeGate({ local: kv(), session: kv(), hash: await hashKey("apostle"), maxAttempts: 5, cooldownSec: 30 });
+    const g = makeGate({ local: kv(), session: kv(), maxAttempts: 5, cooldownSec: 30 });
     const t0 = 1_000_000;
     for (let i = 1; i <= 4; i++) expect(g.recordFailure(t0 + i).locked).toBe(false);
     expect(g.lockState(t0 + 5).attemptsLeft).toBe(1);
@@ -34,7 +34,7 @@ describe("access gate", () => {
   it("remembers the session for seven days when kept, only for the tab otherwise", async () => {
     const local = kv();
     const session = kv();
-    const g = makeGate({ local, session, hash: await hashKey("apostle"), sessionDays: 7 });
+    const g = makeGate({ local, session, sessionDays: 7 });
     const t0 = 5_000_000;
     g.startSession(true, t0);
     expect(g.sessionValid(t0 + 6 * 86_400_000)).toBe(true);

@@ -1,12 +1,14 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { PLATFORM, TENANT } from "@/config/platform";
 import { TOOL_DEFS } from "@/lib/assistant/toolDefs";
+import { sessionFromRequest } from "@/lib/auth/session";
 
 /**
  * Operations assistant — one step of a client-executed tool-use loop.
  * The browser holds the operational state (the simulation), so it executes
  * tool calls locally and re-posts the conversation with tool_result blocks.
  * This route only adds the system prompt, tool schemas and the API credential.
+ * It spends the API credential, so it requires a session from the access gate (see /api/session).
  */
 
 const MODEL = "claude-opus-5-5";
@@ -22,13 +24,15 @@ Answer concisely for a busy operations manager: lead with the answer, then at mo
 const tools: Anthropic.Tool[] = TOOL_DEFS.map((t) => ({ ...t, strict: true }));
 
 // Minimal in-memory rate limit (per server instance). Production: Redis-backed, per user.
+const PER_SESSION_PER_MIN = 30;
+const ALL_SESSIONS_PER_MIN = 120;
 const hits = new Map<string, number[]>();
-function rateLimited(key: string) {
+function rateLimited(key: string, limit: number) {
   const now = Date.now();
   const recent = (hits.get(key) ?? []).filter((t) => now - t < 60_000);
   recent.push(now);
   hits.set(key, recent);
-  return recent.length > 30;
+  return recent.length > limit;
 }
 
 function validMessages(m: unknown): m is Anthropic.Beta.BetaMessageParam[] {
@@ -36,8 +40,10 @@ function validMessages(m: unknown): m is Anthropic.Beta.BetaMessageParam[] {
 }
 
 export async function POST(req: Request) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  if (rateLimited(ip)) return Response.json({ error: "rate_limited" }, { status: 429 });
+  const session = sessionFromRequest(req);
+  if (!session) return Response.json({ error: "session_required" }, { status: 401 });
+  // Anyone holding the key can open more sessions, so the per-session limit needs an overall ceiling.
+  if (rateLimited(session.sid, PER_SESSION_PER_MIN) || rateLimited("all", ALL_SESSIONS_PER_MIN)) return Response.json({ error: "rate_limited" }, { status: 429 });
 
   const raw = await req.text();
   if (raw.length > 400_000) return Response.json({ error: "payload_too_large" }, { status: 413 });

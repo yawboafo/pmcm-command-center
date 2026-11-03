@@ -62,7 +62,10 @@ export default function Assistant() {
     setPrevSection(section);
     if (section === "assistant") setOpen(true);
   }
-  useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [lines]);
+  // In a block: scrollIntoView returns a promise in current Chromium, and an effect may only return a cleanup.
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [lines]);
 
   const push = (l: Line) => setLines((x) => [...x, l]);
 
@@ -84,6 +87,13 @@ export default function Assistant() {
           setOffline(true);
           transcript.current = [];
           push({ role: "note", text: "No Anthropic API credential is configured on the server, so the assistant switched to offline mode (rule-based intents over the same tools)." });
+          push({ role: "assistant", text: await offlineAnswer(q) });
+          return;
+        }
+        if (res.status === 401) {
+          setOffline(true);
+          transcript.current = [];
+          push({ role: "note", text: "Your session has ended, so the assistant switched to offline mode. Sign out and enter the access key again to reconnect it." });
           push({ role: "assistant", text: await offlineAnswer(q) });
           return;
         }
