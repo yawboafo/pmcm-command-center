@@ -462,7 +462,7 @@ select {
   font-size: 10.5px;
   letter-spacing: 0.32em;
   text-transform: uppercase;
-  color: var(--launch-fg-3);
+  color: var(--launch-fg-2);
 }
 .launch-wordmark {
   margin-top: 10px;
@@ -507,9 +507,9 @@ select {
 }
 .launch-corner {
   position: absolute;
-  width: 16px;
-  height: 16px;
-  border: 1px solid var(--launch-line-2);
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--launch-fg-2);
 }
 .launch-corner-tl {
   left: 0;

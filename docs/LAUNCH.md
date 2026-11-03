@@ -115,3 +115,5 @@ Intro beats, then the gate states, then the app, all under `docs/launch/`:
 | Wrong key | `desktop-gate-wrong.png` | `phone-gate-wrong.png` |
 | Unlock | `desktop-unlock.png` | `phone-unlock.png` |
 | App | `desktop-app.png` | `phone-app.png` |
+
+Light theme (the launch follows the app theme): `desktop-light-intro-13s.png`, `desktop-light-gate.png`.
