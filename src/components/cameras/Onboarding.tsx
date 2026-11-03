@@ -35,13 +35,13 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
         <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--cam-muted)]">
           {i + 1} of {TIPS.length}
         </div>
-        <div className="mt-1 text-[16px] font-semibold">{tip.title}</div>
+        <div className="mt-1 font-display text-[16px] font-semibold tracking-tight">{tip.title}</div>
         <p className="mt-2 text-[13px] leading-relaxed text-white/80">{tip.body}</p>
         <div className="mt-4 flex items-center justify-between">
           <button type="button" onClick={finish} className="h-11 px-2 text-[13px] text-white/55 hover:text-white">
             Skip
           </button>
-          <button type="button" onClick={() => (i + 1 < TIPS.length ? setI(i + 1) : finish())} className="h-11 rounded-lg bg-[var(--accent)] px-5 text-[13px] font-semibold text-white">
+          <button type="button" onClick={() => (i + 1 < TIPS.length ? setI(i + 1) : finish())} className="cam-btn-primary h-11 rounded-lg px-5 text-[13px] font-semibold text-white">
             {i + 1 < TIPS.length ? "Next" : "Got it"}
           </button>
         </div>

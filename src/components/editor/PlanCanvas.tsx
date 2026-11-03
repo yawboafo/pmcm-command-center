@@ -29,8 +29,8 @@ const CAT_FILL: Record<string, string> = {
   ventilation: "#334155",
   waste: "#365314",
 };
-const DOOR_COLOR: Record<Door["kind"], string> = { entrance: "#EE1D25", emergency: "#22c55e", delivery: "#FFD400", staff: "#a3a3a3", internal: "#737373" };
-const PATH_COLOR = { customer: "#f87171", staff: "#4ade80", delivery: "#facc15", emergency: "#22c55e" } as const;
+const DOOR_COLOR: Record<Door["kind"], string> = { entrance: "#EE1D25", emergency: "#3ccf8e", delivery: "#FFD400", staff: "#a3a3a3", internal: "#737373" };
+const PATH_COLOR = { customer: "#f87171", staff: "#4ade80", delivery: "#facc15", emergency: "#3ccf8e" } as const;
 
 type Drag =
   | { type: "pending"; startClient: Vec2; startView: ViewBox; onClick: () => void; panOnMove: boolean }
@@ -449,7 +449,7 @@ export default function PlanCanvas({ plan, issues, grid, readOnly }: Props) {
   const sel = (kind: SelItem["kind"], id: string) => isSelected(kind, id);
   const errStroke = (kind: SelItem["kind"], id: string) => {
     const s = issueTargets.get(`${kind}:${id}`);
-    return layers.issues && s ? (s === "error" ? "#ef4444" : "#f59e0b") : null;
+    return layers.issues && s ? (s === "error" ? "#f0483e" : "#f5b02e") : null;
   };
 
   const doorEl = (d: Door) => {
@@ -472,7 +472,7 @@ export default function PlanCanvas({ plan, issues, grid, readOnly }: Props) {
         <line x1={hx} y1={Y(hz)} x2={leafEnd[0]} y2={Y(leafEnd[1])} stroke={color} strokeWidth={fs(2)} />
         <path d={`M ${leafEnd[0]} ${Y(leafEnd[1])} A ${d.width} ${d.width} 0 0 ${sweep} ${closedEnd[0]} ${Y(closedEnd[1])}`} fill="none" stroke={color} strokeWidth={fs(1)} strokeDasharray={`${fs(4)} ${fs(3)}`} opacity={0.8} />
         <line x1={d.axis === "x" ? d.x - d.width / 2 : d.x} y1={Y(d.axis === "x" ? d.z : d.z - d.width / 2)} x2={closedEnd[0]} y2={Y(closedEnd[1])} stroke={s ? "#fff" : "transparent"} strokeWidth={fs(10)} opacity={s ? 0.35 : 1} />
-        {d.kind === "emergency" && <text x={d.x + (d.axis === "z" ? (d.x < cx ? -0.3 : 0.3) : 0)} y={Y(d.z + (d.axis === "x" ? (d.z < cz ? -0.35 : 0.35) : 0))} fontSize={fs(10)} fill="#22c55e" textAnchor="middle" fontWeight={700}>EXIT</text>}
+        {d.kind === "emergency" && <text x={d.x + (d.axis === "z" ? (d.x < cx ? -0.3 : 0.3) : 0)} y={Y(d.z + (d.axis === "x" ? (d.z < cz ? -0.35 : 0.35) : 0))} fontSize={fs(10)} fill="#3ccf8e" textAnchor="middle" fontWeight={700}>EXIT</text>}
       </g>
     );
   };
@@ -692,8 +692,8 @@ export default function PlanCanvas({ plan, issues, grid, readOnly }: Props) {
             .filter((i) => i.at)
             .map((i) => (
               <g key={i.id} pointerEvents="none">
-                <circle cx={i.at![0]} cy={Y(i.at![1])} r={fs(9)} fill="none" stroke={i.severity === "error" ? "#ef4444" : "#f59e0b"} strokeWidth={fs(2)} />
-                <text x={i.at![0]} y={Y(i.at![1]) + fs(4)} fontSize={fs(11)} fontWeight={800} fill={i.severity === "error" ? "#ef4444" : "#f59e0b"} textAnchor="middle">!</text>
+                <circle cx={i.at![0]} cy={Y(i.at![1])} r={fs(9)} fill="none" stroke={i.severity === "error" ? "#f0483e" : "#f5b02e"} strokeWidth={fs(2)} />
+                <text x={i.at![0]} y={Y(i.at![1]) + fs(4)} fontSize={fs(11)} fontWeight={800} fill={i.severity === "error" ? "#f0483e" : "#f5b02e"} textAnchor="middle">!</text>
               </g>
             ))}
 

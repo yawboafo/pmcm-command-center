@@ -381,8 +381,8 @@ function ReadyBags({ sim, e, fulfilment, props }: { sim: BranchSimulation; e: Eq
 /* ───────────── status rings, fault highlight, labels ───────────── */
 
 const ringMats = {
-  active: new THREE.MeshBasicMaterial({ color: "#22c55e", transparent: true, opacity: 0.55, depthWrite: false, toneMapped: false }),
-  fault: new THREE.MeshBasicMaterial({ color: "#ef4444", transparent: true, opacity: 0.85, depthWrite: false, toneMapped: false }),
+  active: new THREE.MeshBasicMaterial({ color: "#3ccf8e", transparent: true, opacity: 0.55, depthWrite: false, toneMapped: false }),
+  fault: new THREE.MeshBasicMaterial({ color: "#f0483e", transparent: true, opacity: 0.85, depthWrite: false, toneMapped: false }),
   offline: new THREE.MeshBasicMaterial({ color: "#9ca3af", transparent: true, opacity: 0.6, depthWrite: false, toneMapped: false }),
 };
 

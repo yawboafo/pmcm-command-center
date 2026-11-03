@@ -148,7 +148,7 @@ export function InspectCamera({ sim, id }: { sim: BranchSimulation; id: string }
             const st = sim.equipment.get(e.id)?.status ?? "idle";
             return (
               <button key={e.id} type="button" onClick={() => select({ kind: "equipment", id: e.id })} className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10.5px] text-white/75 hover:bg-white/10">
-                <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full" style={{ background: st === "fault" ? "#ef4444" : st === "active" ? "#22c55e" : st === "offline" ? "#6b7280" : "#94a3b8" }} />
+                <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full" style={{ background: st === "fault" ? "#f0483e" : st === "active" ? "#3ccf8e" : st === "offline" ? "#6b7280" : "#94a3b8" }} />
                 {e.name}
               </button>
             );

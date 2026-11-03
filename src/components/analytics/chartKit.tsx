@@ -9,7 +9,7 @@ import type { ReactNode } from "react";
  */
 // Theme-aware (CSS variables from globals.css), so charts read in light and dark.
 export const SURFACE = "var(--surface-2)";
-export const SERIES = ["#3987e5", "#d95926", "#199e70", "#c98500"] as const;
+export const SERIES = ["#7f9cc0", "#d1a86a", "#a98fc9", "#6fb8b0"] as const;
 export const SINGLE = SERIES[0];
 export const GRID = "var(--grid)";
 export const AXIS_TEXT = { fill: "var(--axis)", fontSize: 10.5 };

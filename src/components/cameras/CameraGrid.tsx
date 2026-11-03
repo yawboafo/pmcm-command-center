@@ -30,12 +30,12 @@ export default function CameraGrid({ sim, statuses, onOpen, wall }: { sim: Branc
             </FeedTile>
             <button type="button" onClick={() => onOpen(zoneId)} className="flex w-full items-center gap-3 bg-[var(--cam-panel)] px-3 py-2.5 text-left">
               <div className="min-w-0 flex-1">
-                <div className={`truncate font-semibold ${wall ? "text-[16px]" : "text-[13px]"}`}>{ZONE_BY_ID.get(zoneId)!.name}</div>
+                <div className={`truncate font-display font-semibold tracking-tight ${wall ? "text-[16px]" : "text-[13px]"}`}>{ZONE_BY_ID.get(zoneId)!.name}</div>
                 <div className={`truncate text-[var(--cam-muted)] ${wall ? "text-[13px]" : "text-[11px]"}`}>{status.headline}</div>
                 {last && <div className={`mt-0.5 truncate font-mono text-[var(--cam-faint)] ${wall ? "text-[13px]" : "text-[11px]"}`}>{hhmm(last.t)} · {last.message}</div>}
               </div>
               <div className="shrink-0 text-right">
-                <div className={`font-mono font-medium leading-none ${wall ? "text-[32px]" : "text-[20px]"} ${LEVEL_TEXT[primary.tone]}`}>{primary.display}</div>
+                <div className={`cam-num leading-none ${wall ? "text-[34px]" : "text-[24px]"} ${LEVEL_TEXT[primary.tone]}`}>{primary.display}</div>
                 <div className={`mt-0.5 text-[var(--cam-muted)] ${wall ? "text-[13px]" : "text-[11px]"}`}>{primary.label}</div>
               </div>
               {status.alerts.length > 0 && (

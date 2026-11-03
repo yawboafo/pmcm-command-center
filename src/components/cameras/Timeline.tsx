@@ -115,7 +115,8 @@ export default function Timeline({ sim, zoneId }: { sim: BranchSimulation; zoneI
           if (t !== null) setReplay({ t: Math.min(t, now - 1), playing: false, clip: null });
         }}
       >
-        {/* bar */}
+        {/* bar with ten-minute ticks */}
+        <div className="cam-ticks absolute inset-x-0 top-[18px] h-3 opacity-60" />
         <div className="absolute inset-x-0 top-[22px] h-1 rounded bg-white/15" />
         <div className="absolute top-[22px] h-1 rounded bg-white/40" style={{ left: 0, width: pos(cur) }} />
         {/* markers */}
@@ -136,7 +137,9 @@ export default function Timeline({ sim, zoneId }: { sim: BranchSimulation; zoneI
         {/* axis */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-between font-mono text-[11px] text-[var(--cam-faint)]">
           <span>{hhmm(sim.clockStart + start * 1000)}</span>
+          <span>−45</span>
           <span>−30 min</span>
+          <span>−15</span>
           <span>{hhmm(sim.clockStart + now * 1000)}</span>
         </div>
         {/* hover snapshot */}

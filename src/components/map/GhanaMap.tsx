@@ -34,7 +34,7 @@ const FONT_BOLD = ["Noto Sans Bold"];
 /** Building footprint (metres) per conceptual format, used for the fly-in extrusion. */
 const FOOTPRINT = { A: [11, 10, 4.5], B: [16, 13, 5], C: [24, 17, 7.5] } as const;
 /** Sequential blue (dark mode): low → recedes toward the surface, high → bright. */
-const SEQ = ["#0d366b", "#184f95", "#256abf", "#3987e5", "#6da7ec", "#9ec5f4"];
+const SEQ = ["#1f2a3d", "#2f425e", "#465d80", "#7f9cc0", "#a9bfdc", "#d6e1ee"];
 
 /** Keep Ghana clear of the floating dashboard (left) and toolbar (right) on wide screens. */
 /** Map style can reload while hidden; defer mutations until it is ready (returns true when deferred). */

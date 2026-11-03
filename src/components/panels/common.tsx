@@ -12,13 +12,13 @@ import { sims } from "@/store/sims";
 
 /** Chart tokens for the dark surface (reference palette, dark column). */
 export const VIZ = {
-  series1: "#3987e5",
+  series1: "#7f9cc0",
   // Theme-aware ink (CSS variables in globals.css).
   grid: "var(--grid)",
   axis: "var(--axis)",
   text: "var(--fg)",
   muted: "var(--axis)",
-  critical: "#e66767",
+  critical: "#f0483e",
   surface: "var(--surface)",
 };
 
@@ -203,7 +203,7 @@ export function HourlyBars({ values, format, height = 80, nowHour }: { values: n
 }
 
 export function ProgressBar({ value, tone = "blue" }: { value: number; tone?: "blue" | "red" | "yellow" | "green" }) {
-  const c = { blue: "#3987e5", red: "#ef4444", yellow: "#eab308", green: "#22c55e" }[tone];
+  const c = { blue: "var(--viz)", red: "var(--act)", yellow: "var(--watch)", green: "var(--ok)" }[tone];
   return (
     <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
       <div className="h-full rounded-full" style={{ width: `${Math.max(0, Math.min(1, value)) * 100}%`, background: c }} />

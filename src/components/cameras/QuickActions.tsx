@@ -66,7 +66,7 @@ export default function QuickActions({ sim, zoneId, tileId }: { sim: BranchSimul
             placeholder="What did you see?"
             className="h-11 min-w-0 flex-1 rounded-lg border border-white/15 bg-black/40 px-3 text-[13px] text-white placeholder:text-white/30"
           />
-          <button type="button" disabled={!note.trim()} onClick={() => (add({ ...base(), kind: "note", note: note.trim() }), setNote(null), notify("Note saved", "success"))} className="h-11 rounded-lg bg-[var(--accent)] px-3 text-[13px] font-semibold text-white disabled:opacity-40">
+          <button type="button" disabled={!note.trim()} onClick={() => (add({ ...base(), kind: "note", note: note.trim() }), setNote(null), notify("Note saved", "success"))} className="cam-btn-primary h-11 rounded-lg px-3 text-[13px] font-semibold text-white disabled:opacity-40">
             Save
           </button>
         </div>

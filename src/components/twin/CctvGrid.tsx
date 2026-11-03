@@ -144,7 +144,7 @@ export const CameraDevices = memo(function CameraDevices({ cameras, activeId }: 
           <group key={c.id} position={c.position} rotation={[0, yaw, 0]}>
             <mesh geometry={G.box} material={M.white()} position={[0, 0.12, -0.05]} scale={[0.06, 0.24, 0.06]} />
             <mesh geometry={G.box} material={M.white()} position={[0, 0, 0.04]} scale={[0.12, 0.1, 0.2]} rotation={[0.35, 0, 0]} />
-            <mesh geometry={G.sphereLow} material={c.id === activeId ? M.emissive("#ef4444", 3) : M.emissive("#22c55e", 1.5)} position={[0, -0.03, 0.15]} scale={0.035} />
+            <mesh geometry={G.sphereLow} material={c.id === activeId ? M.emissive("#f0483e", 3) : M.emissive("#3ccf8e", 1.5)} position={[0, -0.03, 0.15]} scale={0.035} />
           </group>
         );
       })}
@@ -155,7 +155,7 @@ export const CameraDevices = memo(function CameraDevices({ cameras, activeId }: 
 /** Reference navigation paths from the floor plan plus live agent routes. */
 export function PathsOverlay({ plan, version }: { plan: FloorPlan; version: number }) {
   const sim = sims().peek(plan.restaurantId);
-  const colors = { customer: "#ef4444", staff: "#22c55e", delivery: "#FFD400", emergency: "#38bdf8" } as const;
+  const colors = { customer: "#f0483e", staff: "#3ccf8e", delivery: "#FFD400", emergency: "#38bdf8" } as const;
   const live = useMemo(
     () => (sim ? sim.agents.filter((a) => !a.gone && a.path.length).map((a) => ({ id: a.id, kind: a.kind, pts: [a.pos, ...a.path].map(([x, z]) => [x, 0.05, z] as [number, number, number]) })) : []),
     [sim, version], // eslint-disable-line react-hooks/exhaustive-deps

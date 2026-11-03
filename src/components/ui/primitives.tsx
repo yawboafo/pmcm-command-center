@@ -7,12 +7,13 @@ export function cx(...c: Array<string | false | null | undefined>) {
   return c.filter(Boolean).join(" ");
 }
 
+/** Status palette (hex, because MapLibre paint and three.js materials cannot read CSS variables). Mirrors --ok / --watch / --act in globals.css. */
 export const STATUS_COLOR = {
-  normal: "#22c55e",
-  ok: "#22c55e",
-  warning: "#eab308",
-  attention: "#eab308",
-  critical: "#ef4444",
+  normal: "#3ccf8e",
+  ok: "#3ccf8e",
+  warning: "#f5b02e",
+  attention: "#f5b02e",
+  critical: "#f0483e",
   closed: "#6b7280",
   offline: "#6b7280",
 } as const;
@@ -113,7 +114,7 @@ export function Stat({ label, value, sub, tone }: { label: string; value: ReactN
   return (
     <div className="min-w-0">
       <div className="truncate font-mono text-[9.5px] uppercase tracking-[0.14em] text-white/40">{label}</div>
-      <div className={cx("font-mono text-[17px] font-medium tabular-nums leading-tight tracking-tight", color)}>{value}</div>
+      <div className={cx("num text-[19px] leading-tight", color)}>{value}</div>
       {sub && <div className="truncate text-[10px] text-white/40">{sub}</div>}
     </div>
   );
@@ -129,7 +130,7 @@ export function Btn({ children, onClick, active, tone, className, disabled, titl
       className={cx(
         "inline-flex items-center justify-center gap-1.5 rounded-lg border font-medium transition disabled:cursor-not-allowed disabled:opacity-40",
         size === "xs" ? "px-2 py-1 text-[11px]" : "px-3 py-1.5 text-xs",
-        tone === "red" ? "border-brand-red/60 bg-brand-red text-white hover:bg-brand-red/85" : active ? "border-white/25 bg-white/15 text-white" : tone === "ghost" ? "border-transparent text-white/70 hover:bg-white/10 hover:text-white" : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white",
+        tone === "red" ? "btn-primary text-white" : active ? "border-white/25 bg-white/15 text-white" : tone === "ghost" ? "border-transparent text-white/70 hover:bg-white/10 hover:text-white" : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white",
         className,
       )}
     >
@@ -155,13 +156,13 @@ export function Empty({ children }: { children: ReactNode }) {
 export function Meter({ value, color = "#EE1D25" }: { value: number; color?: string }) {
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-      <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(0, Math.min(1, value)) * 100}%`, background: color }} />
+      <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(0, Math.min(1, value)) * 100}%`, background: color === "#EE1D25" ? "var(--accent)" : color }} />
     </div>
   );
 }
 
 /** Minimal trend line for telemetry readouts (no axes; the last point is marked). */
-export function Sparkline({ values, color = "#7dd3fc", width = 84, height = 22, className }: { values: number[]; color?: string; width?: number; height?: number; className?: string }) {
+export function Sparkline({ values, color = "#a9bfdc", width = 84, height = 22, className }: { values: number[]; color?: string; width?: number; height?: number; className?: string }) {
   if (values.length < 2) return <svg width={width} height={height} className={className} aria-hidden />;
   const max = Math.max(...values);
   const min = Math.min(...values);
@@ -187,9 +188,9 @@ export function Readout({ label, value, unit, sub, tone = "default", trend, tren
   return (
     <div className={cx("min-w-0", className)}>
       <div className="truncate font-mono text-[9.5px] uppercase tracking-[0.16em] text-white/40">{label}</div>
-      <div className={cx("mt-1 whitespace-nowrap font-mono text-[19px] font-medium leading-none tabular-nums tracking-tight", color)}>
+      <div className={cx("num mt-1 whitespace-nowrap text-[21px] leading-none", color)}>
         {value}
-        {unit && <span className="ml-0.5 text-[11px] font-normal text-white/45">{unit}</span>}
+        {unit && <span className="ml-0.5 font-sans text-[11px] font-normal tracking-normal text-white/45">{unit}</span>}
       </div>
       {trend && <Sparkline values={trend} color={trendColor} width={128} height={18} className="mt-1.5 block max-w-full" />}
       {sub && <div className="mt-1 truncate text-[10px] text-white/40">{sub}</div>}

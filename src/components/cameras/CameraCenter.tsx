@@ -103,7 +103,7 @@ export default function CameraCenter({ sim, ready }: { sim: BranchSimulation; re
           </button>
         )}
         <div className="min-w-0">
-          <div className="truncate text-[16px] font-semibold leading-tight">{view === "zone" && zoneId ? ZONE_BY_ID.get(zoneId)!.name : "Cameras"}</div>
+          <div className="truncate font-display text-[16px] font-semibold leading-tight tracking-tight">{view === "zone" && zoneId ? ZONE_BY_ID.get(zoneId)!.name : "Cameras"}</div>
           <div className="truncate text-[11px] text-[var(--cam-muted)]">
             {branch?.name}
             {view === "grid" && (counts.act ? ` · ${counts.act} need action` : counts.watch ? ` · ${counts.watch} to watch` : " · all zones running right")}

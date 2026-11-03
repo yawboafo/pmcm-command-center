@@ -50,11 +50,11 @@ export default function AlertCards({ sim, zoneId, tileId }: { sim: BranchSimulat
         const age = Math.max(0, (sim.now() - a.openedAt) / 1000);
         const color = ack ? "var(--watch)" : a.severity === "critical" || a.escalation > 0 ? "var(--act)" : "var(--watch)";
         return (
-          <div key={a.id} className={`cam-panel cam-slide-in relative overflow-hidden p-3 pl-4 ${!ack && a.escalation > 0 ? "cam-pulse" : ""}`}>
+          <div key={a.id} data-tone={ack ? "watch" : a.severity === "critical" || a.escalation > 0 ? "act" : "watch"} className={`cam-panel cam-alert cam-slide-in relative overflow-hidden p-3 pl-4 ${!ack && a.escalation > 0 ? "cam-pulse" : ""}`}>
             <div className="absolute inset-y-0 left-0 w-1" style={{ background: color }} aria-hidden />
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <div className="text-[13px] font-semibold leading-snug">{a.title}</div>
+                <div className="font-display text-[13px] font-semibold leading-snug tracking-tight">{a.title}</div>
                 <div className="mt-0.5 font-mono text-[11px] text-[var(--cam-faint)]">
                   {hhmm(a.openedAt)} · open {mmss(age)}
                   {ack && ` · acknowledged by ${a.acknowledgedBy}`}
@@ -74,7 +74,7 @@ export default function AlertCards({ sim, zoneId, tileId }: { sim: BranchSimulat
                 Jump to moment
               </button>
               {!ack ? (
-                <button type="button" disabled={!allowed} onClick={() => (sim.acknowledgeAlert(a.id, user.name), notify("Acknowledged — now in hand", "warning"))} className="h-10 rounded-lg bg-[var(--accent)] px-3 text-[13px] font-semibold text-white hover:opacity-90 disabled:opacity-40">
+                <button type="button" disabled={!allowed} onClick={() => (sim.acknowledgeAlert(a.id, user.name), notify("Acknowledged — now in hand", "warning"))} className="cam-btn-primary h-10 rounded-lg px-3 text-[13px] font-semibold text-white disabled:opacity-40">
                   Acknowledge
                 </button>
               ) : (

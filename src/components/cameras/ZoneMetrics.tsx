@@ -33,12 +33,12 @@ export default function ZoneMetrics({ sim, zoneId, status, wall = false }: { sim
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="cam-panel p-4">
+      <div className="cam-panel cam-hero p-4" data-level={toneOf(primary)}>
         <div className="flex items-baseline justify-between gap-2">
-          <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--cam-muted)]">{primary.label}</div>
+          <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--cam-muted)]">{primary.label}</div>
           <div className="font-mono text-[11px] text-[var(--cam-faint)]">{hhmm(atMs)} GMT</div>
         </div>
-        <div className={`mt-1 font-mono font-medium leading-none tracking-tight ${wall ? "text-[64px]" : "text-[40px]"} ${LEVEL_TEXT[toneOf(primary)]}`}>{valueOf(primary)}</div>
+        <div className={`cam-num mt-2 leading-none ${wall ? "text-[64px]" : "text-[44px]"} ${LEVEL_TEXT[toneOf(primary)]}`}>{valueOf(primary)}</div>
         <div className="mt-2 text-[13px] leading-snug text-[var(--cam-fg)]">{frame ? `At ${hhmm(atMs)} (replay)` : status.headline}</div>
         {primary.hint && <div className="mt-1 text-[11px] text-[var(--cam-muted)]">{primary.hint}</div>}
         <Baseline sim={sim} zoneId={zoneId} metric={primary} atMs={atMs} />
@@ -47,7 +47,7 @@ export default function ZoneMetrics({ sim, zoneId, status, wall = false }: { sim
         {rest.map((m) => (
           <div key={m.key} className="cam-panel p-3">
             <div className="truncate text-[11px] text-[var(--cam-muted)]">{m.label}</div>
-            <div className={`mt-1 truncate font-mono text-[20px] font-medium leading-none ${LEVEL_TEXT[toneOf(m)]}`}>{valueOf(m)}</div>
+            <div className={`cam-num mt-1.5 truncate text-[22px] leading-none ${LEVEL_TEXT[toneOf(m)]}`}>{valueOf(m)}</div>
             <Trend values={trends[m.key] ?? []} lowerIsBetter={m.lowerIsBetter} />
             <Baseline sim={sim} zoneId={zoneId} metric={m} atMs={atMs} compact />
           </div>
@@ -74,8 +74,15 @@ function Trend({ values, lowerIsBetter }: { values: number[]; lowerIsBetter?: bo
   return (
     <div className="mt-2 flex items-end gap-2">
       <svg width={w} height={h} className="max-w-full" aria-hidden>
-        <path d={d} fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth={1.25} strokeLinejoin="round" />
-        <circle cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r={2} fill="#fff" />
+        <defs>
+          <linearGradient id="cam-spark" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" stopColor="#fff" stopOpacity="0.16" />
+            <stop offset="1" stopColor="#fff" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={`${d}L${pts[pts.length - 1][0].toFixed(1)},${h}L${pts[0][0].toFixed(1)},${h}Z`} fill="url(#cam-spark)" />
+        <path d={d} fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth={1.25} strokeLinejoin="round" strokeLinecap="round" />
+        <circle cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r={2.2} fill="#fff" />
       </svg>
       <span className="font-mono text-[11px] text-[var(--cam-faint)]" title="Change over the last hour">
         {delta === 0 ? "steady" : `${delta > 0 ? "↑" : "↓"} ${Math.abs(Math.round(delta * 10) / 10)}${worse ? "" : ""}`}

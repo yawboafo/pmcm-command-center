@@ -252,8 +252,8 @@ export function SceneLights({ plan, quality, hour = 12.5 }: { plan: FloorPlan; q
 }
 
 const dragMats = {
-  ok: new THREE.MeshBasicMaterial({ color: "#22c55e", transparent: true, opacity: 0.28, depthWrite: false, toneMapped: false }),
-  bad: new THREE.MeshBasicMaterial({ color: "#ef4444", transparent: true, opacity: 0.35, depthWrite: false, toneMapped: false }),
+  ok: new THREE.MeshBasicMaterial({ color: "#3ccf8e", transparent: true, opacity: 0.28, depthWrite: false, toneMapped: false }),
+  bad: new THREE.MeshBasicMaterial({ color: "#f0483e", transparent: true, opacity: 0.35, depthWrite: false, toneMapped: false }),
 };
 
 /** Green / pulsing-red tint and floor footprint for the item being dragged in the editor. */

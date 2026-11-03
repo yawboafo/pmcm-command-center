@@ -83,7 +83,7 @@ export default function BranchCard({ b, s, onClose, compact }: { b: Branch; s: B
             <span>Kitchen activity</span>
             <span className="tabular-nums text-white/80">{Math.round(s.kitchenLoad * 100)}%</span>
           </div>
-          <Meter value={s.kitchenLoad} color={s.kitchenLoad > 0.85 ? "#ef4444" : s.kitchenLoad > 0.65 ? "#eab308" : "#5ab350"} />
+          <Meter value={s.kitchenLoad} color={s.kitchenLoad > 0.85 ? "#f0483e" : s.kitchenLoad > 0.65 ? "#f5b02e" : "#5ab350"} />
         </div>
         <div className="flex justify-between text-white/55">
           <span>Food safety</span>
