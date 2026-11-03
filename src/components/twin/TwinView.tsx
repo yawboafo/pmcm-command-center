@@ -186,7 +186,7 @@ function Legend() {
       <span className="flex items-center gap-1">
         <span className="h-2 w-2 rounded-full bg-gray-400" /> Offline
       </span>
-      <span className="text-amber-300">◆ Simulated operations · conceptual layout</span>
+      <span className="text-white/40">Conceptual layout</span>
     </div>
   );
 }

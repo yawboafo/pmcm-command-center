@@ -41,7 +41,7 @@ const fleet = fleetJson as unknown as VirtualFleetFile;
 
 // ───────────────────────────── configuration ─────────────────────────────
 
-const BASE_URL = (arg("url") ?? envVar("PMCM_URL") ?? "http://localhost:3000").replace(/\/$/, "");
+const BASE_URL = (arg("url") ?? envVar("OPS_URL") ?? "http://localhost:3000").replace(/\/$/, "");
 const SPEED = Math.min(1000, Math.max(0.1, Number(arg("speed", "1")) || 1));
 const CHAOS = Math.max(0, Number(arg("chaos", "1")) || 0);
 const QUIET = flag("quiet");
@@ -526,9 +526,9 @@ class Terminal {
 
 // ───────────────────────────── transport ─────────────────────────────
 
-async function post(path: string, id: string, header: "x-pmcm-device" | "x-pmcm-source", body: string) {
+async function post(path: string, id: string, header: "x-ops-device" | "x-ops-source", body: string) {
   const ts = Date.now();
-  return fetch(`${BASE_URL}${path}`, { method: "POST", headers: { "content-type": "application/json", [header]: id, "x-pmcm-timestamp": String(ts), "x-pmcm-signature": sign(keyFor(id), ts, body) }, body });
+  return fetch(`${BASE_URL}${path}`, { method: "POST", headers: { "content-type": "application/json", [header]: id, "x-ops-timestamp": String(ts), "x-ops-signature": sign(keyFor(id), ts, body) }, body });
 }
 
 async function flushDevice(dev: Device) {
@@ -546,7 +546,7 @@ async function flushDevice(dev: Device) {
         break;
       }
       const raw = JSON.stringify(m.body);
-      const res = await post("/api/ingest/telemetry", dev.id, "x-pmcm-device", raw);
+      const res = await post("/api/ingest/telemetry", dev.id, "x-ops-device", raw);
       stats.sent++;
       m.attempts++;
       const text = await res.text();
@@ -555,7 +555,7 @@ async function flushDevice(dev: Device) {
         else stats.duplicates++;
         // Ack lost on the way back: the device resends the same message id; the server must de-duplicate it.
         if (res.status === 202 && rng.chance(dev.faults.has("dupes") ? 0.4 : 0.015 * CHAOS)) {
-          const again = await post("/api/ingest/telemetry", dev.id, "x-pmcm-device", raw);
+          const again = await post("/api/ingest/telemetry", dev.id, "x-ops-device", raw);
           stats.sent++;
           if (again.status === 200) stats.duplicates++;
           await again.text();
@@ -600,7 +600,7 @@ async function flushTerminal(t: Terminal) {
     while (t.outbox.length && t.online()) {
       const m = t.outbox[0];
       const raw = JSON.stringify(m.body);
-      const res = await post("/api/ingest/pos", t.id, "x-pmcm-source", raw);
+      const res = await post("/api/ingest/pos", t.id, "x-ops-source", raw);
       m.attempts++;
       const text = await res.text();
       if (res.status === 202 || res.status === 200) {
@@ -608,7 +608,7 @@ async function flushTerminal(t: Terminal) {
         if (res.status === 200) stats.duplicates++;
         // Webhook retry after a timeout: same idempotency key, must be de-duplicated.
         if (res.status === 202 && rng.chance(0.02 * CHAOS)) {
-          const again = await post("/api/ingest/pos", t.id, "x-pmcm-source", raw);
+          const again = await post("/api/ingest/pos", t.id, "x-ops-source", raw);
           if (again.status === 200) stats.duplicates++;
           await again.text();
         }
@@ -714,7 +714,7 @@ async function heartbeat() {
   for (const d of devices) if (d.dead) faults.push({ deviceId: d.id, kind: "battery-dead", since: new Date().toISOString(), injected: d.faults.has("battery") });
   const body = JSON.stringify({ v: 1, startedAt: new Date(startedReal).toISOString(), speed: SPEED, branches, devices: devices.length, terminals: terminals.length, faults: faults.slice(0, 500), offline: devices.filter((d) => !d.online()).map((d) => d.id) });
   try {
-    const res = await post("/api/ingest/simulator", SIMULATOR_ID, "x-pmcm-device", body);
+    const res = await post("/api/ingest/simulator", SIMULATOR_ID, "x-ops-device", body);
     if (res.status !== 202 && !QUIET) log(`HB    simulator heartbeat → ${res.status} ${await res.text()}`);
     else await res.text();
   } catch {

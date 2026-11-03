@@ -191,7 +191,6 @@ export function CctvLabel({ sim }: { sim: BranchSimulation }) {
           <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
           {c.code} · {c.name} · {room}
         </div>
-        <div className="mt-1 font-mono text-[10px] font-semibold tracking-wider text-amber-300">VIRTUAL CAMERA — SIMULATED VIEW, NOT CCTV</div>
       </div>
       <div className="pointer-events-none absolute bottom-6 left-6 font-mono text-[12px] text-white/80">{new Date(sims().clock).toISOString().slice(0, 10)} {clockSec(sims().clock)} GMT</div>
       <div className="glass pointer-events-auto absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-lg p-1 text-white">

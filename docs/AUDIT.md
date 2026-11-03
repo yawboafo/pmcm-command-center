@@ -61,7 +61,7 @@ change below extends the existing code.
 | 3 | Provenance taxonomy: **LIVE / SIMULATED / ESTIMATED / UNAVAILABLE** badges | `primitives.tsx` |
 | 4 3D | Scripted **Blender → glTF** pipeline: 24 equipment + 5 furniture models (meshopt-compressed, 764 KB in all, 6 with distance LODs), contact sheet for visual QA; loader with procedural fallback, furniture kept instanced; Settings switch between models and procedural | `blender/`, `public/models/`, `docs/ASSETS.md`, `modelAssets.tsx`, `furniture.tsx` |
 | 5 Twins | Order status follows the **least-advanced item**; **payment** step; recipe stock deducted **at the moment of sale** (returned if cancelled before production); **estimated ready time** that reacts to station queues; per-order **event trail** and stock movements | `engine.ts`, `InspectOrder.tsx` |
-| 7 Performance | Dev performance probe (`window.__pmcmPerf`: FPS, draw calls, triangles) and `?assets=procedural` for side-by-side checks | `PerfProbe.tsx` |
+| 7 Performance | Dev performance probe (`window.__opsPerf`: FPS, draw calls, triangles) and `?assets=procedural` for side-by-side checks | `PerfProbe.tsx` |
 | 6 Interaction | **Station & zone camera presets** derived from each floor plan (pizza line, fry station, rice, QC & packing, dispatch, front counter, kitchen, cold storage, dining); selecting a station opens its tasks and workload | `StationViews.tsx` |
 
 ### Measured: Blender models vs procedural (East Legon, Model C, 1600×950, Apple GPU via headless Chromium)

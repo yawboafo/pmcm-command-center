@@ -96,7 +96,6 @@ export default function InspectOrder({ sim, id }: { sim: BranchSimulation; id: s
         <KV k="Branch" v={sim.branchName} />
         <KV k="Channel" v={channelLabel(o.channel)} />
         {o.source !== "simulated" && <KV k="Source reference" v={`${o.externalRef}${o.externalStatus ? ` · ${o.externalStatus}` : ""}${o.source === "virtual" ? " · simulated POS terminal" : ""}`} mono />}
-        {o.source !== "simulated" && <KV k="Kitchen progress" v="Simulated (no KDS connected)" tone="yellow" />}
         <KV k="Fulfilment" v={fulfilmentLabel(o.fulfilment)} />
         <KV k="Elapsed" v={mins(elapsed)} mono tone={o.delayed ? "red" : undefined} />
         <KV k="Target (demo SLA)" v={`${o.slaMin} min to ready`} mono />
@@ -239,7 +238,7 @@ export default function InspectOrder({ sim, id }: { sim: BranchSimulation; id: s
             <KV k="Status" v={o.delivery.status.replace(/_/g, " ")} />
             {o.delivery.rider && <KV k="Courier" v={o.delivery.rider} />}
             {o.delivery.collectedAt !== undefined && <KV k="Collected" v={clockSec(simMs(sim, o.delivery.collectedAt))} mono />}
-            {o.delivery.eta !== undefined && o.delivery.status !== "DELIVERED" && <KV k="Simulated ETA" v={clockSec(simMs(sim, o.delivery.eta))} mono />}
+            {o.delivery.eta !== undefined && o.delivery.status !== "DELIVERED" && <KV k="ETA" v={clockSec(simMs(sim, o.delivery.eta))} mono />}
             {o.delivery.deliveredAt !== undefined && <KV k="Delivered" v={clockSec(simMs(sim, o.delivery.deliveredAt))} mono />}
           </Card>
           <p className="mt-1 text-[10px] text-white/35">Live rider location is not connected — no map coordinates are shown.</p>
@@ -253,12 +252,12 @@ export default function InspectOrder({ sim, id }: { sim: BranchSimulation; id: s
           </Btn>
         )}
         {!terminal && (
-          <Btn size="xs" disabled={!canAct} title={canAct ? "Cancel this simulated order" : "Your role cannot cancel orders"} onClick={() => sim.cancelOrder(o.id, `Cancelled by ${user.name}`) && notify(`Order #${o.number} cancelled`, "warning")}>
+          <Btn size="xs" disabled={!canAct} title={canAct ? "Cancel this order" : "Your role cannot cancel orders"} onClick={() => sim.cancelOrder(o.id, `Cancelled by ${user.name}`) && notify(`Order #${o.number} cancelled`, "warning")}>
             Cancel
           </Btn>
         )}
         {["COMPLETED", "CANCELLED", "FAILED"].includes(o.status) && (
-          <Btn size="xs" disabled={!canAct} title={canAct ? "Issue a simulated refund" : "Your role cannot refund orders"} onClick={() => sim.refundOrder(o.id) && notify(`Order #${o.number} refunded (simulated)`, "info")}>
+          <Btn size="xs" disabled={!canAct} title={canAct ? "Issue a refund" : "Your role cannot refund orders"} onClick={() => sim.refundOrder(o.id) && notify(`Order #${o.number} refunded (simulated)`, "info")}>
             Refund
           </Btn>
         )}

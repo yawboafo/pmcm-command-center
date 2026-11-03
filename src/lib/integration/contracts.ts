@@ -10,7 +10,7 @@ import { z } from "zod";
  * never touches UI or business logic.
  *
  * Wire format: JSON over HTTPS (signed, see ./signing.ts) or MQTT
- * (topic `pmcm/v1/{branchCode}/{deviceId}/telemetry`, same payload).
+ * (topic `ops/v1/{branchCode}/{deviceId}/telemetry`, same payload).
  */
 
 /**
@@ -199,7 +199,7 @@ export interface NormalisedOrderEvent {
   seq: number;
   branchId: string;
   receivedAt: number;
-  /** Webhook source id (x-pmcm-source), e.g. "chris-b". */
+  /** Webhook source id (x-ops-source), e.g. "chris-b". */
   sourceId: string;
   event: PosOrderEvent;
   /** Physical POS / ordering system, or a virtual terminal (from the terminal registry). */

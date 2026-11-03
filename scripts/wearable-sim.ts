@@ -21,7 +21,7 @@ import { BRANCH_BY_ID } from "../src/lib/network/branches";
 import { ROLE_SKILLS, ROSTER } from "../src/lib/sim/engine";
 import { arg, envVar, flag } from "./lib/env";
 
-const URL_BASE = (arg("url") ?? envVar("PMCM_URL") ?? "http://localhost:3000").replace(/\/$/, "");
+const URL_BASE = (arg("url") ?? envVar("OPS_URL") ?? "http://localhost:3000").replace(/\/$/, "");
 const INTERVAL = Math.max(0.25, Number(arg("interval", "1")) || 1);
 const SPEED = Math.max(0.1, Number(arg("speed", "1")) || 1);
 const DROPOUT = Math.min(0.5, Math.max(0, Number(arg("dropout", "0.01")) || 0));
@@ -115,7 +115,7 @@ async function report(p: Wearer) {
   const body = JSON.stringify({ v: 1, messageId: randomUUID(), tagId: p.w.tagId, ts: new Date().toISOString(), x: +(p.pos[0] + gauss(accuracy / 2) - offsetX).toFixed(3), y: +(p.pos[1] + gauss(accuracy / 2) - offsetZ).toFixed(3), accuracy_m: +accuracy.toFixed(2), battery_pct: +p.battery.toFixed(1), anchors: 4 + Math.floor(Math.random() * 3) });
   const ts = Date.now();
   try {
-    const res = await fetch(`${URL_BASE}/api/ingest/location`, { method: "POST", headers: { "content-type": "application/json", "x-pmcm-device": p.w.tagId, "x-pmcm-timestamp": String(ts), "x-pmcm-signature": sign(deriveVirtualKey(secret!, p.w.tagId), ts, body) }, body });
+    const res = await fetch(`${URL_BASE}/api/ingest/location`, { method: "POST", headers: { "content-type": "application/json", "x-ops-device": p.w.tagId, "x-ops-timestamp": String(ts), "x-ops-signature": sign(deriveVirtualKey(secret!, p.w.tagId), ts, body) }, body });
     if (res.status >= 300) {
       failed++;
       if (!QUIET) console.error(`${p.w.tagId} → ${res.status} ${await res.text()}`);

@@ -8,6 +8,7 @@ import { ghs, ghsCompact } from "@/lib/format";
 import { useSnapshots, useTick } from "@/lib/hooks/useSim";
 import { BRANCH_BY_ID, BRANCHES } from "@/lib/network/branches";
 import { SUPPLY_HUBS, hubFor, transferStatus, transfersForDay } from "@/lib/network/supply";
+import { TENANT } from "@/config/platform";
 import { useApp } from "@/store/app";
 import { sims } from "@/store/sims";
 import BranchCard from "./BranchCard";
@@ -500,7 +501,7 @@ export default function GhanaMap({ visible }: { visible: boolean }) {
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#0b0e13]">
-      <div ref={container} className="!absolute inset-0 h-full w-full" aria-label="Map of Ghana showing Pizzaman Chickenman branches" role="region" />
+      <div ref={container} className="!absolute inset-0 h-full w-full" aria-label={`Map of Ghana showing ${TENANT.name} branches`} role="region" />
       {!flying && !(section === "branches" && !enteredBranchId) && (
         <>
           {section !== "central" && <NationalDashboard snaps={visibleBranches.map((x) => x.s)} />}

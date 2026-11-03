@@ -30,13 +30,13 @@ function Flag({ on, label }: { on: boolean; label: string }) {
 const ORIGINS = [
   ["all", "All"],
   ["physical", "Physical"],
-  ["virtual", "Simulated"],
+  ["virtual", "Virtual"],
 ] as const;
 const STATES = [
   ["all", "Any status"],
   ["online", "Online"],
   ["offline", "Offline / never seen"],
-  ["fault", "Simulated fault"],
+  ["fault", "Injected fault"],
 ] as const;
 
 const branchName = (id: string) => BRANCH_BY_ID.get(id)?.name ?? id;
@@ -92,15 +92,15 @@ export default function IntegrationsPanel() {
         <div className="mb-3 flex flex-wrap gap-2">
           <Flag on={live.status === "connected"} label={`Telemetry stream: ${live.status}${live.readings ? ` · ${live.readings} readings` : ""}`} />
           <Flag on={!!status?.cameraGatewayConfigured} label="Camera gateway" />
-          <Flag on={!!status?.virtualCameraGatewayConfigured} label="Simulated camera gateway" />
+          <Flag on={!!status?.virtualCameraGatewayConfigured} label="Virtual camera gateway" />
           <Flag on={!!status?.posWebhookConfigured} label="POS webhook secret" />
-          <Flag on={!!status?.virtualFleetConfigured} label="Simulated fleet key" />
+          <Flag on={!!status?.virtualFleetConfigured} label="Virtual fleet key" />
           <Flag on={!!sim?.running} label={sim?.running ? `Hardware simulator: running ${sim.speed}× · ${sim.devices} devices, ${sim.terminals} POS` : "Hardware simulator: not running"} />
           <Flag on={!!status?.assistantConfigured} label="AI assistant key" />
         </div>
         {!sim?.running && (
           <p className="mb-2 text-[11px] text-white/55">
-            Simulated hardware: run <code className="text-white/85">npm run hardware:sim</code> (sensors, controllers, POS) and <code className="text-white/85">npm run camera:sim</code> (cameras) — data arrives through the real pipeline and shows as <SimDeviceBadge />, never LIVE.
+            Virtual hardware: run <code className="text-white/85">npm run hardware:sim</code> (sensors, controllers, POS) and <code className="text-white/85">npm run camera:sim</code> (cameras) — data arrives through the real pipeline and shows as <SimDeviceBadge />, never LIVE.
           </p>
         )}
         {live.unmatched > 0 && <p className="mb-2 text-[11px] text-amber-300">{live.unmatched} reading(s) could not be matched to equipment in the branch floor plan — check the bindings.</p>}
@@ -109,7 +109,7 @@ export default function IntegrationsPanel() {
         {/* Fleet health at a glance: physical vs simulated, per branch. */}
         <div className="mb-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <FleetTile label="Physical devices" online={physicalOnline} total={physical.length} badge={physicalOnline > 0 ? <LiveBadge /> : null} />
-          <FleetTile label="Simulated devices" online={virtualOnline} total={virtual.length} badge={virtual.length ? <SimDeviceBadge /> : null} />
+          <FleetTile label="Virtual devices" online={virtualOnline} total={virtual.length} badge={virtual.length ? <SimDeviceBadge /> : null} />
           {branches
             .filter((b) => virtual.some((d) => d.branchId === b))
             .slice(0, 2)
@@ -212,7 +212,7 @@ export default function IntegrationsPanel() {
       <Glass className="p-4 lg:col-span-2">
         <SectionTitle>Cameras</SectionTitle>
         <p className="mb-3 text-[11px] text-white/55">
-          Virtual cameras render the simulated 3D model only. Real cameras appear here once they are registered with a written authorisation, privacy notice and retention period, and streamed through the camera gateway. Simulated cameras (SIM CAMERA) stream a synthetic test pattern through the same proxy. Camera video always plays in this separate, clearly labelled player — never blended into the simulation.
+          Virtual cameras render the 3D model. Real cameras appear here once they are registered with a written authorisation, privacy notice and retention period, and streamed through the camera gateway. Simulated cameras (SIM CAMERA) stream a synthetic test pattern through the same proxy. Camera video always plays in this separate, clearly labelled player — never blended into the simulation.
         </p>
         {status?.cameras.length ? (
           <div className="space-y-2">
@@ -247,7 +247,7 @@ export default function IntegrationsPanel() {
           <li>Install the sensor and bind it in <code className="text-white/85">src/data/devices.json</code> to the floor-plan equipment it monitors (<code>equipmentId</code>, stable across layout edits) or a sensor code, with its calibration offset and reporting interval.</li>
           <li>Give the device (or its gateway) a secret of at least 16 characters in <code className="text-white/85">DEVICE_KEYS</code> on the server — never in the browser or the repository.</li>
           <li>
-            The device signs each message and posts it to <code className="text-white/85">POST /api/ingest/telemetry</code> (or publishes to MQTT topic <code>pmcm/v1/&#123;branchCode&#125;/&#123;deviceId&#125;/telemetry</code> through the bridge). Bench-test first with{" "}
+            The device signs each message and posts it to <code className="text-white/85">POST /api/ingest/telemetry</code> (or publishes to MQTT topic <code>ops/v1/&#123;branchCode&#125;/&#123;deviceId&#125;/telemetry</code> through the bridge). Bench-test first with{" "}
             <code className="text-white/85">npx tsx scripts/device-sim.ts --device &lt;id&gt; --value 3.2</code>, or exercise the whole pipeline with the simulated fleet (<code className="text-white/85">npm run hardware:sim</code>).
           </li>
           <li>The first reading through the pipeline switches the console to the real wall clock; a physical sensor then shows LIVE, a simulated one SIM DEVICE, and both use the same food-safety limits and alert delays as the simulation.</li>

@@ -19,13 +19,13 @@ const TERMINAL = "vpos-eastlegon-01";
 function telemetry(deviceId: string, value: number, { messageId = randomUUID(), key = deriveVirtualKey(FLEET, deviceId), ts = new Date().toISOString(), metric = "temperature_c" } = {}) {
   const raw = JSON.stringify({ v: 1, messageId, deviceId, ts, readings: [{ metric, value }], battery_pct: 88, rssi_dbm: -97, firmware: "lw-ct-3.4.1" });
   const t = Date.now();
-  return telemetryRoute(new Request("http://localhost/api/ingest/telemetry", { method: "POST", body: raw, headers: { "x-pmcm-device": deviceId, "x-pmcm-timestamp": String(t), "x-pmcm-signature": sign(key, t, raw) } }));
+  return telemetryRoute(new Request("http://localhost/api/ingest/telemetry", { method: "POST", body: raw, headers: { "x-ops-device": deviceId, "x-ops-timestamp": String(t), "x-ops-signature": sign(key, t, raw) } }));
 }
 
 function posEvent(status: string, { source = TERMINAL, key = deriveVirtualKey(FLEET, source), branchId = "branch-015", idempotencyKey = randomUUID() } = {}) {
   const raw = JSON.stringify({ v: 1, idempotencyKey, branchId, externalRef: "01-261103-0001", channel: "walk-in", fulfilment: "pickup", status, lines: [{ menuId: "pz-chicken-l", qty: 1, unitPriceGhs: 150 }], ts: new Date().toISOString() });
   const t = Date.now();
-  return posRoute(new Request("http://localhost/api/ingest/pos", { method: "POST", body: raw, headers: { "x-pmcm-source": source, "x-pmcm-timestamp": String(t), "x-pmcm-signature": sign(key, t, raw) } }));
+  return posRoute(new Request("http://localhost/api/ingest/pos", { method: "POST", body: raw, headers: { "x-ops-source": source, "x-ops-timestamp": String(t), "x-ops-signature": sign(key, t, raw) } }));
 }
 
 const readings = () => backlog(null, 0).filter((e): e is NormalisedReading => e.type === "reading");
@@ -114,7 +114,7 @@ describe("virtual provenance end to end", () => {
     }
     const alert = sim.alerts.find((a) => a.sensorId === id)!;
     expect(alert.source).toBe("virtual");
-    expect(alert.issue).toMatch(/^Simulated-device reading/);
+    expect(alert.issue).toMatch(/^Reading /);
     // The priority queue keeps the provenance: SIM DEVICE, never LIVE.
     const items = rankPriorities([{ branchId: "branch-015", status: "critical" } as never], new Map([["branch-015", sim]]), sim.now());
     expect(items.find((x) => x.id === alert.id)?.provenance).toBe("virtual");
@@ -202,7 +202,7 @@ describe("simulator heartbeat", () => {
   const report = { v: 1, startedAt: new Date().toISOString(), speed: 10, branches: ["branch-015"], devices: 27, terminals: 3, faults: [{ deviceId: WALK_IN, kind: "compressor", since: new Date().toISOString(), injected: true }], offline: [] };
   const call = (key: string, body = JSON.stringify(report)) => {
     const t = Date.now();
-    return simulatorRoute(new Request("http://localhost/api/ingest/simulator", { method: "POST", body, headers: { "x-pmcm-device": SIMULATOR_ID, "x-pmcm-timestamp": String(t), "x-pmcm-signature": sign(key, t, body) } }));
+    return simulatorRoute(new Request("http://localhost/api/ingest/simulator", { method: "POST", body, headers: { "x-ops-device": SIMULATOR_ID, "x-ops-timestamp": String(t), "x-ops-signature": sign(key, t, body) } }));
   };
   it("accepts a signed report and exposes the simulated faults", async () => {
     expect((await call(deriveVirtualKey(FLEET, SIMULATOR_ID))).status).toBe(202);

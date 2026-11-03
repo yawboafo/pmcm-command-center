@@ -73,7 +73,7 @@ export default function MenuCatalogue() {
               <tr key={i.catalogueId} className="border-t border-white/5">
                 <td className="px-2 py-1">
                   <span className="text-white">{i.name}</span>
-                  {SIMULATED.has(i.slug) && <span className="ml-1.5 rounded bg-amber-400/10 px-1 font-mono text-[9px] text-amber-300">SIMULATED ORDERS</span>}
+                  {SIMULATED.has(i.slug) && <span className="ml-1.5 rounded bg-amber-400/10 px-1 font-mono text-[9px] text-amber-300">IN TWIN</span>}
                   {i.notes && <div className="text-[10px] text-white/35">{i.notes}</div>}
                 </td>
                 <td className="px-2 py-1 text-white/55">{i.category}</td>

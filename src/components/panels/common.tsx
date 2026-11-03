@@ -158,7 +158,7 @@ export function HistoryChart({ data, limit, unit, height = 120 }: { data: Array<
   lo = Math.floor(lo - pad);
   hi = Math.ceil(hi + pad);
   return (
-    <div style={{ height }} role="img" aria-label={`Simulated history, latest ${vals.at(-1)} ${unit}${limit ? `, limit ${limit.label}` : ""}`}>
+    <div style={{ height }} role="img" aria-label={`History, latest ${vals.at(-1)} ${unit}${limit ? `, limit ${limit.label}` : ""}`}>
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={rows} margin={{ top: 6, right: 6, bottom: 0, left: -18 }}>
           <CartesianGrid stroke={VIZ.grid} vertical={false} />
@@ -167,7 +167,7 @@ export function HistoryChart({ data, limit, unit, height = 120 }: { data: Array<
           <Tooltip
             cursor={{ stroke: "rgba(255,255,255,0.35)", strokeWidth: 1 }}
             contentStyle={{ background: VIZ.surface, border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, fontSize: 11, color: VIZ.text }}
-            labelFormatter={(t) => `${clock(Number(t))} GMT · simulated`}
+            labelFormatter={(t) => `${clock(Number(t))} GMT`}
             formatter={(v) => [`${v} ${unit}`, "Reading"]}
           />
           <Area type="monotone" dataKey="v" stroke="none" fill={VIZ.series1} fillOpacity={0.12} isAnimationActive={false} connectNulls={false} />
@@ -183,14 +183,14 @@ export function HistoryChart({ data, limit, unit, height = 120 }: { data: Array<
 export function HourlyBars({ values, format, height = 80, nowHour }: { values: number[]; format: (n: number) => string; height?: number; nowHour?: number }) {
   const rows = values.map((v, h) => ({ h, v }));
   return (
-    <div style={{ height }} role="img" aria-label={`Hourly simulated values, total ${format(values.reduce((s, v) => s + v, 0))}`}>
+    <div style={{ height }} role="img" aria-label={`Hourly values, total ${format(values.reduce((s, v) => s + v, 0))}`}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={rows} margin={{ top: 4, right: 0, bottom: 0, left: 0 }} barCategoryGap={2}>
           <XAxis dataKey="h" tick={{ fill: VIZ.axis, fontSize: 9 }} tickLine={false} axisLine={false} interval={5} tickFormatter={(h) => `${String(h).padStart(2, "0")}h`} />
           <Tooltip
             cursor={{ fill: "rgba(255,255,255,0.05)" }}
             contentStyle={{ background: VIZ.surface, border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, fontSize: 11, color: VIZ.text }}
-            labelFormatter={(h) => `${String(h).padStart(2, "0")}:00–${String(Number(h) + 1).padStart(2, "0")}:00 · simulated`}
+            labelFormatter={(h) => `${String(h).padStart(2, "0")}:00–${String(Number(h) + 1).padStart(2, "0")}:00`}
             formatter={(v) => [format(Number(v)), "Sales"]}
           />
           {nowHour !== undefined && <ReferenceLine x={nowHour} stroke="rgba(255,255,255,0.3)" strokeDasharray="2 2" />}

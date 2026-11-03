@@ -12,13 +12,13 @@ import { verify } from "@/lib/integration/signing";
  *  400 schema violation      413 too large      202 accepted      200 duplicate
  */
 export async function POST(req: Request) {
-  const deviceId = req.headers.get("x-pmcm-device") ?? "";
+  const deviceId = req.headers.get("x-ops-device") ?? "";
   const raw = await req.text();
   if (raw.length > 32_000) return Response.json({ error: "payload_too_large" }, { status: 413 });
 
   const secret = deviceSecret(deviceId);
   if (!secret || bindingsFor(deviceId).length === 0) return Response.json({ error: "unknown_device" }, { status: 401 });
-  const v = verify(secret, { timestamp: req.headers.get("x-pmcm-timestamp"), signature: req.headers.get("x-pmcm-signature") }, raw);
+  const v = verify(secret, { timestamp: req.headers.get("x-ops-timestamp"), signature: req.headers.get("x-ops-signature") }, raw);
   if (!v.ok) return Response.json({ error: v.reason }, { status: 401 });
 
   let json: unknown;

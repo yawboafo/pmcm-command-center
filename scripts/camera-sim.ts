@@ -28,7 +28,7 @@ const FPS = Math.min(15, Math.max(1, Number(arg("fps", "5")) || 5));
 const FFMPEG = arg("ffmpeg") ?? (existsSync("/opt/homebrew/bin/ffmpeg") ? "/opt/homebrew/bin/ffmpeg" : "ffmpeg");
 const W = 640;
 const H = 360;
-const BOUNDARY = "pmcmframe";
+const BOUNDARY = "opsframe";
 
 // ───────────────────────────── bitmap font (5×7) ─────────────────────────────
 
@@ -261,7 +261,7 @@ const server = createServer((req, res) => {
     res.end("unknown camera");
     return;
   }
-  res.writeHead(200, { "content-type": `multipart/x-mixed-replace; boundary=${BOUNDARY}`, "cache-control": "no-store", connection: "close", "x-pmcm-simulated": "1" });
+  res.writeHead(200, { "content-type": `multipart/x-mixed-replace; boundary=${BOUNDARY}`, "cache-control": "no-store", connection: "close", "x-ops-simulated": "1" });
   cam.clients.add(res);
   if (cam.idleTimer) clearTimeout(cam.idleTimer);
   cam.idleTimer = null;

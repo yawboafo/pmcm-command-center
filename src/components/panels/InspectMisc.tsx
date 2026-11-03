@@ -59,7 +59,7 @@ export function InspectAgent({ sim, id }: { sim: BranchSimulation; id: string })
         />
         {a.tracked && <KV k="Badge" v={badgeLine(a, sim.t)} mono tone={a.tracked.lost ? "yellow" : undefined} />}
         {m && <KV k="Shift" v={m.shift} />}
-        {m && <KV k="Status" v={a.tracked ? `${a.phase === "working" ? "Working" : "Available"} · work simulated, position from badge` : a.phase === "working" ? "Working" : a.phase === "to-task" ? "Moving to task" : "Available"} />}
+        {m && <KV k="Status" v={a.tracked ? `${a.phase === "working" ? "Working" : "Available"} · position from badge` : a.phase === "working" ? "Working" : a.phase === "to-task" ? "Moving to task" : "Available"} />}
         {m && <KV k="Tasks completed" v={m.tasksDone} mono />}
         {m && <KV k="Utilisation" v={pct(m.busySeconds / Math.max(1, sim.t))} mono />}
         {a.kind === "customer" && <KV k="Activity" v={CUSTOMER_PHASE[a.phase] ?? a.phase} />}
@@ -284,7 +284,7 @@ export function InspectSensor({ sim, id }: { sim: BranchSimulation; id: string }
         <KV k="Room" v={sim.roomName(s.roomId)} />
         <KV k="Reading" v={st.value === null ? st.note ?? "—" : `${st.value} ${s.unit === "status" ? "" : s.unit}`} mono />
         <KV k="Status" v={<Pill tone={statusTone(st.status)}>{st.status}</Pill>} />
-        <KV k="Connectivity" v={st.source !== "simulated" ? (st.connected ? `${st.source === "virtual" ? "Simulated device" : "Live device"} ${st.deviceId}` : `No data from ${st.deviceId}`) : st.connected ? "Connected (simulated)" : "Offline"} tone={st.connected ? "green" : "yellow"} />
+        <KV k="Connectivity" v={st.source !== "simulated" ? (st.connected ? `${st.source === "virtual" ? "Device" : "Live device"} ${st.deviceId}` : `No data from ${st.deviceId}`) : st.connected ? "Connected (simulated)" : "Offline"} tone={st.connected ? "green" : "yellow"} />
         {limit && <KV k="Configured limit" v={limit.label} mono />}
       </Card>
       {st.history.length > 1 && <HistoryChart data={st.history} limit={limit} unit={s.unit === "%" ? "%" : "°C"} />}

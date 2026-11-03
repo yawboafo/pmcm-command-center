@@ -21,7 +21,6 @@ export default function TopBar() {
   const canControl = can(user, "control:simulation") && !realtime;
   const snaps = useSnapshots();
   const liveBranches = useLive((s) => s.liveBranches.length);
-  const simBranches = useLive((s) => s.virtualBranches.length);
   const count = (st: string) => snaps.filter((x) => x.status === st).length;
 
   return (
@@ -55,11 +54,6 @@ export default function TopBar() {
         <span className={cx(liveBranches ? "text-emerald-300" : "text-white/35")} title="Branches receiving data from connected devices or order systems">
           LIVE {liveBranches}
         </span>
-        {simBranches > 0 && (
-          <span className="text-fuchsia-300" title="Branches receiving data from simulated hardware (never shown as LIVE)">
-            SIM HW {simBranches}
-          </span>
-        )}
       </div>
 
       <div className="ml-auto flex items-center gap-2">
@@ -70,7 +64,7 @@ export default function TopBar() {
         </button>
         <span className="whitespace-nowrap max-md:hidden">{realtime ? <SimBadge label={liveBranches ? "LIVE + SIMULATION" : "SIM DEVICES + SIMULATION"} /> : <SimBadge label="SIMULATION" />}</span>
         <span className="md:hidden">{realtime ? <SimBadge label={liveBranches ? "LIVE + SIM" : "SIM DEV + SIM"} /> : <SimBadge label="DEMO" />}</span>
-        <div className={cx("hidden items-center gap-1 rounded-lg border px-2 py-1 md:flex", realtime ? "border-emerald-400/40 bg-emerald-400/10" : "border-white/10 bg-black/30")} title={realtime ? (liveBranches ? "Real wall clock — live devices connected" : "Real wall clock — simulated hardware connected") : "Simulated clock (Africa/Accra, GMT)"}>
+        <div className={cx("hidden items-center gap-1 rounded-lg border px-2 py-1 md:flex", realtime ? "border-emerald-400/40 bg-emerald-400/10" : "border-white/10 bg-black/30")} title={realtime ? (liveBranches ? "Real wall clock — live devices connected" : "Real wall clock — hardware connected") : "Simulated clock (Africa/Accra, GMT)"}>
           {realtime && <span className="font-mono text-[9px] font-semibold tracking-wider text-emerald-300">{liveBranches ? "LIVE CLOCK" : "REAL CLOCK"}</span>}
           <span className={cx("h-1.5 w-1.5 rounded-full", paused && !realtime ? "bg-white/30" : "animate-pulse bg-emerald-400")} />
           <span className="font-mono text-xs tabular-nums text-white">{clockSec(sims().clock)}</span>

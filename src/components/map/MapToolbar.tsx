@@ -3,6 +3,7 @@
 import { Layers, Search, X } from "lucide-react";
 import { STATUS_COLOR, cx } from "@/components/ui/primitives";
 import { GHANA_REGIONS } from "@/lib/network/branches";
+import { TENANT } from "@/config/platform";
 import { useApp } from "@/store/app";
 import { useMapFilters } from "./mapState";
 
@@ -57,7 +58,7 @@ export default function MapToolbar({ visibleCount }: { visibleCount: number }) {
           <select className={selectCls} value={pinkberry} onChange={(e) => setPinkberry(e.target.value as "any" | "co-branded" | "standalone")} aria-label="Brand filter">
             <option value="any">All brands</option>
             <option value="co-branded">+ Pinkberry co-brand</option>
-            <option value="standalone">PMCM only</option>
+            <option value="standalone">{TENANT.short} only</option>
           </select>
         </div>
         <div className="mt-2 flex items-center justify-between text-[10.5px] text-white/45">
@@ -101,7 +102,7 @@ export default function MapToolbar({ visibleCount }: { visibleCount: number }) {
             <span className="h-2 w-3 rounded-sm bg-[#1b1f27] ring-1 ring-white/15" /> no outlets
           </div>
         )}
-        <div className="mt-1 text-[9.5px] text-white/40">Locations verified from the official outlet directory · status &amp; metrics simulated</div>
+        <div className="mt-1 text-[9.5px] text-white/40">Locations verified from the official outlet directory</div>
       </div>
     </>
   );

@@ -149,7 +149,7 @@ export default function Assistant() {
       <div className="scroll-thin flex-1 space-y-2 overflow-y-auto px-3 py-3 text-[12.5px]">
         {lines.length === 0 && (
           <div>
-            <p className="mb-2 text-white/55">Ask about branches, orders, safety, inventory or equipment — or tell me where to take you in 3D. Answers use simulated demo data.</p>
+            <p className="mb-2 text-white/55">Ask about branches, orders, safety, inventory or equipment — or tell me where to take you in 3D.</p>
             <div className="flex flex-wrap gap-1.5">
               {SUGGESTIONS.map((s) => (
                 <button key={s} type="button" onClick={() => ask(s)} className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-left text-[11px] text-white/75 hover:bg-white/10 hover:text-white">

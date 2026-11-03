@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { PLATFORM, TENANT } from "@/config/platform";
 import { clockSec } from "@/lib/format";
 import { BRANCH_BY_ID } from "@/lib/network/branches";
 import { useApp } from "@/store/app";
@@ -87,12 +88,12 @@ export default function FeedBoot({ branchId }: { branchId: string }) {
           <span className="tracking-[0.2em]">{locked ? "FEED LOCKED" : "ESTABLISHING LINK"}</span>
         </div>
         <div className="mt-1 text-white/45">
-          {`PMCM // ${b?.name.toUpperCase() ?? ""} // OVERVIEW · SIMULATED FEED`}
+          {`${PLATFORM.mark} // ${b?.name.toUpperCase() ?? ""} // OVERVIEW`}
         </div>
       </div>
 
       <div className="absolute bottom-10 left-8 w-[min(400px,calc(100%-4rem))] rounded-lg bg-black/55 p-4 font-mono text-[11px]" style={{ opacity: panelOpacity }}>
-        <div className="text-[10px] uppercase tracking-[0.25em] text-brand-yellow">Pizzaman Chickenman · {b?.region}</div>
+        <div className="text-[10px] uppercase tracking-[0.25em] text-brand-yellow">{TENANT.name} · {b?.region}</div>
         <div className="mb-3 mt-1 font-display text-3xl font-extrabold tracking-tight text-white">{b?.name}</div>
         <ol className="space-y-1">
           {checks.map((c, i) => {

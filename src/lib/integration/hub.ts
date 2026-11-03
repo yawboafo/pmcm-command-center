@@ -36,8 +36,8 @@ interface HubState {
   listeners: Set<(e: HubEvent) => void>;
 }
 
-const g = globalThis as unknown as { __pmcmHub?: HubState };
-const hub: HubState = (g.__pmcmHub ??= { seq: 0, buffer: [], seen: new Map(), lastSeen: new Map(), stats: new Map(), terminals: new Map(), simulator: null, listeners: new Set() });
+const g = globalThis as unknown as { __opsHub?: HubState };
+const hub: HubState = (g.__opsHub ??= { seq: 0, buffer: [], seen: new Map(), lastSeen: new Map(), stats: new Map(), terminals: new Map(), simulator: null, listeners: new Set() });
 // State created by an older version of this module (hot reload) may lack newer fields.
 hub.stats ??= new Map();
 hub.terminals ??= new Map();

@@ -219,7 +219,7 @@ export default function PlanView2D({ sim }: { sim: BranchSimulation }) {
               ["#38bdf8", "Equipment active"],
               ["#f87171", "Fault / critical"],
               ["#34d399", "Sensor OK"],
-              ["#e879f9", "Badge (SIM DEVICE)"],
+              ["#e879f9", "Staff badge"],
             ] as const
           ).map(([c, l]) => (
             <span key={l} className="flex items-center gap-1">

@@ -7,21 +7,21 @@ import { MENU_BY_ID } from "@/lib/sim/menu";
 /**
  * Order webhook for POS / Chris B app / delivery partners. The sender signs the raw
  * body with POS_WEBHOOK_SECRET (same scheme as devices, see signing.ts) and names
- * itself in `x-pmcm-source`. Retries are safe: events are idempotent on
+ * itself in `x-ops-source`. Retries are safe: events are idempotent on
  * (source, idempotencyKey). See docs/INTEGRATION.md.
  *
  *  401 bad signature / stale timestamp   400 schema   422 unknown branch or menu id
  *  413 too large   503 not configured    202 accepted 200 duplicate
  */
 export async function POST(req: Request) {
-  const sourceId = req.headers.get("x-pmcm-source") ?? "";
+  const sourceId = req.headers.get("x-ops-source") ?? "";
   if (!/^[a-zA-Z0-9._:-]{2,64}$/.test(sourceId)) return Response.json({ error: "missing_source" }, { status: 401 });
   // Virtual terminals sign with a key derived from VIRTUAL_FLEET_SECRET; everyone else with POS_WEBHOOK_SECRET.
   const secret = posSecret(sourceId);
   if (!secret) return Response.json({ error: "not_configured" }, { status: 503 });
   const raw = await req.text();
   if (raw.length > 64_000) return Response.json({ error: "payload_too_large" }, { status: 413 });
-  const v = verify(secret, { timestamp: req.headers.get("x-pmcm-timestamp"), signature: req.headers.get("x-pmcm-signature") }, raw);
+  const v = verify(secret, { timestamp: req.headers.get("x-ops-timestamp"), signature: req.headers.get("x-ops-signature") }, raw);
   if (!v.ok) return Response.json({ error: v.reason }, { status: 401 });
 
   let json: unknown;

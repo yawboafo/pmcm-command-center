@@ -6,16 +6,16 @@ import { verify } from "@/lib/integration/signing";
 /**
  * Heartbeat from the hardware simulator (scripts/hardware-sim.ts): which branches it runs,
  * at what speed, and which faults it is currently simulating, for Settings → Integrations.
- * Signed like a device (`x-pmcm-device: hardware-sim`) with HMAC(VIRTUAL_FLEET_SECRET, "hardware-sim").
+ * Signed like a device (`x-ops-device: hardware-sim`) with HMAC(VIRTUAL_FLEET_SECRET, "hardware-sim").
  * Carries no readings — telemetry always goes through /api/ingest/telemetry.
  */
 export async function POST(req: Request) {
   const secret = simulatorSecret();
   if (!secret) return Response.json({ error: "not_configured" }, { status: 503 });
-  if (req.headers.get("x-pmcm-device") !== SIMULATOR_ID) return Response.json({ error: "unknown_device" }, { status: 401 });
+  if (req.headers.get("x-ops-device") !== SIMULATOR_ID) return Response.json({ error: "unknown_device" }, { status: 401 });
   const raw = await req.text();
   if (raw.length > 64_000) return Response.json({ error: "payload_too_large" }, { status: 413 });
-  const v = verify(secret, { timestamp: req.headers.get("x-pmcm-timestamp"), signature: req.headers.get("x-pmcm-signature") }, raw);
+  const v = verify(secret, { timestamp: req.headers.get("x-ops-timestamp"), signature: req.headers.get("x-ops-signature") }, raw);
   if (!v.ok) return Response.json({ error: v.reason }, { status: 401 });
   let json: unknown;
   try {

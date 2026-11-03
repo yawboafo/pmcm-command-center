@@ -40,7 +40,7 @@ describe("staff wearables", () => {
     const call = (body: object, key: string, tagId = tag.tagId) => {
       const raw = JSON.stringify(body);
       const ts = Date.now();
-      return POST(new Request("http://localhost/api/ingest/location", { method: "POST", body: raw, headers: { "x-pmcm-device": tagId, "x-pmcm-timestamp": String(ts), "x-pmcm-signature": sign(key, ts, raw) } }));
+      return POST(new Request("http://localhost/api/ingest/location", { method: "POST", body: raw, headers: { "x-ops-device": tagId, "x-ops-timestamp": String(ts), "x-ops-signature": sign(key, ts, raw) } }));
     };
     const key = deriveVirtualKey(SECRET, tag.tagId);
     expect((await call(fix(), key)).status).toBe(202);

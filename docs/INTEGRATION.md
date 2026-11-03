@@ -70,9 +70,9 @@ its `Last-Event-ID` and gets everything still buffered.
 
 | Header | Value |
 |---|---|
-| `x-pmcm-device` | device id |
-| `x-pmcm-timestamp` | Unix epoch milliseconds at signing |
-| `x-pmcm-signature` | hex `HMAC-SHA256(secret, "${timestamp}.${rawBody}")` |
+| `x-ops-device` | device id |
+| `x-ops-timestamp` | Unix epoch milliseconds at signing |
+| `x-ops-signature` | hex `HMAC-SHA256(secret, "${timestamp}.${rawBody}")` |
 
 Requests outside a ±5 minute window are rejected, which blocks replay of captured requests.
 Responses: `202` accepted, `200` duplicate, `400` schema / clock skew, `401` unknown device,
@@ -83,7 +83,7 @@ in the prototype. In production use a secrets manager and per-device X.509 certi
 
 ### MQTT
 
-Gateways that prefer MQTT publish the same JSON to `pmcm/v1/{branchCode}/{deviceId}/telemetry`
+Gateways that prefer MQTT publish the same JSON to `ops/v1/{branchCode}/{deviceId}/telemetry`
 (QoS 1). In production an MQTT → ingestion bridge verifies the device certificate, then hands
 the message to the same validation and binding code as the HTTPS route.
 
@@ -130,10 +130,10 @@ LIVE reading, then opens a LIVE alert after the configured delay.
 }
 ```
 
-- Signed like devices, with `x-pmcm-source` (sender id, e.g. `chris-b`, `pos-eastlegon`) in place
-  of `x-pmcm-device`, and the shared secret `POS_WEBHOOK_SECRET` (≥16 characters).
+- Signed like devices, with `x-ops-source` (sender id, e.g. `chris-b`, `pos-eastlegon`) in place
+  of `x-ops-device`, and the shared secret `POS_WEBHOOK_SECRET` (≥16 characters).
 - Send one event per status change: `RECEIVED`, `ACCEPTED`, `READY`, `COMPLETED`, `CANCELLED`,
-  `REFUNDED`. Events are idempotent on (`x-pmcm-source`, `idempotencyKey`), so retries are safe.
+  `REFUNDED`. Events are idempotent on (`x-ops-source`, `idempotencyKey`), so retries are safe.
 - `branchId` and `menuId` must already be mapped to command-center ids; unknown ids are refused
   with `422` rather than guessed. Keep the mapping table in the integration service.
 - Prices from the source system are authoritative and replace catalogue prices on that order.
@@ -304,7 +304,7 @@ badge to `POST /api/ingest/location`:
   "x": 7.42, "y": 3.10, "accuracy_m": 0.21, "battery_pct": 81, "anchors": 5 }
 ```
 
-- Signed like device telemetry (`x-pmcm-device` = tag id). Physical tags (or the RTLS gateway)
+- Signed like device telemetry (`x-ops-device` = tag id). Physical tags (or the RTLS gateway)
   use `DEVICE_KEYS`; simulated tags derive their key from `VIRTUAL_FLEET_SECRET`.
 - `x`/`y` are in the RTLS **site frame**. Each binding (`wearables` in `src/data/devices*.json`)
   carries the calibration to the floor plan (`offsetX`, `offsetZ`, `rotationDeg`, `scale`) —

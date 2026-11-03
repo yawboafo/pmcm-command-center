@@ -10,6 +10,7 @@ import { useApp } from "@/store/app";
 import { sims } from "@/store/sims";
 import BottomPanel from "./BottomPanel";
 import CommandPalette from "./CommandPalette";
+import PrototypeNotice from "./PrototypeNotice";
 import MainView from "./MainView";
 import { ShortcutsHelp, useShortcuts } from "./Shortcuts";
 import SimDriver from "./SimDriver";
@@ -53,6 +54,7 @@ export default function App() {
       <Assistant />
       <Toast />
       <CommandPalette />
+      <PrototypeNotice />
       <ShortcutsHelp />
     </div>
   );

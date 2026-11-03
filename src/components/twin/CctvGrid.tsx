@@ -115,11 +115,10 @@ export function CctvOverlay({ plan }: { plan: FloorPlan }) {
                 </button>
               )}
               {physical.get(c.id)?.virtual && (
-                <button type="button" title="Open the simulated camera stream at this position (synthetic video through the camera pipeline)" className="rounded border border-fuchsia-400/50 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-fuchsia-300 hover:bg-fuchsia-400/15" onClick={(e) => (e.stopPropagation(), setWatching({ cameraId: physical.get(c.id)!.cameraId, name: physical.get(c.id)!.name, protocol: physical.get(c.id)!.protocol, virtual: true }))}>
-                  ◈ SIM CAMERA
+                <button type="button" title="Open the camera stream at this position" className="rounded border border-fuchsia-400/50 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-fuchsia-300 hover:bg-fuchsia-400/15" onClick={(e) => (e.stopPropagation(), setWatching({ cameraId: physical.get(c.id)!.cameraId, name: physical.get(c.id)!.name, protocol: physical.get(c.id)!.protocol, virtual: true }))}>
+                  ● CAMERA FEED
                 </button>
               )}
-              <span className="rounded border border-amber-400/40 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-amber-300">SIMULATED VIEW</span>
             </div>
             <div className="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 font-mono text-[10px] text-white/70">
               {rooms.get(c.roomId)} · {clockSec(sims().clock)}

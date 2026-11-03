@@ -22,6 +22,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cx } from "@/components/ui/primitives";
+import { PLATFORM, TENANT } from "@/config/platform";
 import { useSnapshots } from "@/lib/hooks/useSim";
 import { useApp, type Section } from "@/store/app";
 
@@ -64,11 +65,17 @@ export default function Sidebar() {
       {open && <div className="fixed inset-0 z-30 bg-black/50 md:hidden" onClick={() => toggle("left")} aria-hidden />}
       <nav aria-label="Main" className={cx("glass z-30 flex h-full flex-col rounded-none border-y-0 border-l-0 transition-all max-md:absolute max-md:left-0 max-md:top-0 max-md:z-40", open ? "w-60" : "w-14")}>
         <div className="flex items-center gap-2 border-b border-white/5 px-3 py-3">
-          <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand-red font-display text-[11px] font-extrabold text-white shadow-lg shadow-red-900/40">PC</div>
+          {/* Platform mark (the product), with the customer workspace underneath. */}
+          <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-white/15 bg-gradient-to-br from-white/[0.14] to-white/[0.03] font-mono text-[11px] font-semibold tracking-tight text-white" aria-hidden>
+            {PLATFORM.mark}
+          </div>
           {open && (
             <div className="min-w-0 leading-tight">
-              <div className="truncate font-display text-[12px] font-extrabold tracking-wide text-white">PIZZAMAN <span className="text-brand-yellow">CHICKENMAN</span></div>
-              <div className="truncate text-[9.5px] font-semibold tracking-[0.18em] text-white/45">OPERATIONS COMMAND CENTER</div>
+              <div className="truncate font-display text-[12.5px] font-bold tracking-wide text-white">{PLATFORM.name}</div>
+              <div className="flex items-center gap-1.5 truncate text-[10px] text-white/50" title={`Workspace: ${TENANT.name} (${TENANT.plan})`}>
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-red" aria-hidden />
+                <span className="truncate">{TENANT.name}</span>
+              </div>
             </div>
           )}
         </div>

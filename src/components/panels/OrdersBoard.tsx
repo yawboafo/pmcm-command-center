@@ -112,7 +112,7 @@ export default function OrdersBoard({ sim }: { sim: BranchSimulation }) {
                       </button>
                     )}
                     {["COMPLETED", "CANCELLED"].includes(o.status) && (
-                      <button type="button" disabled={!canAct} title={canAct ? "Refund (simulated)" : "Your role cannot refund orders"} className="text-[10.5px] text-white/45 enabled:hover:text-white disabled:opacity-40" onClick={() => sim.refundOrder(o.id)}>
+                      <button type="button" disabled={!canAct} title={canAct ? "Refund" : "Your role cannot refund orders"} className="text-[10.5px] text-white/45 enabled:hover:text-white disabled:opacity-40" onClick={() => sim.refundOrder(o.id)}>
                         Refund
                       </button>
                     )}

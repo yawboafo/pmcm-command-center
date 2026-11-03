@@ -1,3 +1,4 @@
+import { UI_POLICY } from "../../config/platform";
 import { NavGrid } from "../floorplan/nav";
 import { roomAt } from "../floorplan/derive";
 import type { Equipment, FloorPlan, Sensor, Vec2, Workstation, WorkstationType } from "../floorplan/types";
@@ -32,7 +33,9 @@ import {
 export const STEP = 0.25;
 
 /** How alert text names where a reading came from. */
-const SOURCE_WORD: Record<DataSource, string> = { live: "Live", simulated: "Simulated", virtual: "Simulated-device" };
+// Alert wording names the source only when the UI policy shows simulated labels; LIVE is always named.
+const SOURCE_WORD: Record<DataSource, string> = UI_POLICY.showSimulatedLabels ? { live: "Live ", simulated: "Simulated ", virtual: "Simulated-device " } : { live: "Live ", simulated: "", virtual: "" };
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const DAY = 86400;
 
 const STAFF_NAMES = ["Kwame", "Ama", "Kofi", "Akosua", "Yaw", "Efua", "Kojo", "Abena", "Kwesi", "Esi", "Kwabena", "Adwoa", "Fiifi", "Selorm", "Elikem", "Naa", "Nii", "Afia", "Kobby", "Dzifa"];
@@ -172,7 +175,7 @@ export class BranchSimulation {
     this.initSeats();
     this.initStaff();
     this.nextArrival = this.rng.exp(this.arrivalRatePerSec()) * 0.5;
-    this.log("system", "info", `Simulation started for ${this.branchName} (${opts.plan.name}). All activity is simulated demo data.`);
+    this.log("system", "info", `Twin started for ${this.branchName} (${opts.plan.name})`);
   }
 
   // ───────────────────────────── clock ─────────────────────────────
@@ -941,7 +944,7 @@ export class BranchSimulation {
     if (!a.tracked) {
       // Show them where the badge says from the first fix; their simulated work carries on.
       a.pos = [r.x, r.z];
-      this.log("staff", "info", `${a.name} is now located by badge ${r.tagId} (${r.source === "live" ? "live" : "simulated device"})`, { agentId: a.id });
+      this.log("staff", "info", `${a.name} is now located by badge ${r.tagId} (${r.source === "live" ? "live" : "virtual"})`, { agentId: a.id });
     }
     a.tracked = { tagId: r.tagId, source: r.source, technology: r.technology, target: [r.x, r.z], accuracy: r.accuracy, seenAt: this.t, battery: r.battery, lost: false, shadow };
     return a.id;
@@ -954,7 +957,7 @@ export class BranchSimulation {
     if (silent > 600) {
       a.pos = tr.shadow;
       a.tracked = undefined;
-      this.log("staff", "warning", `${a.name}: badge ${tr.tagId} silent for 10 min — position is simulated again`, { agentId: a.id });
+      this.log("staff", "warning", `${a.name}: badge ${tr.tagId} silent for 10 min — no longer tracked`, { agentId: a.id });
       return;
     }
     if (silent > 30 && !tr.lost) {
@@ -1208,7 +1211,7 @@ export class BranchSimulation {
     const a: Agent = { id, kind: "rider", name: `Rider ${this.seq}`, pos: start, heading: 0, path: [], speed: 1.3, anim: "walk", carrying: null, orderId: order.id, phase: "to-wait", timer: 0, seed: this.rng.int(0, 1e6), arrivedAt: this.t };
     this.agents.push(a);
     order.riderId = id;
-    order.delivery = { ...order.delivery!, status: "RIDER_ASSIGNED", rider: order.channel === "delivery-partner" ? "Partner courier (simulated)" : "Branch dispatch rider (simulated)" };
+    order.delivery = { ...order.delivery!, status: "RIDER_ASSIGNED", rider: order.channel === "delivery-partner" ? "Partner courier" : "Branch dispatch rider" };
     const w = this.plan.anchors.riderWait;
     this.goTo(a, [w[0] + this.rng.range(-0.4, 0.4), w[1] + this.rng.range(-0.4, 0.4)]);
   }
@@ -1434,7 +1437,7 @@ export class BranchSimulation {
       if (!es) return null;
       const wasFault = es.fault?.kind === "reported";
       es.fault = r.value ? (wasFault ? undefined : es.fault) : wasFault ? es.fault : { kind: "reported", since: this.t };
-      if (!r.value && !wasFault) this.log("equipment", "warning", `${source === "virtual" ? "Simulated device" : "Device"} ${r.deviceId} reports a fault on ${this.eqById.get(r.equipmentId!)?.name ?? r.equipmentId}`, { equipmentId: r.equipmentId });
+      if (!r.value && !wasFault) this.log("equipment", "warning", `Device ${r.deviceId} reports a fault on ${this.eqById.get(r.equipmentId!)?.name ?? r.equipmentId}`, { equipmentId: r.equipmentId });
       this.version++;
       return `equipment:${r.equipmentId}`;
     }
@@ -1455,7 +1458,7 @@ export class BranchSimulation {
       st.history = [];
       st.outOfRangeSince = undefined;
       if (es?.fault && es.fault.kind !== "reported") es.fault = undefined;
-      this.log("system", "info", `${source === "virtual" ? "Simulated device (SIM DEVICE)" : "Live device"} ${r.deviceId} connected to ${s.name}`);
+      this.log("system", "info", `${source === "live" ? "Live device" : "Device"} ${r.deviceId} connected to ${s.name}`);
     }
     if (r.metric === "door_open") {
       st.note = r.value ? "Door open" : "Door closed";
@@ -1492,8 +1495,8 @@ export class BranchSimulation {
       sensorId: s.id,
       title: isOil ? `${e?.name}: oil change due` : `${e?.name ?? s.name}: temperature ${lim.kind === "max" ? "above" : "below"} configured limit`,
       issue: isOil
-        ? `${SOURCE_WORD[st.source]} oil quality ${st.value}% below configured minimum ${lim.value}%`
-        : `${SOURCE_WORD[st.source]} reading ${st.value} °C ${lim.kind === "max" ? ">" : "<"} limit ${lim.value} °C for ≥ ${this.safety.alertDelayMin} min`,
+        ? cap(`${SOURCE_WORD[st.source]}oil quality ${st.value}% below configured minimum ${lim.value}%`)
+        : cap(`${SOURCE_WORD[st.source]}reading ${st.value} °C ${lim.kind === "max" ? ">" : "<"} limit ${lim.value} °C for ≥ ${this.safety.alertDelayMin} min`),
       openedAt: this.now(),
       status: "open",
       correctiveActions: [],
@@ -1551,7 +1554,7 @@ export class BranchSimulation {
     if (!e || !st) return false;
     const k = kind ?? (e.category === "refrigeration" ? "compressor" : ["hot-holding", "rice-warmer", "qc-pass"].includes(e.type) ? "thermostat" : "sensor-offline");
     st.fault = { kind: k, since: this.t };
-    this.log("equipment", "warning", `Simulated fault injected: ${e.name} (${k})`, { equipmentId });
+    this.log("equipment", "warning", `Fault injected: ${e.name} (${k})`, { equipmentId });
     if (preRollMin > 0) {
       const sensor = this.plan.sensors.find((s) => s.equipmentId === equipmentId && s.unit === "°C");
       if (sensor) {
@@ -1571,7 +1574,7 @@ export class BranchSimulation {
     if (!st?.fault) return false;
     st.fault = undefined;
     st.lastMaintenance = this.t;
-    this.log("equipment", "info", `Simulated fault cleared: ${this.eqById.get(equipmentId)?.name} — readings will recover gradually`, { equipmentId });
+    this.log("equipment", "info", `Fault cleared: ${this.eqById.get(equipmentId)?.name} — readings will recover gradually`, { equipmentId });
     this.version++;
     return true;
   }

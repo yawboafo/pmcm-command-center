@@ -47,7 +47,7 @@ function goLive(branchId: string, origin: Origin) {
   if (!BRANCH_BY_ID.has(branchId)) return false;
   if (!sims().realtime) {
     sims().enableRealtime();
-    useApp.getState().notify(origin === "virtual" ? "Simulated hardware connected — clock switched to real time (1×)" : "Live data received — clock switched to real time (1×)", "info");
+    useApp.getState().notify(origin === "virtual" ? "Hardware connected — clock switched to real time (1×)" : "Live data received — clock switched to real time (1×)", "info");
   }
   return true;
 }

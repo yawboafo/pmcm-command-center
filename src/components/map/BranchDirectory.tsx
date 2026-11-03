@@ -7,6 +7,7 @@ import { ghs } from "@/lib/format";
 import { useSnapshots } from "@/lib/hooks/useSim";
 import { GHANA_REGIONS, type Branch } from "@/lib/network/branches";
 import type { BranchSnapshot } from "@/lib/network/network";
+import { TENANT } from "@/config/platform";
 import { useApp } from "@/store/app";
 import { hoursLabel } from "./BranchCard";
 import { STATUS_LABEL, filterBranches, requestFlyTo, useMapFilters } from "./mapState";
@@ -63,7 +64,7 @@ export default function BranchDirectory() {
     const blob = new Blob([csv(rows)], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `pmcm-branches-simulated-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `${TENANT.id}-branches-simulated-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
   };

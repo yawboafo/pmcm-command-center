@@ -10,7 +10,7 @@ Session 2 is in PR https://github.com/yawboafo/pmcm-command-center/pull/1 (`feat
 - **Command center**: ranked priority queue (`lib/ops/priority.ts`), network status strip in the top bar, crisper panels.
 - **3D**: 24 equipment + 5 furniture GLBs from the scripted Blender pipeline (`blender/`, contact sheet `blender/renders/contact-sheet.png`), loaded with procedural fallback; Settings switch; `?assets=procedural` URL flag. Measured: fewer draw calls than procedural, 57–60 FPS (table in AUDIT.md). The menu board stays procedural (it shows the real menu).
 - **Cameras**: Stations & zones presets derived from each floor plan.
-- **Perf probe**: `window.__pmcmPerf` in development. Headless GPU measurement script pattern: Playwright with `--use-angle=metal` (the built-in browser pane pauses rendering when hidden).
+- **Perf probe**: `window.__opsPerf` in development. Headless GPU measurement script pattern: Playwright with `--use-angle=metal` (the built-in browser pane pauses rendering when hidden).
 - 41 tests pass; tsc and eslint clean.
 
 Next for the upgrade: rigged characters and branded storefront (artist work, list in `docs/ASSETS.md`); menu texture on the scripted menu board; a measured East Legon floor plan; KDS events for live orders. Research + sources: `docs/research/`.

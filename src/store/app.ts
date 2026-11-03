@@ -78,6 +78,8 @@ interface AppState {
   graphics: "high" | "balanced" | "low";
   paletteOpen: boolean;
   shortcutsOpen: boolean;
+  /** Start-up prototype notice (see PrototypeNotice); re-openable from Settings and ⌘K. */
+  noticeOpen: boolean;
   /** Inside a branch: show the live 2D operations plan instead of the 3D view. */
   view2d: boolean;
   /** Equipment rendering: Blender-built glTF models (when available) or the procedural stand-ins. */
@@ -109,11 +111,22 @@ interface AppState {
   setGraphics: (g: "high" | "balanced" | "low") => void;
   setAssetMode: (m: "models" | "procedural") => void;
   setPaletteOpen: (b: boolean) => void;
+  setNoticeOpen: (b: boolean) => void;
   setView2d: (b: boolean) => void;
   setShortcutsOpen: (b: boolean) => void;
   setUser: (id: string) => void;
   setFilters: (f: Partial<{ regionFilter: string | null; statusFilter: string | null; search: string }>) => void;
   notify: (text: string, tone?: "info" | "success" | "warning" | "critical", action?: { label: string; run: () => void }) => void;
+}
+
+/** Show the prototype notice on start-up unless the viewer ticked "Don't show this again". */
+function noticeDue() {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem("ops.prototypeNotice.v1") !== "dismissed";
+  } catch {
+    return true;
+  }
 }
 
 export const ARRIVAL_PRESETS = { low: 5, medium: 20, high: 50 } as const;
@@ -142,6 +155,7 @@ export const useApp = create<AppState>((set, get) => ({
   graphics: "balanced",
   paletteOpen: false,
   shortcutsOpen: false,
+  noticeOpen: noticeDue(),
   view2d: false,
   // `?assets=procedural` starts with the procedural stand-ins (side-by-side QA and performance checks).
   assetMode: typeof window !== "undefined" && new URLSearchParams(window.location.search).get("assets") === "procedural" ? "procedural" : "models",
@@ -187,6 +201,7 @@ export const useApp = create<AppState>((set, get) => ({
   setGraphics: (graphics) => set({ graphics }),
   setAssetMode: (assetMode) => set({ assetMode }),
   setPaletteOpen: (paletteOpen) => set({ paletteOpen, shortcutsOpen: false }),
+  setNoticeOpen: (noticeOpen) => set({ noticeOpen, paletteOpen: false }),
   setView2d: (view2d) => set({ view2d, cctvOpen: view2d ? false : get().cctvOpen }),
   setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen, paletteOpen: false }),
   setUser: (id) => set({ user: DEMO_USERS.find((u) => u.id === id) ?? DEMO_USERS[1] }),

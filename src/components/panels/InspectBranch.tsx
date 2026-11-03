@@ -66,7 +66,7 @@ export function InspectBranch({ id }: { id: string }) {
               <Stat label="Food safety" value={snap.safetyStatus.toUpperCase()} tone={snap.safetyStatus === "critical" ? "red" : snap.safetyStatus === "attention" ? "yellow" : "green"} />
             </div>
             <div className="mt-3">
-              <div className="mb-1 text-[10px] uppercase tracking-wider text-white/40">Simulated sales by hour</div>
+              <div className="mb-1 text-[10px] uppercase tracking-wider text-white/40">Sales by hour</div>
               <HourlyBars values={snap.hourlySales} format={ghs} nowHour={nowH} />
             </div>
             <p className="mt-1 text-[10px] text-white/35">{snap.live ? "From this branch's full kitchen simulation." : "Lightweight network model — open the twin for a full simulation."}</p>

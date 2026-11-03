@@ -1,7 +1,12 @@
-# Pizzaman Chickenman — Operations Command Center (prototype)
+# Operations Ops — restaurant operations platform (prototype)
 
-A browser-based 3D restaurant digital twin and operations simulation for Pizzaman Chickenman's
-branch network in Ghana. Pick any of the 70 outlets on the Ghana map, fly into a procedurally
+**Operations Ops** is a restaurant operations platform: command center, 3D digital twin and
+integration layer, offered as a service. **Pizzaman Chickenman** (Ghana) is the first tenant
+workspace. The product name lives in `src/config/platform.ts` (one line to change); everything
+about the tenant (name, branches, menu, signage) is tenant data.
+
+This prototype is a browser-based 3D restaurant digital twin and operations simulation for
+Pizzaman Chickenman's branch network in Ghana. Pick any of the 70 outlets on the Ghana map, fly into a procedurally
 generated 3D restaurant, and watch a deterministic simulation of customers, staff, kitchen
 stations, orders, food-safety sensors, inventory and deliveries.
 
@@ -16,6 +21,10 @@ stations, orders, food-safety sensors, inventory and deliveries.
 >   `bench-*` devices are examples for testing.
 > - Virtual cameras are 3D viewpoints, **not CCTV**. Physical cameras play only in a separate,
 >   labelled LIVE player once registered and authorised. Rider GPS is not connected.
+> - **Labelling policy:** the app opens with a prototype notice that says all of this once and lists
+>   the systems and hardware still to connect (`src/config/integrations.ts`). After that, simulated
+>   data is not badged in the UI (`UI_POLICY.showSimulatedLabels` in `src/config/platform.ts`);
+>   provenance is still recorded on every value, and real data is always marked **LIVE**.
 
 ## Run it
 

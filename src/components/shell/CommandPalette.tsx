@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Camera, CornerDownLeft, Crosshair, Gauge, MapPin, ReceiptText, Search, ShieldAlert, UserRound, Users, Wrench, type LucideIcon } from "lucide-react";
+import { Building2, Camera, CornerDownLeft, Crosshair, Gauge, Info, MapPin, ReceiptText, Search, ShieldAlert, UserRound, Users, Wrench, type LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { requestFlyTo } from "@/components/map/mapState";
 import { focusEquipment } from "@/components/panels/common";
@@ -73,7 +73,7 @@ export default function CommandPalette() {
         out.push({ id: `st:${p.id}`, group: "Stations & zones", label: p.label, icon: Crosshair, run: () => (app.setCctv(false), app.requestCamera({ position: p.position, target: p.target }), p.workstationId && app.select({ kind: "workstation", id: p.workstationId })) });
       if (can(app.user, "view:staff-location"))
         for (const a of sim.agents.filter((x) => x.kind === "staff" && !x.gone))
-          out.push({ id: `staff:${a.id}`, group: "Locate staff", label: a.name, hint: `${a.role ? ROLE_LABEL[a.role] : "Staff"}${a.tracked ? ` · badge ${a.tracked.tagId}` : " · simulated position"}`, icon: Users, run: () => app.followAgent(a.id) });
+          out.push({ id: `staff:${a.id}`, group: "Locate staff", label: a.name, hint: `${a.role ? ROLE_LABEL[a.role] : "Staff"}${a.tracked ? ` · badge ${a.tracked.tagId}` : ""}`, icon: Users, run: () => app.followAgent(a.id) });
       for (const a of sim.alerts.filter((x) => x.status !== "resolved"))
         out.push({ id: `al:${a.id}`, group: "Open alerts", label: a.title, hint: a.severity, icon: ShieldAlert, run: () => app.select({ kind: "alert", id: a.id }) });
       for (const o of sim.activeOrders().slice(0, 40))
@@ -87,6 +87,7 @@ export default function CommandPalette() {
     for (const [k, label] of [["low", "Low · 5/h"], ["medium", "Medium · 20/h"], ["high", "High · 50/h"]] as const)
       out.push({ id: `demand:${k}`, group: "Simulation", label: `Demand: ${label}`, hint: app.arrivalPreset === k ? "current" : undefined, icon: Gauge, run: () => app.setArrivalPreset(k) });
     for (const u of DEMO_USERS) out.push({ id: `role:${u.id}`, group: "Demo role", label: `View as ${u.roleLabel}`, hint: app.user.id === u.id ? "current" : undefined, icon: UserRound, run: () => app.setUser(u.id) });
+    out.push({ id: "about", group: "Go to", label: "About this prototype & integrations", icon: Info, run: () => app.setNoticeOpen(true) });
     for (const n of NAV) out.push({ id: `nav:${n.id}`, group: "Go to", label: n.label, icon: n.icon, run: () => app.setSection(n.id) });
     for (const b of BRANCHES) {
       out.push({ id: `tw:${b.id}`, group: "Open branch twin", label: b.name, hint: `${b.city} · ${b.region}`, icon: Building2, run: () => app.enterBranch(b.id) });

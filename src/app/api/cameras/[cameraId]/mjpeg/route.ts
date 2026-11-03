@@ -27,7 +27,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ cameraId: strin
       "Content-Type": type,
       "Cache-Control": "no-store, no-transform",
       "X-Accel-Buffering": "no",
-      ...(cam.virtual ? { "X-PMCM-Simulated": "1" } : {}),
+      ...(cam.virtual ? { "X-Ops-Simulated": "1" } : {}),
     },
   });
 }
