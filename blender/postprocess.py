@@ -5,7 +5,8 @@ Web-ready step after build_assets.py (runs with the system python3, not Blender)
   1. gltf-transform (via npx) on every raw GLB:
        dedup + weld + prune + EXT_meshopt_compression (+ KHR_mesh_quantization)
      with flatten / join / instance / palette / simplify OFF so the named
-     BODY / STATUS / GLASS ... nodes survive exactly as built.
+     BODY / STATUS / GLASS ... nodes survive exactly as built, and attribute pruning OFF so
+     the UVs of untextured LABEL / SCREEN quads survive.
   2. public/models/manifest.json (triangles + bytes measured from the final files).
   3. blender/renders/contact-sheet.png (needs Pillow; skipped with a warning if absent).
 
@@ -38,6 +39,9 @@ OPT_FLAGS = [
     "--flatten", "false", "--join", "false", "--instance", "false",
     "--palette", "false", "--simplify", "false", "--texture-compress", "false",
     "--resample", "false", "--weld", "true", "--prune", "true",
+    # keep TEXCOORD_0 on LABEL / SCREEN quads: they carry no texture in the file (the app puts its
+    # canvas artwork on them), so attribute pruning would otherwise strip their UVs
+    "--prune-attributes", "false",
 ]
 TOTAL_BUDGET = 2.5 * 1024 * 1024
 
@@ -173,12 +177,14 @@ def main():
             "lod1Triangles": lod_tris,
             "lod1Bytes": lod_bytes,
             "extensionsRequired": summary["extensionsRequired"],
+            # builder-specific extras (e.g. the people rig: joint positions + part -> joint map)
+            **s.get("extra", {}),
         }
     req = sorted({x for a in assets.values() for x in a["extensionsRequired"]})
     manifest = {
         "schemaVersion": 1,
         "generatedAt": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat(),
-        "generator": "blender/build_assets.py + blender/postprocess.py",
+        "generator": "blender/build_assets.py, build_people.py, build_props.py + blender/postprocess.py",
         "units": "metres, +Y up, front +Z",
         "compression": "EXT_meshopt_compression" if "EXT_meshopt_compression" in req else None,
         "extensionsRequired": req,

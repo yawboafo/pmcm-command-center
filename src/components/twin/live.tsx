@@ -2,14 +2,17 @@
 
 import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { memo, useMemo, useRef } from "react";
+import { Suspense, memo, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { footprint } from "@/lib/floorplan/derive";
 import type { Equipment } from "@/lib/floorplan/types";
 import type { BranchSimulation } from "@/lib/sim/engine";
 import type { Task } from "@/lib/sim/types";
+import { useApp } from "@/store/app";
 import { M } from "./materials";
+import { AssetBoundary, useManifest, type AssetEntry } from "./modelAssets";
 import { G } from "./parts";
+import { LIVE_PROPS, PropMesh, usePropSet, type PropSet } from "./propAssets";
 
 /* ───────────── per-frame task index (built once per frame, shared) ───────────── */
 
@@ -52,12 +55,20 @@ function placed(e: Equipment) {
 
 /* ───────────── equipment-specific animated props ───────────── */
 
-function OvenLive({ e, index, frameRef }: { e: Equipment; index: LiveIndex; frameRef: { current: number } }) {
-  const pizzas = useRef<Array<THREE.Mesh | null>>([]);
+function OvenLive({ e, index, frameRef, props }: { e: Equipment; index: LiveIndex; frameRef: { current: number }; props: PropSet | null }) {
+  const pizzas = useRef<Array<THREE.Object3D | null>>([]);
+  const raws = useRef<Array<THREE.Object3D | null>>([]);
   const [w, h] = e.size;
   const standH = h * 0.32;
   const deckH = (h - standH) / 2 - 0.02;
   const glow = useRef<THREE.Mesh>(null);
+  const baked = props?.pizza;
+  const raw = props?.["pizza-raw"];
+  // One material per belt slot so each pizza browns on its own schedule.
+  const mats = useMemo(
+    () => Array.from({ length: 6 }, () => (baked ? (baked.material as THREE.MeshStandardMaterial).clone() : new THREE.MeshStandardMaterial({ color: "#f1dcae", roughness: 0.8 }))),
+    [baked],
+  );
   useFrame(() => {
     index.update(frameRef.current);
     const jobs = index.get(e.id);
@@ -67,21 +78,52 @@ function OvenLive({ e, index, frameRef }: { e: Equipment; index: LiveIndex; fram
       const m = pizzas.current[n];
       if (!m) break;
       const deck = n % 2;
-      m.visible = true;
-      m.position.set(-w / 2 + 0.15 + j.progress * (w - 0.3), standH + deck * (deckH + 0.02) + deckH * 0.3 + 0.025, 0.06);
-      const mat = m.material as THREE.MeshStandardMaterial;
-      mat.color.setRGB(0.95 - j.progress * 0.15, 0.82 - j.progress * 0.25, 0.55 - j.progress * 0.25);
+      const x = -w / 2 + 0.15 + j.progress * (w - 0.3);
+      const y = standH + deck * (deckH + 0.02) + deckH * 0.3 + 0.025;
+      const mat = mats[n] as THREE.MeshStandardMaterial;
+      if (baked) {
+        // Model origin is the pizza's underside (the old disc was centred and 2.5 cm tall).
+        const r = raws.current[n];
+        const rawPhase = !!raw && j.progress < 0.35;
+        m.visible = !rawPhase;
+        m.position.set(x, y - 0.0125, 0.06);
+        if (r) {
+          r.visible = rawPhase;
+          r.position.copy(m.position);
+        }
+        const k = Math.max(0, (j.progress - 0.35) / 0.65);
+        mat.color.setRGB(1.12 - k * 0.2, 1.1 - k * 0.24, 1.0 - k * 0.22);
+      } else {
+        m.visible = true;
+        m.position.set(x, y, 0.06);
+        mat.color.setRGB(0.95 - j.progress * 0.15, 0.82 - j.progress * 0.25, 0.55 - j.progress * 0.25);
+      }
       n++;
     }
-    for (let i = n; i < pizzas.current.length; i++) if (pizzas.current[i]) pizzas.current[i]!.visible = false;
+    for (let i = n; i < pizzas.current.length; i++) {
+      if (pizzas.current[i]) pizzas.current[i]!.visible = false;
+      if (raws.current[i]) raws.current[i]!.visible = false;
+    }
     if (glow.current) (glow.current.material as THREE.MeshStandardMaterial).emissiveIntensity = n ? 1.6 + Math.sin(performance.now() / 300) * 0.3 : 0.2;
   });
-  const mats = useMemo(() => Array.from({ length: 6 }, () => new THREE.MeshStandardMaterial({ color: "#f1dcae", roughness: 0.8 })), []);
   return (
     <group {...placed(e)}>
-      {mats.map((m, i) => (
-        <mesh key={i} ref={(el) => void (pizzas.current[i] = el)} geometry={G.cylLow} material={m} scale={[0.34, 0.025, 0.34]} visible={false} />
-      ))}
+      {mats.map((m, i) =>
+        baked ? (
+          <group key={i}>
+            <group ref={(el) => void (pizzas.current[i] = el)} visible={false}>
+              <PropMesh prop={baked} material={m} />
+            </group>
+            {raw && (
+              <group ref={(el) => void (raws.current[i] = el)} visible={false}>
+                <PropMesh prop={raw} />
+              </group>
+            )}
+          </group>
+        ) : (
+          <mesh key={i} ref={(el) => void (pizzas.current[i] = el)} geometry={G.cylLow} material={m} scale={[0.34, 0.025, 0.34]} visible={false} />
+        ),
+      )}
       <mesh ref={glow} geometry={G.box} position={[0, standH + deckH * 0.42, 0.06]} scale={[w * 0.6 + 0.02, deckH * 0.18, 0.02]}>
         <meshStandardMaterial color="#ff6a1a" emissive="#ff6a1a" emissiveIntensity={0.2} toneMapped={false} transparent opacity={0.6} />
       </mesh>
@@ -89,7 +131,8 @@ function OvenLive({ e, index, frameRef }: { e: Equipment; index: LiveIndex; fram
   );
 }
 
-function FryerLive({ e, index, frameRef }: { e: Equipment; index: LiveIndex; frameRef: { current: number } }) {
+function FryerLive({ e, index, frameRef, props }: { e: Equipment; index: LiveIndex; frameRef: { current: number }; props: PropSet | null }) {
+  const basket = props?.["chicken-basket"];
   const [w, h, d] = e.size;
   const top = h * 0.82;
   const baskets = useRef<Array<THREE.Group | null>>([]);
@@ -125,8 +168,17 @@ function FryerLive({ e, index, frameRef }: { e: Equipment; index: LiveIndex; fra
     <group {...placed(e)}>
       {[-0.24, 0.24].map((x, i) => (
         <group key={x} ref={(el) => void (baskets.current[i] = el)} position={[x * w, top + 0.18, 0.03]}>
-          <mesh geometry={G.box} material={basketMat} scale={[w * 0.36, 0.14, d * 0.5]} />
-          <mesh geometry={G.box} material={M.black()} position={[0, 0.06, d * 0.32]} scale={[0.03, 0.03, d * 0.25]} />
+          {basket ? (
+            // Wire basket + fried chicken, modelled for the catalogue fryer and scaled to this one (origin = basket underside).
+            <group position={[0, -0.07, 0]} scale={[(w * 0.36) / 0.324, 1, (d * 0.5) / 0.4]}>
+              <PropMesh prop={basket} />
+            </group>
+          ) : (
+            <>
+              <mesh geometry={G.box} material={basketMat} scale={[w * 0.36, 0.14, d * 0.5]} />
+              <mesh geometry={G.box} material={M.black()} position={[0, 0.06, d * 0.32]} scale={[0.03, 0.03, d * 0.25]} />
+            </>
+          )}
         </group>
       ))}
       <instancedMesh ref={bubbles} args={[G.sphereLow, bubbleMat, 24]} />
@@ -172,10 +224,11 @@ function SteamLive({ e, index, frameRef, kind }: { e: Equipment; index: LiveInde
 }
 const steamMat = new THREE.MeshStandardMaterial({ color: "#ffffff", transparent: true, opacity: 0.18, depthWrite: false, roughness: 1 });
 
-function HoldingLive({ e, sim }: { e: Equipment; sim: BranchSimulation }) {
+function HoldingLive({ e, sim, props }: { e: Equipment; sim: BranchSimulation; props: PropSet | null }) {
   const [w, h, d] = e.size;
   const ref = useRef<THREE.InstancedMesh>(null);
   const tmp = useMemo(() => new THREE.Object3D(), []);
+  const drum = props?.["chicken-drum"];
   const MAX = 36;
   useFrame(() => {
     const im = ref.current;
@@ -187,24 +240,56 @@ function HoldingLive({ e, sim }: { e: Equipment; sim: BranchSimulation }) {
     for (let i = 0; i < MAX; i++) {
       const tray = Math.floor(i / 12);
       const k = i % 12;
-      tmp.position.set((-0.38 + (k % 6) * 0.15) * w, h * [0.33, 0.53, 0.73][tray] + 0.03, (k < 6 ? -0.12 : 0.08) * d);
+      const y = h * [0.33, 0.53, 0.73][tray];
       tmp.rotation.set(0, i * 1.3, 0);
-      tmp.scale.set(i < n ? 0.11 : 0, 0.06, 0.07);
-      tmp.updateMatrix();
+      if (drum) {
+        // Fried drumsticks resting on the tray (model origin = underside).
+        tmp.position.set((-0.38 + (k % 6) * 0.15) * w, y + 0.004, (k < 6 ? -0.12 : 0.08) * d);
+        tmp.scale.setScalar(i < n ? 1 : 0);
+        tmp.updateMatrix();
+        tmp.matrix.multiply(drum.node);
+      } else {
+        tmp.position.set((-0.38 + (k % 6) * 0.15) * w, y + 0.03, (k < 6 ? -0.12 : 0.08) * d);
+        tmp.scale.set(i < n ? 0.11 : 0, 0.06, 0.07);
+        tmp.updateMatrix();
+      }
       im.setMatrixAt(i, tmp.matrix);
     }
     im.instanceMatrix.needsUpdate = true;
   });
   return (
     <group {...placed(e)}>
-      <instancedMesh ref={ref} args={[G.sphereLow, M.chicken(), MAX]} />
+      <instancedMesh key={drum ? "drum" : "blob"} ref={ref} args={drum ? [drum.geometry, drum.material, MAX] : [G.sphereLow, M.chicken(), MAX]} />
     </group>
   );
 }
 
-function WorkItemsLive({ e, index, frameRef, kind }: { e: Equipment; index: LiveIndex; frameRef: { current: number }; kind: "makeline" | "pack" | "prep" | "qc" }) {
+/** Which prop stands for a task's item on the QC pass / packing bench. */
+function itemProp(sim: BranchSimulation, t: Task, kind: "pack" | "qc"): string {
+  const unitKind = (id?: string) => (id ? sim.units.get(id)?.kind : undefined);
+  if (kind === "qc") {
+    if (t.kind === "chicken-batch") return "chicken-tray";
+    const k = unitKind(t.unitId);
+    return k === "chicken" ? "chicken-bucket" : k === "rice" ? "rice-pack" : k === "side" ? "side-cup" : k === "drink" ? "drink-bottle" : "pizza-tray";
+  }
+  const order = t.orderId ? sim.orders.get(t.orderId) : undefined;
+  const kinds = new Set(order?.unitIds.map((id) => unitKind(id)) ?? []);
+  return kinds.has("pizza") ? "pizza-box" : kinds.has("chicken") ? "chicken-bucket" : kinds.has("rice") ? "rice-pack" : "takeaway-bag";
+}
+
+const WORK_PROPS: Record<"makeline" | "pack" | "prep" | "qc", string[]> = {
+  makeline: ["pizza-raw"],
+  prep: ["chicken-tray"],
+  pack: ["pizza-box-open", "pizza-box", "chicken-bucket", "rice-pack", "takeaway-bag"],
+  qc: ["pizza-tray", "chicken-tray", "chicken-bucket", "rice-pack", "side-cup", "drink-bottle"],
+};
+
+function WorkItemsLive({ e, sim, index, frameRef, kind, props }: { e: Equipment; sim: BranchSimulation; index: LiveIndex; frameRef: { current: number }; kind: "makeline" | "pack" | "prep" | "qc"; props: PropSet | null }) {
   const [w, h, d] = e.size;
   const items = useRef<Array<THREE.Group | null>>([]);
+  const variants = useRef<Array<Record<string, THREE.Object3D | null>>>([{}, {}]);
+  const usable = WORK_PROPS[kind].filter((n) => props?.[n]);
+  const modelled = usable.length > 0;
   useFrame(() => {
     index.update(frameRef.current);
     const jobs = index.get(e.id).filter((j) => j.task.state === "working");
@@ -216,15 +301,29 @@ function WorkItemsLive({ e, index, frameRef, kind }: { e: Equipment; index: Live
       // Topping/assembly progress grows the item.
       const s = kind === "makeline" ? 0.5 + j.progress * 0.5 : 1;
       g.scale.setScalar(s);
+      if (modelled && usable.length > 1) {
+        let want = kind === "pack" || kind === "qc" ? itemProp(sim, j.task, kind) : usable[0];
+        if (want === "pizza-box" && j.progress < 0.6) want = "pizza-box-open";
+        if (!props?.[want]) want = usable[0];
+        for (const [name, o] of Object.entries(variants.current[i])) if (o) o.visible = name === want;
+      }
     });
   });
   const y = kind === "makeline" ? h * 0.88 + 0.03 : kind === "qc" ? 1.03 : h + 0.01;
   const z = kind === "makeline" ? d * 0.18 : 0.05;
+  // Underside of the old procedural stand-ins, so modelled props rest on the same surfaces.
+  const base = kind === "makeline" ? -0.01 : kind === "qc" ? 0 : 0.005;
   return (
     <group {...placed(e)}>
       {[-0.25, 0.25].map((x, i) => (
         <group key={x} ref={(el) => void (items.current[i] = el)} position={[x * w, y, z]} visible={false}>
-          {kind === "makeline" ? (
+          {modelled ? (
+            usable.map((name, k) => (
+              <group key={name} ref={(el) => void (variants.current[i][name] = el)} position={[0, base, 0]} visible={k === 0}>
+                <PropMesh prop={props![name]!} />
+              </group>
+            ))
+          ) : kind === "makeline" ? (
             <>
               <mesh geometry={G.cylLow} material={M.dough()} scale={[0.34, 0.02, 0.34]} />
               <mesh geometry={G.cylLow} material={M.sauce()} position={[0, 0.012, 0]} scale={[0.29, 0.006, 0.29]} />
@@ -244,9 +343,10 @@ function WorkItemsLive({ e, index, frameRef, kind }: { e: Equipment; index: Live
 }
 
 /** Bags waiting at the collection counter / dispatch rack for READY orders. */
-function ReadyBags({ sim, e, fulfilment }: { sim: BranchSimulation; e: Equipment; fulfilment: "pickup" | "delivery" }) {
+function ReadyBags({ sim, e, fulfilment, props }: { sim: BranchSimulation; e: Equipment; fulfilment: "pickup" | "delivery"; props: PropSet | null }) {
   const [w, h, d] = e.size;
-  const bags = useRef<Array<THREE.Mesh | null>>([]);
+  const bags = useRef<Array<THREE.Object3D | null>>([]);
+  const bag = props?.["takeaway-bag"];
   useFrame(() => {
     let n = 0;
     for (const o of sim.orders.values()) {
@@ -262,6 +362,16 @@ function ReadyBags({ sim, e, fulfilment }: { sim: BranchSimulation; e: Equipment
       {Array.from({ length: slots }).map((_, i) => {
         const pos: [number, number, number] =
           fulfilment === "delivery" ? [(-0.3 + (i % 4) * 0.2) * w, 0.15 + 0.15 + Math.floor(i / 4) * ((h - 0.2) / 3), 0] : [(-0.4 + i * 0.2) * w, h + 0.15, -d * 0.1];
+        if (bag) {
+          // Paper bag standing on the shelf / worktop (the old box was centred at pos and 0.3 m tall;
+          // on the rack it now sits on the wire shelf instead of 1.5 cm into it).
+          const seat = fulfilment === "delivery" ? 0.015 : 0;
+          return (
+            <group key={i} ref={(el) => void (bags.current[i] = el)} position={[pos[0], pos[1] - 0.15 + seat, pos[2]]} rotation={[0, (i % 3) * 0.2 - 0.2, 0]} scale={0.88} visible={false}>
+              <PropMesh prop={bag} shadow />
+            </group>
+          );
+        }
         return <mesh key={i} ref={(el) => void (bags.current[i] = el)} geometry={G.box} material={M.bag()} position={pos} scale={[0.22, 0.3, 0.14]} visible={false} castShadow />;
       })}
     </group>
@@ -306,7 +416,37 @@ function StatusRing({ e, sim }: { e: Equipment; sim: BranchSimulation }) {
   );
 }
 
+/**
+ * Animated food, baskets, bags and equipment status. Uses the Blender-built props
+ * (public/models/props) when available and Settings → 3D assets is "Blender models";
+ * the procedural stand-ins otherwise (and while loading / on a load error).
+ */
 export const LiveLayer = memo(function LiveLayer({ sim }: { sim: BranchSimulation }) {
+  const manifest = useManifest();
+  const mode = useApp((s) => s.assetMode);
+  const entries = useMemo(() => {
+    if (mode !== "models" || !manifest) return null;
+    const out: Record<string, AssetEntry> = {};
+    for (const n of LIVE_PROPS) if (manifest.assets[n]) out[n] = manifest.assets[n];
+    return Object.keys(out).length ? out : null;
+  }, [manifest, mode]);
+  const plain = <LiveScene sim={sim} props={null} />;
+  if (!entries) return plain;
+  return (
+    <AssetBoundary fallback={plain}>
+      <Suspense fallback={plain}>
+        <LiveWithProps sim={sim} entries={entries} />
+      </Suspense>
+    </AssetBoundary>
+  );
+});
+
+function LiveWithProps({ sim, entries }: { sim: BranchSimulation; entries: Record<string, AssetEntry> }) {
+  const props = usePropSet(entries);
+  return <LiveScene sim={sim} props={props} />;
+}
+
+function LiveScene({ sim, props }: { sim: BranchSimulation; props: PropSet | null }) {
   const index = useMemo(() => new LiveIndex(sim), [sim]);
   const frameRef = useRef(0);
   useFrame(() => {
@@ -319,30 +459,30 @@ export const LiveLayer = memo(function LiveLayer({ sim }: { sim: BranchSimulatio
         switch (e.type) {
           case "conveyor-oven":
           case "deck-oven":
-            return <OvenLive key={e.id} e={e} index={index} frameRef={frameRef} />;
+            return <OvenLive key={e.id} e={e} index={index} frameRef={frameRef} props={props} />;
           case "fryer":
-            return <FryerLive key={e.id} e={e} index={index} frameRef={frameRef} />;
+            return <FryerLive key={e.id} e={e} index={index} frameRef={frameRef} props={props} />;
           case "rice-stove":
             return <SteamLive key={e.id} e={e} index={index} frameRef={frameRef} kind="stove" />;
           case "rice-warmer":
             return <SteamLive key={e.id} e={e} index={index} frameRef={frameRef} kind="warmer" />;
           case "hot-holding":
-            return <HoldingLive key={e.id} e={e} sim={sim} />;
+            return <HoldingLive key={e.id} e={e} sim={sim} props={props} />;
           case "pizza-makeline":
-            return <WorkItemsLive key={e.id} e={e} index={index} frameRef={frameRef} kind="makeline" />;
+            return <WorkItemsLive key={e.id} e={e} sim={sim} index={index} frameRef={frameRef} kind="makeline" props={props} />;
           case "packaging-table":
-            return <WorkItemsLive key={e.id} e={e} index={index} frameRef={frameRef} kind="pack" />;
+            return <WorkItemsLive key={e.id} e={e} sim={sim} index={index} frameRef={frameRef} kind="pack" props={props} />;
           case "breading-station":
-            return <WorkItemsLive key={e.id} e={e} index={index} frameRef={frameRef} kind="prep" />;
+            return <WorkItemsLive key={e.id} e={e} sim={sim} index={index} frameRef={frameRef} kind="prep" props={props} />;
           case "qc-pass":
-            return <WorkItemsLive key={e.id} e={e} index={index} frameRef={frameRef} kind="qc" />;
+            return <WorkItemsLive key={e.id} e={e} sim={sim} index={index} frameRef={frameRef} kind="qc" props={props} />;
           // A prep table's items sit on its worktop, not on the QC pass shelf height.
           case "prep-table":
-            return <WorkItemsLive key={e.id} e={e} index={index} frameRef={frameRef} kind="prep" />;
+            return <WorkItemsLive key={e.id} e={e} sim={sim} index={index} frameRef={frameRef} kind="prep" props={props} />;
           case "pickup-counter":
-            return <ReadyBags key={e.id} sim={sim} e={e} fulfilment="pickup" />;
+            return <ReadyBags key={e.id} sim={sim} e={e} fulfilment="pickup" props={props} />;
           case "dispatch-rack":
-            return <ReadyBags key={e.id} sim={sim} e={e} fulfilment="delivery" />;
+            return <ReadyBags key={e.id} sim={sim} e={e} fulfilment="delivery" props={props} />;
           default:
             return null;
         }
@@ -354,7 +494,7 @@ export const LiveLayer = memo(function LiveLayer({ sim }: { sim: BranchSimulatio
         ))}
     </group>
   );
-});
+}
 
 /* ───────────── HTML overlays (refreshed on the 4 Hz tick) ───────────── */
 

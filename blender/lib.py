@@ -590,7 +590,8 @@ def export_glb(path: str):
         export_morph=False,
         export_draco_mesh_compression_enable=False,
         export_meshopt_compression_enable=False,
-        export_image_format="NONE",
+        # NB: export_image_format="NONE" makes the exporter ignore the material's vertex-colour
+        # node and write a white COLOR_0 (real colours in COLOR_1, later pruned) - leave it AUTO.
     )
 
 

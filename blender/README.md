@@ -9,12 +9,16 @@ blender/
   lib.py            shared helpers: PBR material library, bevelled boxes, tubs, pipes,
                     lathe, booleans, role joining, export, decimate, QA render, catalogue parser
   build_assets.py   one builder function per equipment / furniture type (+ registry)
+  build_people.py   rigid-part people: shared body + swappable parts, rig in the manifest, QA line-up
+  build_props.py    food / packaging / hand-held props (one GLB each, <= 600 tris)
   postprocess.py    gltf-transform (meshopt), manifest.json, contact sheet  (system python3)
   out/              raw (un-optimised) GLBs + stats.json      (build artefacts, safe to delete)
   renders/          <type>.png QA renders + contact-sheet.png
 public/models/
   equipment/<type>.glb (+ <type>.lod1.glb)   web-ready
   furniture/<type>.glb
+  characters/people.glb
+  props/<name>.glb
   manifest.json
 ```
 
@@ -28,6 +32,10 @@ python3 with Pillow (only for the contact sheet).
 blender -b --factory-startup --python blender/build_assets.py            # everything (~15 s)
 blender -b --factory-startup --python blender/build_assets.py -- --only fryer,fridge
 blender -b --factory-startup --python blender/build_assets.py -- --no-render --no-lod
+blender -b --factory-startup --python blender/build_people.py            # people (~3 s, renders people.png)
+blender -b --factory-startup --python blender/build_people.py -- --closeup   # + out/people-close.png (heads)
+blender -b --factory-startup --python blender/build_props.py             # all props (~5 s)
+blender -b --factory-startup --python blender/build_props.py -- --only pizza,crate
 python3 blender/postprocess.py                                           # optimise + manifest + sheet (~1 min)
 python3 blender/postprocess.py --only fryer,fridge                       # re-optimise a subset (manifest is merged)
 python3 blender/postprocess.py --no-optimize                             # copy raw GLBs (no meshopt decoder needed)
@@ -68,6 +76,20 @@ Node-level details that matter to the loader:
 * Material names match `M.*` in `src/components/twin/materials.ts` where possible
   (`steel`, `steelDark`, `brushed`, `black`, `red`, `woodLight`, ...), so the app may
   remap them to its shared materials if it wants the canvas brushed-steel texture.
+
+## People contract (`characters/people.glb`)
+
+* One node per part, named as in `PARTS` in `build_people.py`; each node's origin is its joint in
+  the rest pose (`JOINTS`, metres, +x = the character's left). L/R limbs share one mesh, so limb
+  meshes must stay symmetric about their own x = 0 plane. The manifest entry's `rig` carries
+  `joints`, `armSplay` and `parts` (part → joint); the app builds its instancing offsets from it.
+* `COLOR_0` is data, not colour: `.r` = palette slot / 15, `.g` = baked AO, `.b` = roughness
+  override (0 = default). Slots: 0 skin, 1 top, 2 bottom, 3 shoes, 4 hair (helmet for riders),
+  5 accent (cap / apron / head-wrap / delivery box), 6 forearm (sleeve or skin), 7 shin (trouser or
+  skin), 8 dark, 9 white, 10 brand red, 11 brand yellow, 12 visor, 13–15 darker skin / top / accent.
+  Keep the `S_*` slot constants and the shader in `src/components/twin/people.tsx` in sync when adding slots.
+* A hand-made replacement must keep node names, joint origins and the slot encoding (or the app
+  needs a different material path). Budget: ≤ 2.5k tris for a dressed person.
 
 ## Adding an asset
 

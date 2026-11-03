@@ -472,7 +472,7 @@ def drinks_fridge(a: Asset):
 # --------------------------------------------------------------------------
 
 
-def counter_shell(a: Asset, front_mat: str, *, niche=True):
+def counter_shell(a: Asset, front_mat: str, *, niche=True, dividers=True):
     """Shared counter carcass: plinth, white body, coloured front, wood top, staff-side niche."""
     w, h, d = a.w, a.h, a.d
     kick, top_t = 0.08, 0.05
@@ -484,7 +484,7 @@ def counter_shell(a: Asset, front_mat: str, *, niche=True):
     a.box((0, kick / 2, -0.03), (w - 0.04, kick, d - 0.1), "blackEnamel", bevel=0.003)
     y1 = y_top * 0.82
     a.box((0, kick + (y1 - kick) / 2, d / 2 - 0.0125), (w, y1 - kick, 0.025), front_mat, bevel=0.006, seg=2)
-    if a.detail:
+    if a.detail and dividers:
         n = max(2, int(w / 0.5))
         for i in range(1, n):
             a.box((-w / 2 + i * w / n, kick + (y1 - kick) / 2, d / 2 + 0.0005), (0.008, y1 - kick - 0.04, 0.003), "charcoal" if front_mat != "charcoal" else "black", bevel=0)
@@ -495,7 +495,10 @@ def counter_shell(a: Asset, front_mat: str, *, niche=True):
 
 def pos_counter(a: Asset):
     w, h, d = a.w, a.h, a.d
-    counter_shell(a, "redCladding")
+    y1, _ = counter_shell(a, "redCladding", dividers=False)
+    # customer-facing graphic panel: UV'd quad the app fills with its canvas counter-front artwork
+    kick = 0.08
+    a.label((0, kick + (y1 - kick) / 2, d / 2 + 0.0015), (w - 0.04, y1 - kick - 0.03), "redCladding")
     terminals = max(1, round(w / 1.4))
     for i in range(terminals):
         x = (-0.5 + (i + 0.5) / terminals) * w
